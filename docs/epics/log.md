@@ -2,6 +2,14 @@
 
 ## 2026-08-09
 
+* **PR opened**: [02 parse the review invocation and exit 2 on usage
+  errors](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) (#5) —
+  [PR #17](https://github.com/julienlegoux/external-reviewer/pull/17) against
+  `develop`. `review [--prompt <text>] <repo-path>` and `help`/`--help`/`-h`
+  over stdlib `flag`, `ContinueOnError` throughout; every malformed
+  invocation exits `2` with stdout empty and a reason on stderr. 301 changed
+  lines in `internal/cli/` against a ~350 target.
+
 * **Started**: [02 parse the review invocation and exit 2 on usage
   errors](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) (#5) —
   branch `issue-5-review-invocation-parsing`.
