@@ -2,6 +2,27 @@
 
 ## 2026-08-09
 
+* **PR opened**: [03 emit run diagnostics on stderr and classify exit
+  codes](/epic-1-walking-skeleton/issues/03-diagnostics-and-exit-codes.md)
+  (#6) — [PR #18](https://github.com/julienlegoux/external-reviewer/pull/18)
+  against `develop`. `internal/diag` (the prefixed stderr writer and the run
+  `State` the `done` line renders from), `internal/cli/exit.go`
+  (`ErrNoReviewer` and `errors.Is`-based classification), and
+  `signal.NotifyContext` wired for `SIGINT` over an inner `run(ctx, …)`, so
+  every termination path — success, no reviewer, failure, interruption —
+  emits exactly one `done` line via a single `defer`. 530 changed lines
+  (226 production, 304 tests) against a ~400 target, driven mostly by the
+  three termination-path tests and full `internal/diag` coverage.
+
+* **Started**: [03 emit run diagnostics on stderr and classify exit
+  codes](/epic-1-walking-skeleton/issues/03-diagnostics-and-exit-codes.md)
+  (#6) — branch `issue-6-diagnostics-and-exit-codes`.
+
+* **Merged**: [02 parse the review invocation and exit 2 on usage
+  errors](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) (#5) —
+  [PR #17](https://github.com/julienlegoux/external-reviewer/pull/17) merged into
+  `develop`.
+
 * **PR opened**: [02 parse the review invocation and exit 2 on usage
   errors](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) (#5) —
   [PR #17](https://github.com/julienlegoux/external-reviewer/pull/17) against
