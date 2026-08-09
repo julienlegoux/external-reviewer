@@ -3,7 +3,7 @@ type: Technical Specification
 title: "External Reviewer — Technical Specs"
 description: "A single Go binary that runs a bounded, read-only agent loop over an explicitly allowed slice of a repository, on a model outside the Anthropic family, and returns markdown on stdout."
 tags: [planning, specs]
-timestamp: 2026-08-09T03:51:32Z
+timestamp: 2026-08-09T07:50:00Z
 status: final
 ---
 
@@ -204,11 +204,14 @@ of formatting someone else's document. stderr carries prefixed human-readable li
 turn 3  tools=2  in=48210 out=1104  $0.0231  42.8s
 tool    read_file docs/epics/epic-2/EPIC_2.md:1-2000
 warn    config: unrecognised key "models" in [tiers.standard]
-done    turns=7  $0.0918  2m14s  stop=end_turn
+done    turns=7  in=182430 out=9106  $0.0918  2m14s  stop=end_turn
 ```
 
 The `done` line is emitted on **every** termination path, including failure and
-interruption. Its load-bearing fields are turns, tokens and elapsed time; the `$` figure is
+interruption. Its load-bearing fields are turns, tokens and elapsed time — the token
+counts are accumulated over the run and printed on the line itself, so a transcript reader
+never has to sum the `turn` lines; on a path that never reached a model they are `0`, not
+absent. The `$` figure is
 notional on the current credentials and becomes real only if a tier names an API-key
 provider. No colour, no spinner — the caller is a script.
 

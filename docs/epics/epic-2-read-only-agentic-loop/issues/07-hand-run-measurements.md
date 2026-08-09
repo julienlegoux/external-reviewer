@@ -3,7 +3,7 @@ type: Issue
 title: "Run a real review by hand and record the measurements"
 description: "Run the completed loop against a real repository on a real provider and record turns, tokens, cost and wall clock — the epic's second deliverable and the input Epic 3's caps are sized from."
 tags: [epic-2]
-timestamp: 2026-08-09T06:32:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 2
 issue: 07
 slug: hand-run-measurements
@@ -78,15 +78,19 @@ the keyboard to interrupt.
 - [ ] The document ends with observations framed for Epic 3 — a plausible turn cap range
       and wall-clock deadline range, each with the run that suggests it — explicitly
       labelled as input to a decision, not as the decision.
-- [ ] The epic folder's `index.md` and `docs/epics/log.md` are updated per the bundle
-      rules, and `EPIC_2.md` links the new document.
+- [ ] The bundle's root index `docs/epics/index.md` gains a bullet for the new document
+      in the mechanical form the bundle rules require, `docs/epics/log.md` records its
+      creation, and `EPIC_2.md` links it. (`MEASUREMENTS.md` is a reference document, not
+      an issue, so it does **not** go in `issues/index.md`; there is no epic-level
+      `index.md` in this bundle.)
 - [ ] No `.go` file is changed by this PR.
 
 ## Relevant files / areas
 
 - `docs/epics/epic-2-read-only-agentic-loop/MEASUREMENTS.md` (new)
 - `docs/epics/epic-2-read-only-agentic-loop/EPIC_2.md` — Notes gains the link
-- `docs/epics/log.md`, `docs/epics/epic-2-read-only-agentic-loop/issues/index.md`
+- `docs/epics/index.md` (the bundle's root index gains the new document),
+  `docs/epics/log.md`
 
 Governing decisions:
 [EPIC_2 § Goal](/epic-2-read-only-agentic-loop/EPIC_2.md) (measurements as the second

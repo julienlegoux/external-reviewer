@@ -3,7 +3,7 @@ type: Issue
 title: "Add the batched read_file tool"
 description: "Add read_file taking an array of paths with offset and limit, returning each file under its own header with a bad path reported inline while the rest still return."
 tags: [epic-2]
-timestamp: 2026-08-09T06:32:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 2
 issue: 04
 slug: read-file-tool
@@ -50,6 +50,11 @@ failing the call.
 - Any write path, any `os.OpenFile` — the forbidigo guard rejects them and the tool reads
   through `*os.Root` only.
 - Binary-file detection beyond the UTF-8 check above; there is no MIME sniffing.
+- Tolerating OS-native separators on the wire. Wire paths are `/`-separated on every
+  platform (CONVENTIONS § Paths and platforms), so a backslash-separated path is refused
+  like any other non-conforming path rather than normalised — hand-normalising it would
+  make a legal Linux filename containing a backslash unreachable, and would make this
+  tool accept what the other three do not.
 - Caching file contents between calls.
 
 ## Acceptance criteria / Definition of done
@@ -73,7 +78,7 @@ failing the call.
 - [ ] A directory path and a non-UTF-8 file each return an inline explanatory message,
       not raw bytes and not a panic.
 - [ ] Paths in headers and in refusals are `/`-separated and repo-relative on both matrix
-      OSes, including when the caller passed a path with backslashes.
+      OSes.
 - [ ] End-to-end through issue 03's loop against the `faux` provider: a scripted
       `read_file` call over a batch containing one bad path leaves the run alive and the
       model's next turn is dispatched.
@@ -101,4 +106,7 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **M**: target ~400 changed lines — one tool over issue 01's resolver, with the
+partial-success behaviour and the truncation line carrying most of the test weight. The
+loop it plugs into already exists, so there is nothing to integrate. If it passes ~700,
+something outside this tool's contract has been taken on.

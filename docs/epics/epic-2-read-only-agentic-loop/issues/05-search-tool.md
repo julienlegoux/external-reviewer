@@ -3,11 +3,11 @@ type: Issue
 title: "Add the search tool with surrounding context lines"
 description: "Add search: an in-process RE2 regex over the confined enumeration, returning path:line:text with context lines, capped at 200 matches with the truncation announced."
 tags: [epic-2]
-timestamp: 2026-08-09T06:32:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 2
 issue: 05
 slug: search-tool
-size: M
+size: L
 status: open
 gh_issue: 13
 resource: https://github.com/julienlegoux/external-reviewer/issues/13
@@ -105,4 +105,8 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **L**: target ~650 changed lines — five parameters, streamed line-by-line matching,
+context-window rendering at file edges, the enumeration and confinement filters, and a
+test per parameter. It stays whole: `context` is why this tool exists rather than being a
+`read_file` follow-up, and shipping matching without it is shipping the version the epic
+rejected. If it passes ~1000, the context rendering and its edge cases are the split.

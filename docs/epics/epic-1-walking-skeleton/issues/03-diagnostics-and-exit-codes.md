@@ -3,7 +3,7 @@ type: Issue
 title: "Emit run diagnostics on stderr and classify exit codes"
 description: "Add the prefixed stderr diagnostics writer with a done line on every termination path, the typed-error exit-code classification at the Run boundary, and SIGINT cancellation."
 tags: [epic-1]
-timestamp: 2026-08-09T05:24:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 1
 issue: 03
 slug: diagnostics-and-exit-codes
@@ -28,9 +28,12 @@ typed errors inspected at the `Run` boundary — never message matching.
 
 - An internal diagnostics writer producing the prefixed, human-readable lines SPECS
   fixes, no colour and no spinner: `turn`, `tool`, `warn`, `done`.
-- The `done` line — `done    turns=7  $0.0918  2m14s  stop=end_turn` — emitted on every
-  termination path: success, no reviewer available, failure, and interruption. Its
-  load-bearing fields are turns, tokens and elapsed time.
+- The `done` line — `done    turns=7  in=182430 out=9106  $0.0918  2m14s  stop=end_turn` —
+  emitted on every termination path: success, no reviewer available, failure, and
+  interruption. Its load-bearing fields are turns, tokens and elapsed time, so the
+  **accumulated** token counts are on the line itself rather than left to be summed off
+  the per-turn lines by whoever reads a transcript — Epic 2's measurement issue is the
+  first such reader. SPECS § Interfaces is amended to this shape by the same PR.
 - Run state (turn count, accumulated tokens and cost, start time, stop reason) carried in
   one struct that the `done` line is rendered from, so no path can terminate without one.
 - The exit-code taxonomy as sentinel/typed errors in an internal package, classified with
@@ -58,9 +61,11 @@ typed errors inspected at the `Run` boundary — never message matching.
 - [ ] A `done` line appears on stderr for each of: an exit-`0` termination, an exit-`1`
       termination, an exit-`2` failure, and a cancelled context — asserted through `Run`
       (or the inner `run`) for all four, not by calling the writer directly.
-- [ ] The `done` line contains the turn count, the elapsed time and the stop reason, in
-      the `key=value` shape SPECS shows; a test asserts on the parsed fields rather than
-      on an exact string where timing is involved.
+- [ ] The `done` line contains the turn count, the accumulated input and output token
+      counts, the elapsed time and the stop reason, in the `key=value` shape SPECS shows;
+      a test asserts on the parsed fields rather than on an exact string where timing is
+      involved. On paths that never reached a model the token fields are `0`, not absent
+      — one shape on every termination path.
 - [ ] stdout is empty on every non-zero exit path exercised here.
 - [ ] Classification is by `errors.Is` / `errors.As`: a test wraps a sentinel with
       `fmt.Errorf("…: %w", err)` two levels deep and asserts the exit code is unchanged.
@@ -81,6 +86,9 @@ No existing code for this yet. Expected paths:
   `internal/diag/diag_test.go`
 - `internal/cli/run.go` (signal wiring, inner `run(ctx, …)`, classification switch),
   `internal/cli/exit.go` (sentinel/typed errors), `internal/cli/exit_test.go`
+- `docs/planning/SPECS.md` — § Interfaces' `done` example already carries the amended
+  shape (tokens on the line); no further change is expected, but the implementation
+  follows that document if the two ever disagree
 
 Governing decisions: [SPECS § Interfaces](../../../planning/SPECS.md) (output,
 diagnostics format, exit codes), [CONVENTIONS § Error handling](../../../planning/CONVENTIONS.md).
@@ -92,4 +100,8 @@ diagnostics format, exit codes), [CONVENTIONS § Error handling](../../../planni
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **M**: target ~400 changed lines — the writer, the run state, the typed errors and
+the signal wiring, each small, plus the four-termination-path test that is the point of
+the issue. Its natural split line, if one is ever needed, is the writer and run state
+first, the classification and signal wiring second — but the `done`-on-every-path
+guarantee only becomes assertable once both halves exist, so prefer to keep it whole.

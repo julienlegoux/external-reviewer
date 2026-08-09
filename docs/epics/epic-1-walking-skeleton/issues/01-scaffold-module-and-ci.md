@@ -3,11 +3,11 @@ type: Issue
 title: "Scaffold the Go module, the run() seam and CI"
 description: "Create the module, the thin main.go over an in-process Run() seam, and the CI workflow whose lint job forbids the write half of the filesystem API."
 tags: [epic-1]
-timestamp: 2026-08-09T05:24:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 1
 issue: 01
 slug: scaffold-module-and-ci
-size: M
+size: S
 status: open
 gh_issue: 4
 resource: https://github.com/julienlegoux/external-reviewer/issues/4
@@ -96,4 +96,6 @@ guard), [CONVENTIONS § Repository layout](../../../planning/CONVENTIONS.md).
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **S**: target ~150 changed lines — a `go.mod`, an eight-line `main.go`, the `Run`
+seam, two YAML files and one test. Most of the work is deciding the `forbidigo` list, not
+typing it. If this passes ~300, scope has leaked in from issue 02.

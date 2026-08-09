@@ -3,7 +3,7 @@ type: Epic
 title: "Read-only agentic loop"
 description: "The multi-turn loop and four confined read-only tools that turn a prompt-pipe into a reviewer that chooses what to read, plus the instrumentation Epic 3's caps are sized from."
 tags: [epic]
-timestamp: 2026-08-09T04:34:00Z
+timestamp: 2026-08-09T07:50:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/2
 epic: 2
 slug: read-only-agentic-loop
@@ -41,7 +41,9 @@ epic runs for real.
   `os.OpenRoot(repoPath)` at startup, and every read goes through that `*os.Root`.
 - `git_read` confined too: subcommand allowlisted *before* the command is built, never a
   shell, `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM` neutralised, allowed subtrees passed as
-  pathspecs to `log`/`diff`, and `show`'s `<rev>:<path>` form path-validated.
+  pathspecs to `log`/`diff`/`status`, and `show`'s `<rev>:<path>` form path-validated.
+  No subcommand is exempt: an unscoped `status` reports the working-tree state of the
+  whole repository, which leaks every path name outside the allow-list.
 - The small non-configurable sensitive-file floor inside allowed subtrees (`.env*`,
   `*.pem`, `*.key`, `id_rsa*`, `*.p12`, `*.pfx`, `.npmrc`, `.netrc`, `credentials*`,
   `.git/`), with refusals naming which rule refused.
@@ -77,8 +79,8 @@ epic runs for real.
 - A path outside the allowed subtrees is refused — including traversal, an absolute
   symlink, and a symlink pointing outside the root where the platform supports creating
   one — and the refusal names the rule.
-- `git show HEAD:<path>` for a path outside the allow-list is refused; `log` and `diff`
-  return nothing from outside the allowed subtrees.
+- `git show HEAD:<path>` for a path outside the allow-list is refused; `log`, `diff` and
+  `status` return nothing from outside the allowed subtrees.
 - A file matching the sensitive-file floor inside an allowed subtree is refused.
 - A truncated tool result says so, with both numbers.
 - A failing tool call leaves the run alive and lets the model try another path; a

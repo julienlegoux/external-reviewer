@@ -3,7 +3,7 @@ type: Issue
 title: "Parse the review invocation and exit 2 on usage errors"
 description: "Add the review/help subcommand grammar over stdlib flag, taking the repository path positionally and the task prompt from --prompt or stdin, with every usage error exiting 2 and leaving stdout empty."
 tags: [epic-1]
-timestamp: 2026-08-09T05:24:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 1
 issue: 02
 slug: review-invocation-parsing
@@ -95,4 +95,6 @@ contract and long-form-only flags),
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **M**: target ~350 changed lines, of which the table of usage cases is the larger
+half. The grammar and its usage errors are one contract and do not split; if this passes
+~700, the exit-code taxonomy from issue 03 has been pulled forward.

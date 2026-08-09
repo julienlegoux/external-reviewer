@@ -3,7 +3,7 @@ type: Issue
 title: "Call the model once and return its markdown on stdout"
 description: "Drive one streamed round trip through kern-link and write the final assistant text verbatim to stdout, closing the walking skeleton and retiring the first half of the project's largest risk."
 tags: [epic-1]
-timestamp: 2026-08-09T05:24:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 1
 issue: 05
 slug: single-turn-model-call
@@ -99,4 +99,7 @@ codes), [SPECS § Testing](../../../planning/SPECS.md) (the `faux` provider),
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **M**: target ~450 changed lines — one round trip and its five failure paths, plus
+the reusable `faux` harness the whole of Epic 2 tests against, which is the part worth
+spending lines on. It does not split: the harness with no round trip tests nothing, and
+the round trip with no harness cannot be tested offline.

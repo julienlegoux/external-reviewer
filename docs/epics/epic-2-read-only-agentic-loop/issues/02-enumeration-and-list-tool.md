@@ -3,11 +3,11 @@ type: Issue
 title: "Enumerate the repository through git ls-files and add the list tool"
 description: "Add gitignore-exact enumeration via git ls-files with an fs.WalkDir fallback, re-resolved through the root, and the first tool — list — with its declaration and announced truncation."
 tags: [epic-2]
-timestamp: 2026-08-09T06:32:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 2
 issue: 02
 slug: enumeration-and-list-tool
-size: M
+size: L
 status: open
 gh_issue: 10
 resource: https://github.com/julienlegoux/external-reviewer/issues/10
@@ -44,7 +44,9 @@ argv, never a shell, with machine-level git config neutralised. Issue 06 reuses 
   it is used or returned; a path git lists but the root refuses is skipped, not trusted.
   Paths outside the allow-list and paths matching the floor are excluded from results.
 - The `list` tool: parameter `pattern` (glob, repo-relative, default `**/*`), result is
-  matching paths one per line, repo-relative and `/`-separated. Truncation announced —
+  matching paths one per line, repo-relative and `/`-separated, **capped at 200 paths** —
+  the same order as `search`'s 200-match cap, since both answer "what is there". The cap
+  is a stated constant, not a tuning knob, and truncation is always announced:
   `[truncated: showing 200 of 431 paths]`.
 - Its `ai.Tool` declaration — name, description and `ai.JSONSchema(...)` literal — lives
   beside the implementation, with `snake_case` names and schema fields because they are a
@@ -81,8 +83,9 @@ argv, never a shell, with machine-level git config neutralised. Issue 06 reuses 
       a file inside the root but outside them is absent from the result.
 - [ ] `list` never returns a path matching the sensitive-file floor, including with
       `--allow .`.
-- [ ] `list` with a pattern matching more than the cap ends with a
-      `[truncated: showing N of M paths]` line carrying both real numbers.
+- [ ] `list` with a pattern matching more than the 200-path cap returns 200 paths and
+      ends with a `[truncated: showing 200 of M paths]` line carrying both real numbers;
+      a pattern matching fewer carries no truncation line.
 - [ ] Every path in every `list` result is `/`-separated and repo-relative, asserted on
       both matrix OSes.
 - [ ] `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM` neutralisation is asserted: a test writes a
@@ -118,4 +121,8 @@ declarations live beside their implementation).
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **L**: target ~700 changed lines — two enumeration paths, the `exec` helper with
+its config neutralisation, the fallback walk, `list`, the registry, and git-fixture tests
+for each. This is the one issue in the epic with a genuine split line: enumeration and
+the `exec` helper first (tested directly, no tool yet), then the registry and `list` on
+top. Take it if the first half approaches ~700 on its own.

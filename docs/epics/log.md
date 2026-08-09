@@ -2,9 +2,44 @@
 
 ## 2026-08-09
 
+* **Revision**: Applied [issue review report 1](../REPORT_1.md) to the twelve issues of
+  Epics 1 and 2, and pushed the corrected bodies to #4–#15.
+
+  Two P1s. **`git_read status` was exempted from confinement** while the other three
+  subcommands were scoped — an unscoped `status` reports the working-tree state of the
+  whole repository, so it handed the model every path name the allow-list and the
+  sensitive-file floor exist to hide. It is now pathspec-scoped like `log` and `diff`,
+  with its own acceptance criterion. And **the Windows reserved-device criterion was
+  unsatisfiable** — it asked one test to assert refusal on both matrix OSes, where `NUL`
+  and `COM1` are ordinary Linux filenames; the cheapest way to green it would have been a
+  hand-rolled blocklist, which is precisely what `os.Root` was chosen to avoid. The
+  expectation is now selected at runtime from `runtime.GOOS`.
+
+  Three things were **decided** rather than merely corrected: the `done` line carries the
+  accumulated token counts (SPECS § Interfaces amended to match, [planning
+  log](../planning/log.md)); `--allow` grants **subtrees only**, a single-file grant being
+  a usage error, since every downstream mechanism reads it as a subtree; and the caps
+  `list` and `git_read` announce truncation against are stated numbers — 200 paths and
+  2000 lines — rather than constants each implementer would have invented differently.
+
+  **Sizing was compressed and is now honest.** Eleven of twelve issues carried a
+  byte-identical size note telling an M issue to target 500 lines and split past 1000,
+  which authorised an L-sized PR on every one of them. Six issues were re-declared
+  (epic-1/01 → S; epic-2/01, 02, 03, 05, 06 → L) and every note now names its own target
+  and its own split line. Only epic-2/02 has a real split line — enumeration and the
+  `exec` helper, then the registry and `list`.
+
+  Two findings were closed **without changing the files**. Cross-epic blockers are
+  invisible in `depends_on` because the schema scopes it to one epic; the guard is
+  `EPIC_2.md`'s epic-level dependency, and the fix — if it recurs — belongs in the schema.
+  And no issue states the branch model (`develop`, `issue-<n>-<slug>`, `Closes #<n>`):
+  the pipeline skills own it — `implement-epic` selects `develop` as the integration
+  branch, `implement-issue` reads CONVENTIONS § Git & PRs — so repeating it twelve times
+  would duplicate a rule that already has an enforcer.
+
 * **Creation**: Cut
-  [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) into seven issues — six sized M and
-  one S — issues #9 through #15 on milestone 2, each linked as a native sub-issue of #2.
+  [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) into seven issues — issues #9
+  through #15 on milestone 2, each linked as a native sub-issue of #2.
 
   The order is boundary → loop → tools → measurement:
   [01 the allow-list and the `os.Root` boundary](/epic-2-read-only-agentic-loop/issues/01-allow-list-and-root-confinement.md),
@@ -30,7 +65,7 @@
   tree.
 
 * **Creation**: Cut
-  [Epic 1](/epic-1-walking-skeleton/EPIC_1.md) into five issues, all sized M, in a strict
+  [Epic 1](/epic-1-walking-skeleton/EPIC_1.md) into five issues in a strict
   dependency chain — issues #4 through #8 on milestone 1, each linked as a native
   sub-issue of #1.
 

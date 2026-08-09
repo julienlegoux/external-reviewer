@@ -3,11 +3,11 @@ type: Issue
 title: "Drive the multi-turn loop with tool dispatch and the bounds seam"
 description: "Turn the single round trip into an accumulating multi-turn loop that declares tools, dispatches tool calls, feeds results back, and terminates on bound then cancellation then stop reason."
 tags: [epic-2]
-timestamp: 2026-08-09T06:32:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 2
 issue: 03
 slug: multi-turn-loop-and-dispatch
-size: M
+size: L
 status: open
 gh_issue: 11
 resource: https://github.com/julienlegoux/external-reviewer/issues/11
@@ -114,7 +114,9 @@ value; a failing turn is an error).
 ## Dependencies
 
 - Blocked by: [02 — Enumeration and the list tool](/epic-2-read-only-agentic-loop/issues/02-enumeration-and-list-tool.md);
-  and Epic 1 issue 05, whose `faux` harness and single round trip this generalises.
+  and Epic 1's
+  [05 — Call the model once and return its markdown on stdout](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md),
+  whose `faux` harness and single round trip this generalises.
 - Blocks: [04 — read_file](/epic-2-read-only-agentic-loop/issues/04-read-file-tool.md),
   [05 — search](/epic-2-read-only-agentic-loop/issues/05-search-tool.md),
   [06 — git_read](/epic-2-read-only-agentic-loop/issues/06-git-read-tool.md) — each of
@@ -122,4 +124,9 @@ value; a failing turn is an error).
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **L**: target ~650 changed lines — the accumulating loop, dispatch, the bounds
+seam, the asserted termination order, the instrumentation lines, and the scripted `faux`
+conversations that exercise each. It stays whole: the loop, its termination order and its
+two failure levels are one behaviour, and a loop that dispatches but cannot terminate in
+the specified order is not half of this issue, it is the wrong half. If it passes ~1000,
+the scripted-conversation fixtures move, not the loop.

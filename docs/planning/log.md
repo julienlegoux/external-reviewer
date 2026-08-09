@@ -2,6 +2,13 @@
 
 ## 2026-08-09
 
+* **Update**: amended [SPECS](/SPECS.md) § Interfaces — the `done` line now carries the
+  accumulated `in=`/`out=` token counts. The document already called tokens one of the
+  line's load-bearing fields while its example omitted them, which left Epic 1's
+  diagnostics issue unable to say whether `done` must print them and Epic 2's measurement
+  issue reading them off the `turn` lines instead. Decided on the review of
+  [issue review report 1](../REPORT_1.md).
+
 * **Update**: wrote [CONVENTIONS](/CONVENTIONS.md) — the personal baseline filtered to Go,
   with an 8-item [deviations ledger](/conventions/index.md), all accepted at triage.
   Planning is now complete: `split-epics` can cut SCOPE.

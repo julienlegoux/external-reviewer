@@ -3,7 +3,7 @@ type: Issue
 title: "Resolve the hard-coded reviewer model and preflight auth"
 description: "Add the kern-link dependency and the pre-loop resolution step that turns a hard-coded provider/model into a reachable, credentialed model — or ends the run at exit 1 or 2 before any request is sent."
 tags: [epic-1]
-timestamp: 2026-08-09T05:24:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 1
 issue: 04
 slug: model-resolution-and-auth
@@ -96,4 +96,7 @@ set — this PR adds the first of the two, and no third).
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **M**: target ~300 changed lines — a short resolution sequence and its typed
+errors, with the `faux`-registry tests and the `go.sum` churn from the first dependency
+making up the rest. It does not split; the resolution order *is* the issue. If it passes
+~700, tier vocabulary from Epic 3 has crept in.

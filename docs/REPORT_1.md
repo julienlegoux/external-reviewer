@@ -356,3 +356,32 @@
   tools".** The model chooses its own tools, so this is steerable by the task prompt but
   not guaranteed. Worth deciding whether a run that never calls `git_read` fails the
   criterion or is simply re-run with a prompt that invites history.
+
+## Resolution — 2026-08-09
+
+Every finding above is dispositioned. The twelve local issue files were amended, the
+twelve GitHub bodies (#4–#15) rewritten from them with links transformed for the issue
+surface, and `docs/epics/log.md` records the revision.
+
+| # | Finding | Disposition |
+|---|---|---|
+| P1 | `git_read status` exempt from confinement | **Fixed.** `status` now takes the allowed subtrees as pathspecs like `log`/`diff`, with its own acceptance criterion asserting a change in a disallowed subtree does not appear. `EPIC_2.md` scope and acceptance criteria updated to match. |
+| P1 | Windows reserved-device criterion unsatisfiable | **Fixed.** One test on both matrix OSes, expectation selected at runtime from `runtime.GOOS` — refused on Windows, resolved on Linux — with the hand-rolled blocklist named as the wrong fix. |
+| P2 | `--allow` pointed at `run.go`; invalidated Epic 1 tests unnamed | **Fixed.** Relevant files now name `internal/cli/review.go` and `internal/cli/review_test.go`, and a Scope bullet states that Epic 1 issue 02's success cases are amended here because the grammar tightens deliberately. |
+| P2 | `list` and `git_read` announce truncation against an undefined cap | **Fixed, with numbers decided.** `list` caps at **200 paths** (matching `search`'s 200 matches); `git_read` caps at **2000 lines**. Both stated in Scope and asserted in the acceptance criteria. |
+| P2 | Sizes contradicted by content, under identical boilerplate notes | **Fixed.** Re-declared: `epic-1/01` → S; `epic-2/01`, `02`, `03`, `05`, `06` → L. All twelve PR size notes rewritten with a per-issue target and split line. Only `epic-2/02` has a real split line (enumeration + exec helper, then registry + `list`). |
+| P2 | Every cross-reference in the GitHub bodies is a dead link | **Fixed at the push boundary.** Bodies pushed with bundle-relative and `../../../` links rewritten to absolute blob URLs on `develop`, and `Blocked by` / `Blocks` rendered with `#n` alongside the file link. Local files keep the bundle link forms unchanged. |
+| P2 | Issue 07 updates an `index.md` that does not exist | **Fixed.** Both the acceptance criterion and the file list now name `docs/epics/index.md`, with a note that `MEASUREMENTS.md` is a reference document and does not belong in `issues/index.md`. |
+| P2 | No issue states the branch model | **No change — the guard is the pipeline.** `implement-epic` selects `develop` as the integration branch, and `implement-issue` reads `CONVENTIONS § Git & PRs` before branching. Repeating the rule twelve times would duplicate one that already has an enforcer. |
+| P3 | Cross-epic blockers invisible in `depends_on` | **No change**, as recommended. The schema scopes `depends_on` to one epic; `EPIC_2.md`'s epic-level dependency is the guard. If it recurs, the schema is where to fix it. |
+| P3 | `./`-relative links in the issues indexes | **Fixed.** Both indexes rewritten to `/epic-<n>-<slug>/issues/<nn>-<slug>.md`, bullet form unchanged, size letters updated. |
+| P3 | "issue 01" ambiguous inside Epic 2 | **Fixed.** `epic-2/01:90` now reads "Epic 1 issue 01's forbidigo guard". |
+| P3 | The `done` line's token field undecided | **Decided: tokens on the line.** `done turns=7 in=182430 out=9106 $0.0918 2m14s stop=end_turn`, `0` on paths that never reached a model. `SPECS § Interfaces` amended to the same shape, recorded in the planning log. |
+| P3 | Only `read_file` accepts backslash wire paths | **Fixed by dropping the clause.** `/` is the wire separator in all four tools; a backslash path is refused like any other non-conforming path, stated in `epic-2/04`'s Out of scope. |
+| P3 | `--allow` may name a file, against "subtrees" everywhere else | **Decided: subtrees only.** An `--allow` value must resolve to an existing directory; a file or a missing path is a usage error at exit `2`, with an acceptance criterion for each. |
+
+The three **open questions** are untouched and stay open: nothing claims the JSON request
+object on stdin or `--system`; `version` is unclaimed; and `epic-2/07`'s "at least one run
+exercises each of the four tools" is steerable but not guaranteed. The first two are
+Epic 3's to close — `review-epics` or `create-issues` for Epic 3 — and closing them here
+would be inventing scope this review exists to catch.

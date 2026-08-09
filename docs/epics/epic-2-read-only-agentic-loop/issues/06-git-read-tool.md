@@ -3,11 +3,11 @@ type: Issue
 title: "Add the confined git_read tool"
 description: "Add git_read over the fixed log/diff/show/status allowlist with args as an array, allowed subtrees passed as pathspecs and show's <rev>:<path> form validated before the command is built."
 tags: [epic-2]
-timestamp: 2026-08-09T06:32:00Z
+timestamp: 2026-08-09T07:50:00Z
 epic: 2
 issue: 06
 slug: git-read-tool
-size: M
+size: L
 status: open
 gh_issue: 14
 resource: https://github.com/julienlegoux/external-reviewer/issues/14
@@ -42,9 +42,13 @@ take the allowed subtrees as pathspecs.
   - `show` — the `<rev>:<path>` form parsed and its path validated against the allow-list
     and the floor before the command is built; a bare `<rev>` (a commit) is allowed, and
     its diff is pathspec-scoped the same way;
-  - `status` — unaffected.
-- Result is the command's stdout verbatim, with truncation announced when it hits the
-  cap.
+  - `status` — the allowed subtrees appended as pathspecs (`git status -- <paths>`),
+    exactly as `log` and `diff` are. An unscoped `status` reports the working-tree state
+    of the *whole* repository, which hands the model the names and modification state of
+    every path outside the allow-list — including the ones the sensitive-file floor
+    exists to hide.
+- Result is the command's stdout verbatim, **capped at 2000 lines**, with truncation
+  always announced — `[truncated: showing 2000 of 6431 lines]`.
 - A non-zero `git` exit, or `git` absent from `PATH`, returns a tool error carrying
   git's stderr — a message the reviewer can act on, not a run failure.
 - An `args` entry that would be interpreted as an option overriding the confinement
@@ -79,6 +83,10 @@ take the allowed subtrees as pathspecs.
 - [ ] `log` and `diff` over a repository whose history touches both an allowed and a
       disallowed subtree return **no** entries from the disallowed one, proving the
       pathspecs are applied.
+- [ ] `status` in a working tree with an uncommitted change in an allowed subtree **and**
+      one in a disallowed subtree reports the first and **not** the second — the same
+      pathspec scoping as `log` and `diff`, asserted separately because an unscoped
+      `status` is the one form that leaks path names without reading a file.
 - [ ] A subcommand outside the allowlist (`commit`, `push`, `blame`) is refused with a
       message listing the four allowed subcommands, and never reaches `git`.
 - [ ] `args` supplied as a string rather than an array is a schema violation returned as
@@ -87,7 +95,9 @@ take the allowed subtrees as pathspecs.
       rule-naming message.
 - [ ] A non-zero `git` exit returns a tool error carrying git's stderr, and — asserted
       end-to-end through issue 03's loop — leaves the run alive.
-- [ ] Output exceeding the cap ends with a truncation line carrying both numbers.
+- [ ] Output exceeding the 2000-line cap ends with a
+      `[truncated: showing 2000 of N lines]` line carrying both real numbers; output
+      under the cap carries no truncation line.
 - [ ] `golangci-lint run` passes; the `exec` call is the one already carrying its
       `//nolint:forbidigo` reason from issue 02, or a second one carrying its own. CI
       green on ubuntu-latest and windows-latest.
@@ -118,4 +128,9 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Sized **L**: target ~700 changed lines — the subcommand allowlist, per-subcommand
+pathspec scoping for all four, the `<rev>:<path>` parser and their tests against scripted
+`git init` fixtures. It has no natural split line: the `show` validation and the pathspec
+scoping are the same confinement decision expressed twice, and splitting them ships a
+tool whose history hole is open for one PR. If it passes ~1000, the tests are what move —
+into a second PR of fixtures, never the confinement.
