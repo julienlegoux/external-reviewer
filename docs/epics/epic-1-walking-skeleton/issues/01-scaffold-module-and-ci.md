@@ -3,12 +3,12 @@ type: Issue
 title: "Scaffold the Go module, the run() seam and CI"
 description: "Create the module, the thin main.go over an in-process Run() seam, and the CI workflow whose lint job forbids the write half of the filesystem API."
 tags: [epic-1]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-09T09:49:06Z
 epic: 1
 issue: 01
 slug: scaffold-module-and-ci
 size: S
-status: open
+status: in-progress
 gh_issue: 4
 resource: https://github.com/julienlegoux/external-reviewer/issues/4
 depends_on: []

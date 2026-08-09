@@ -2,6 +2,10 @@
 
 ## 2026-08-09
 
+* **Started**: [01 scaffold the Go module, the run() seam and
+  CI](/epic-1-walking-skeleton/issues/01-scaffold-module-and-ci.md) (#4) — branch
+  `issue-4-scaffold-module-and-ci`.
+
 * **Revision**: Applied [issue review report 1](../REPORT_1.md) to the twelve issues of
   Epics 1 and 2, and pushed the corrected bodies to #4–#15.
 
