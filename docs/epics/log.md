@@ -2,6 +2,10 @@
 
 ## 2026-08-09
 
+* **Started**: [02 parse the review invocation and exit 2 on usage
+  errors](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) (#5) —
+  branch `issue-5-review-invocation-parsing`.
+
 * **Merged**: [01 scaffold the Go module, the run() seam and
   CI](/epic-1-walking-skeleton/issues/01-scaffold-module-and-ci.md) (#4) —
   [PR #16](https://github.com/julienlegoux/external-reviewer/pull/16) merged into

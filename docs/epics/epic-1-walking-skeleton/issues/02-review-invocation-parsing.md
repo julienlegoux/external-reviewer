@@ -3,12 +3,12 @@ type: Issue
 title: "Parse the review invocation and exit 2 on usage errors"
 description: "Add the review/help subcommand grammar over stdlib flag, taking the repository path positionally and the task prompt from --prompt or stdin, with every usage error exiting 2 and leaving stdout empty."
 tags: [epic-1]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-09T10:20:00Z
 epic: 1
 issue: 02
 slug: review-invocation-parsing
 size: M
-status: open
+status: in-progress
 gh_issue: 5
 resource: https://github.com/julienlegoux/external-reviewer/issues/5
 depends_on: [1]
