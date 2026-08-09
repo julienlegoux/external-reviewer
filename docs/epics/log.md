@@ -3,6 +3,33 @@
 ## 2026-08-09
 
 * **Creation**: Cut
+  [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) into seven issues — six sized M and
+  one S — issues #9 through #15 on milestone 2, each linked as a native sub-issue of #2.
+
+  The order is boundary → loop → tools → measurement:
+  [01 the allow-list and the `os.Root` boundary](/epic-2-read-only-agentic-loop/issues/01-allow-list-and-root-confinement.md),
+  [02 enumeration and `list`](/epic-2-read-only-agentic-loop/issues/02-enumeration-and-list-tool.md),
+  [03 the multi-turn loop and dispatch](/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md),
+  [04 `read_file`](/epic-2-read-only-agentic-loop/issues/04-read-file-tool.md),
+  [05 `search`](/epic-2-read-only-agentic-loop/issues/05-search-tool.md),
+  [06 `git_read`](/epic-2-read-only-agentic-loop/issues/06-git-read-tool.md),
+  [07 the hand-run measurements](/epic-2-read-only-agentic-loop/issues/07-hand-run-measurements.md).
+
+  Three judgments worth recording. **The loop lands at 03 with only one tool wired**,
+  rather than after all four: every later tool PR is then small and assertable end-to-end
+  through a working loop, instead of three tools and a loop integrating in one review.
+  **Enumeration and `list` ship together** (02) because enumeration alone has no
+  observable behaviour, and because that PR carries the one `exec` helper the forbidigo
+  guard tolerates — which 06 then reuses rather than re-deriving. And **the measurement
+  is an issue, not a checklist item**: it is the epic's second deliverable and Epic 3's
+  loop caps have no input without it, so it gets a PR, a document in the bundle
+  (`MEASUREMENTS.md`) and an acceptance criterion that no `.go` file changes in it.
+
+  Still greenfield — Epic 1's PRs are unmerged — so every issue's "Relevant files /
+  areas" again states that its paths follow the layout SPECS fixes rather than a verified
+  tree.
+
+* **Creation**: Cut
   [Epic 1](/epic-1-walking-skeleton/EPIC_1.md) into five issues, all sized M, in a strict
   dependency chain — issues #4 through #8 on milestone 1, each linked as a native
   sub-issue of #1.
