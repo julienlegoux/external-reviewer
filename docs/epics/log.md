@@ -2,6 +2,11 @@
 
 ## 2026-08-09
 
+* **Merged**: [03 emit run diagnostics on stderr and classify exit
+  codes](/epic-1-walking-skeleton/issues/03-diagnostics-and-exit-codes.md) (#6) —
+  [PR #18](https://github.com/julienlegoux/external-reviewer/pull/18) merged into
+  `develop`.
+
 * **PR opened**: [03 emit run diagnostics on stderr and classify exit
   codes](/epic-1-walking-skeleton/issues/03-diagnostics-and-exit-codes.md)
   (#6) — [PR #18](https://github.com/julienlegoux/external-reviewer/pull/18)

@@ -3,12 +3,12 @@ type: Issue
 title: "Emit run diagnostics on stderr and classify exit codes"
 description: "Add the prefixed stderr diagnostics writer with a done line on every termination path, the typed-error exit-code classification at the Run boundary, and SIGINT cancellation."
 tags: [epic-1]
-timestamp: 2026-08-09T10:38:52Z
+timestamp: 2026-08-09T11:05:00Z
 epic: 1
 issue: 03
 slug: diagnostics-and-exit-codes
 size: M
-status: pr-open
+status: done
 gh_issue: 6
 gh_pr: 18
 resource: https://github.com/julienlegoux/external-reviewer/issues/6
