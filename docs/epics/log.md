@@ -2,6 +2,15 @@
 
 ## 2026-08-09
 
+* **PR opened**: [01 scaffold the Go module, the run() seam and
+  CI](/epic-1-walking-skeleton/issues/01-scaffold-module-and-ci.md) (#4) —
+  [PR #16](https://github.com/julienlegoux/external-reviewer/pull/16) against
+  `develop`. `go.mod`, `main.go`, `internal/cli.Run`, `.golangci.yml` (v2 schema,
+  `forbidigo` guard on the write half of the filesystem API and
+  `exec.Command`/`exec.CommandContext`), and `.github/workflows/ci.yml`
+  (`test` on ubuntu-latest/windows-latest, `lint` pinned to golangci-lint
+  `v2.12.2`). 184 changed lines against a ~150 target.
+
 * **Started**: [01 scaffold the Go module, the run() seam and
   CI](/epic-1-walking-skeleton/issues/01-scaffold-module-and-ci.md) (#4) — branch
   `issue-4-scaffold-module-and-ci`.
