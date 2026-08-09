@@ -2,6 +2,42 @@
 
 ## 2026-08-09
 
+* **Update**: ran `define-scope` and wrote [SCOPE](/SCOPE.md) from an 18-item
+  [decision ledger](/scope/index.md) — 16 decided, 2 marked N/A because
+  [CONCEPT](/CONCEPT.md) already settled them (the problem, and the CLI delivery form).
+  Premise confirmed before enumerating: a Go CLI on `kern-link`, author-first,
+  replacing the pipeline's `opencode` dependency.
+
+* **v1 runs unbounded, and measures instead of capping.** The recommendation was three
+  hard caps (turns, cost, wall clock) plus a coverage statement, on the argument that
+  the binary spends the user's own credit unsupervised. The user rejected it on the
+  ground that nobody knows yet how many turns or how long a review takes, so any cap
+  chosen now is a guess — and a guess set too low silently truncates legitimate
+  reviews. The counter-argument turned out not to apply yet: through Milestones 1–2 the
+  author launches by hand and can interrupt; the unsupervised case only arrives at
+  Milestone 3, by which point the numbers exist. So Milestone 2 ships instrumentation
+  (turns, cost, elapsed time on stderr) and Milestone 3 inherits caps sized from it.
+  Rippled into six decisions; the honest cost is recorded as two risks — context
+  overflow is now unmitigated in v1, and a runaway hand-run is accepted deliberately.
+
+* **The skills-side edit is inside v1.** Milestone 3 removes the `opencode` branch from
+  `_shared/review-interfaces.md` rather than adding a second delegation path beside it:
+  keeping both would maintain two contracts forever for compatibility with nobody, since
+  v1 has exactly one user and that user will have the new binary. The native fallback
+  stays unchanged. Consequence flagged for `split-epics`: Milestone 3's issues land in
+  the **lx skills repository**, not this one.
+
+* **Weight tiers, not roles.** The concept fixed the split (skills ship the vocabulary,
+  the machine holds the assignment) but not the vocabulary itself. Chose `light` /
+  `standard` / `heavy`, reusing the grading `implement-epic` already applies — a role
+  taxonomy like "security-reviewer" would push a vendor-shaped judgment back into the
+  shipped artifact, which is exactly what the concept moved onto the user's machine.
+
+* **The binary enforces the family exclusion, not the caller.** The concept settled the
+  principle; the open question was the mechanism. A claim that depends on every caller
+  remembering to check is not a claim, and enforcing centrally codes the
+  `amazon-bedrock` trap once, next to the catalogue where family metadata lives.
+
 * **Creation**: established this bundle and wrote [CONCEPT](/CONCEPT.md) from a
   working session that started out designing an LLM gateway and ended somewhere else.
 
