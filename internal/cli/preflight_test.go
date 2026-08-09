@@ -31,23 +31,49 @@ type authProvider struct {
 
 func (p authProvider) Auth() ai.ProviderAuth { return p.auth }
 
-// registry builds the offline registry a run resolves against: kern-link's
-// in-process faux provider under the hard-coded provider id, serving
-// modelIDs, with auth scripted. No network, no bill, no credential store on
-// disk.
-func registry(t *testing.T, auth ai.ProviderAuth, credentials ai.CredentialStore, modelIDs ...string) ai.Models {
+// registryWith builds the offline registry a run resolves against and
+// streams from: kern-link's in-process faux provider under the hard-coded
+// provider id, serving modelIDs, with auth scripted. No network, no bill, no
+// credential store on disk. The handle it returns is the scripting surface —
+// what the model answers, and how fast.
+//
+// The models carry a price sheet so ai.CalculateCost has something to
+// multiply: a run that reports $0.0000 for every turn cannot tell cost
+// accounting that works from cost accounting that was never wired.
+func registryWith(t *testing.T, auth ai.ProviderAuth, credentials ai.CredentialStore, tokensPerSecond float64, modelIDs ...string) (ai.Models, *faux.Handle) {
 	t.Helper()
 
 	definitions := make([]faux.ModelDefinition, 0, len(modelIDs))
 	for _, id := range modelIDs {
-		definitions = append(definitions, faux.ModelDefinition{ID: id})
+		definitions = append(definitions, faux.ModelDefinition{
+			ID:   id,
+			Cost: &ai.ModelCost{Input: 100, Output: 200},
+		})
 	}
-	handle := faux.New(&faux.Options{Provider: reviewer.DefaultProviderID, Models: definitions})
+	handle := faux.New(&faux.Options{
+		Provider:        reviewer.DefaultProviderID,
+		Models:          definitions,
+		TokensPerSecond: tokensPerSecond,
+	})
 
 	models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: credentials})
 	models.SetProvider(authProvider{Provider: handle.Provider, auth: auth})
+	return models, handle
+}
+
+// registry is registryWith for the tests that care about pre-flight rather
+// than about the round trip: one unremarkable answer is scripted, because
+// every path that gets past resolution now goes on to call the model.
+func registry(t *testing.T, auth ai.ProviderAuth, credentials ai.CredentialStore, modelIDs ...string) ai.Models {
+	t.Helper()
+	models, handle := registryWith(t, auth, credentials, 0, modelIDs...)
+	handle.SetResponses(faux.Step(faux.TextMessage(scriptedAnswer, nil)))
 	return models
 }
+
+// scriptedAnswer is what the default registry's reviewer replies. Tests that
+// assert on the report's exact bytes script their own.
+const scriptedAnswer = "no findings\n"
 
 // credentialedAuth resolves successfully, hiding preflightSecret in every
 // field an AuthResult can hide one in, behind a Source label that is safe to
@@ -129,16 +155,16 @@ func runReview(t *testing.T, models ai.Models) (int, string, string) {
 
 // TestRun_ResolvableCredentialedModel_ProceedsPastPreflight is the only
 // success path pre-flight has: the model is in the catalog and a credential
-// reaches it, so the run continues (to the round trip issue 05 adds) and
-// terminates normally.
+// reaches it, so the run continues into the round trip and terminates
+// normally with the reviewer's answer on stdout.
 func TestRun_ResolvableCredentialedModel_ProceedsPastPreflight(t *testing.T) {
 	code, stdout, stderr := runReview(t, registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 0 {
 		t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr)
 	}
-	if stdout != "" {
-		t.Errorf("stdout = %q, want empty until issue 05 wires the round trip", stdout)
+	if stdout != scriptedAnswer {
+		t.Errorf("stdout = %q, want the reviewer's answer %q", stdout, scriptedAnswer)
 	}
 	if fields := parseDoneLine(t, stderr); fields.stop != "ok" {
 		t.Errorf("done stop = %q, want ok", fields.stop)

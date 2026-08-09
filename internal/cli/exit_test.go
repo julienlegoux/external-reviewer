@@ -43,7 +43,7 @@ func parseDoneLine(t *testing.T, stderr string) doneFields {
 // decides it rather than error text.
 func TestRun_NoReviewerReached_ExitsOne(t *testing.T) {
 	wrapped := fmt.Errorf("resolving model: %w", fmt.Errorf("checking auth: %w", cli.ErrNoReviewer))
-	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer) error {
+	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer, io.Writer) error {
 		return wrapped
 	})
 	defer restore()
@@ -71,7 +71,7 @@ func TestRun_NoReviewerReached_ExitsOne(t *testing.T) {
 // turn — again through a stubbed reviewer, since issues 04/05 supply the
 // real failure modes.
 func TestRun_ReachedAndFailed_ExitsTwo(t *testing.T) {
-	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer) error {
+	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer, io.Writer) error {
 		return fmt.Errorf("turn failed: stop reason error")
 	})
 	defer restore()
@@ -92,8 +92,8 @@ func TestRun_ReachedAndFailed_ExitsTwo(t *testing.T) {
 }
 
 // TestRun_Success_ExitsZero exercises the exit-0 path end to end: real
-// pre-flight resolution against an offline registry, terminating normally
-// with nothing on stdout until issue 05 wires the round trip.
+// pre-flight resolution and a real streamed round trip against an offline
+// registry, terminating normally with the reviewer's answer on stdout.
 func TestRun_Success_ExitsZero(t *testing.T) {
 	defer cli.SetModelsForTest(registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))()
 
@@ -102,6 +102,9 @@ func TestRun_Success_ExitsZero(t *testing.T) {
 
 	if code != 0 {
 		t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
+	}
+	if stdout.String() != scriptedAnswer {
+		t.Errorf("stdout = %q, want the reviewer's answer %q", stdout.String(), scriptedAnswer)
 	}
 	fields := parseDoneLine(t, stderr.String())
 	if fields.stop != "ok" {
