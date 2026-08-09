@@ -17,8 +17,6 @@ import (
 // parsing run pre-flight for real, so the whole table resolves against an
 // offline registry.
 func TestRun_Review(t *testing.T) {
-	defer cli.SetModelsForTest(registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))()
-
 	tests := []struct {
 		name             string
 		argv             func(t *testing.T) []string
@@ -33,7 +31,7 @@ func TestRun_Review(t *testing.T) {
 				return []string{"review", "--prompt", "review this", t.TempDir()}
 			},
 			wantExit:        0,
-			wantStdoutEmpty: true,
+			wantStdoutEmpty: false,
 		},
 		{
 			name: "prompt from stdin parses identically",
@@ -42,7 +40,7 @@ func TestRun_Review(t *testing.T) {
 			},
 			stdin:           "review this",
 			wantExit:        0,
-			wantStdoutEmpty: true,
+			wantStdoutEmpty: false,
 		},
 		{
 			name: "missing repository path is a usage error",
@@ -141,6 +139,12 @@ func TestRun_Review(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			// A registry per row rather than one for the table: each row that
+			// gets past parsing consumes a scripted response, and a shared
+			// faux provider would leave the second one talking to an empty
+			// queue.
+			defer cli.SetModelsForTest(registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))()
+
 			argv := tc.argv(t)
 
 			var stdout, stderr bytes.Buffer

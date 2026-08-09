@@ -5,17 +5,23 @@ import (
 	"io"
 
 	"github.com/julienlegoux/kern-link/ai"
+
+	"github.com/julienlegoux/external-reviewer/internal/diag"
 )
 
 // SetReviewerForTest swaps the whole review execution seam — pre-flight
-// resolution and, from issue 05, the round trip — for the duration of a
+// resolution and the round trip that follows it — for the duration of a
 // test, returning a func that restores the previous seam. It lets a test
 // drive the no-reviewer and reached-and-failed terminations directly, so the
 // done-line and exit-code machinery can be exercised without a registry.
-func SetReviewerForTest(fn func(ctx context.Context, repoPath, task string, stderr io.Writer) error) func() {
+//
+// The run state stays out of the substituted signature deliberately: a stub
+// that could write turn counts and token totals would let a test assert on
+// numbers no model produced.
+func SetReviewerForTest(fn func(ctx context.Context, repoPath, task string, stdout, stderr io.Writer) error) func() {
 	prev := performReview
-	performReview = func(ctx context.Context, req reviewRequest, stderr io.Writer) error {
-		return fn(ctx, req.RepoPath, req.Task, stderr)
+	performReview = func(ctx context.Context, req reviewRequest, stdout, stderr io.Writer, _ *diag.State) error {
+		return fn(ctx, req.RepoPath, req.Task, stdout, stderr)
 	}
 	return func() { performReview = prev }
 }

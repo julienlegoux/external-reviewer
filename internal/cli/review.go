@@ -24,10 +24,10 @@ type reviewRequest struct {
 	Task     string
 }
 
-// performReview is everything a syntactically valid review does once
-// parsing is done: pre-flight resolution today, plus the round trip issue 05
-// adds. export_test.go exposes SetReviewerForTest so a test can replace the
-// whole of it and drive a termination path directly.
+// performReview is everything a syntactically valid review does once parsing
+// is done: pre-flight resolution and the round trip that follows it.
+// export_test.go exposes SetReviewerForTest so a test can replace the whole
+// of it and drive a termination path directly.
 var performReview = resolveAndReview
 
 // models is the provider registry resolution runs against. It stays nil in a
@@ -37,16 +37,16 @@ var performReview = resolveAndReview
 var models ai.Models
 
 // resolveAndReview runs the pre-flight that can end a run before a single
-// request is sent, and writes the resolved reviewer to stderr as one line
-// carrying the model and AuthResult.Source. Nothing else about the
-// credential exists at this layer: resolution returns a source label, never
-// an AuthResult, so there is no credential value here to leak.
+// request is sent, then takes the one turn Epic 1 ships and writes the
+// reviewer's own markdown to stdout. Nothing about the credential exists at
+// this layer: resolution returns a source label, never an AuthResult, so
+// there is no credential value here to leak.
 //
-// The round trip itself is issue 05; until then a resolved reviewer means
-// the run proceeds to a successful termination with nothing to print.
-// The request itself is unused until issue 05 turns it into a conversation;
-// it is on the signature because that is the seam issue 05 fills.
-func resolveAndReview(ctx context.Context, _ reviewRequest, stderr io.Writer) error {
+// stdout is written exactly once, at the very end, from the completed final
+// message — never from the text deltas as they arrive. That is what makes
+// "stdout is empty on every failure" true for the failures that stream a
+// paragraph of prose before falling over.
+func resolveAndReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
 	registry, err := reviewModels()
 	if err != nil {
 		return err
@@ -61,9 +61,62 @@ func resolveAndReview(ctx context.Context, _ reviewRequest, stderr io.Writer) er
 	if err != nil {
 		return err
 	}
-
 	diag.WriteModel(stderr, resolution.Model.Provider, resolution.Model.ID, resolution.AuthSource)
+
+	conversation := reviewer.NewConversation(registry, resolution.Model, req.Task)
+	turn, turnErr := conversation.Next(ctx)
+	recordTurn(stderr, state, turn)
+	if turnErr != nil {
+		return turnErr
+	}
+
+	report := reviewer.FinalText(turn.Message)
+	if report == "" {
+		return errors.New("the reviewer finished but its final message carried no text")
+	}
+	if _, err := io.WriteString(stdout, report); err != nil {
+		return fmt.Errorf("writing the report to stdout: %w", err)
+	}
 	return nil
+}
+
+// recordTurn folds a completed round trip into the run state the done line
+// renders from and writes the turn's own line, plus a warn line for every
+// non-fatal diagnostic kern-link attached to the message. It runs on the
+// failure paths too: a turn that stopped with an error still consumed tokens,
+// and its diagnostics are usually why it stopped.
+func recordTurn(stderr io.Writer, state *diag.State, turn reviewer.Turn) {
+	if turn.Message == nil {
+		return
+	}
+
+	state.Turns++
+	// Cached prompt tokens are prompt tokens: providers report them beside
+	// Input rather than inside it, so summing the three is what makes the in=
+	// figure comparable between a cold run and a warm one.
+	state.InputTokens += int64(turn.Usage.Input + turn.Usage.CacheRead + turn.Usage.CacheWrite)
+	state.OutputTokens += int64(turn.Usage.Output)
+	state.Cost += turn.Usage.Cost.Total
+
+	for _, diagnostic := range turn.Message.Diagnostics {
+		diag.WriteWarn(stderr, diagnosticMessage(diagnostic))
+	}
+	diag.WriteTurn(stderr, state.Turns, turn.Tools, state.InputTokens, state.OutputTokens, state.Cost, turn.Elapsed)
+}
+
+// diagnosticMessage renders one AssistantMessageDiagnostic as a warn line's
+// text. kern-link redacts these upstream, and nothing here re-formats or
+// re-derives anything from the underlying error, which is what keeps a
+// credential from being reintroduced by a diagnostic (SPECS § Security).
+func diagnosticMessage(diagnostic ai.AssistantMessageDiagnostic) string {
+	kind := diagnostic.Type
+	if kind == "" {
+		kind = "diagnostic"
+	}
+	if diagnostic.Error == nil || diagnostic.Error.Message == "" {
+		return kind
+	}
+	return kind + ": " + diagnostic.Error.Message
 }
 
 // reviewModels returns the injected registry when a test set one, and builds
@@ -152,20 +205,23 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return errors.New("empty task prompt")
 	}
 
-	return runReview(ctx, reviewRequest{RepoPath: repoPath, Task: task}, stderr, state)
+	return runReview(ctx, reviewRequest{RepoPath: repoPath, Task: task}, stdout, stderr, state)
 }
 
 // runReview calls the review seam and folds its outcome into state's stop
-// reason. stdout is untouched here — the model's report only reaches it
-// once issue 05 wires the round trip; pre-flight never has anything to
-// print.
-func runReview(ctx context.Context, req reviewRequest, stderr io.Writer, state *diag.State) error {
-	err := performReview(ctx, req, stderr)
+// reason. Cancellation is checked before the generic failure case: a run a
+// human interrupted is not a run that failed, and the transcript has to say
+// which of the two happened. Both are exit 2 all the same.
+func runReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
+	err := performReview(ctx, req, stdout, stderr, state)
 	switch {
 	case err == nil:
 		state.StopReason = "ok"
 	case errors.Is(err, ErrNoReviewer):
 		state.StopReason = "no_reviewer"
+	case errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded):
+		state.StopReason = "interrupted"
+		_, _ = fmt.Fprintln(stderr, "error: run interrupted")
 	default:
 		state.StopReason = "failed"
 		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)

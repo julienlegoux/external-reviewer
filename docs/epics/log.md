@@ -2,6 +2,30 @@
 
 ## 2026-08-09
 
+* **PR opened**: [05 call the model once and return its markdown on
+  stdout](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md) (#8) —
+  [PR #20](https://github.com/julienlegoux/external-reviewer/pull/20) against
+  `develop`. `internal/reviewer.Conversation` (the accumulating `[]ai.Message`
+  and one `StreamSimple` + `Result` round trip, with `ai.CalculateCost` per
+  turn), the reviewer's markdown written to stdout verbatim once at the end,
+  and every way one turn can end without a usable report classified as exit
+  `2`. The walking skeleton walks: a hand run against the real
+  `openai-codex/gpt-5.5` returned markdown on stdout and exited `0`, retiring
+  the first half of the project's largest risk. 784 changed lines against a
+  ~450 target — 220 of production code, 447 of tests for the six termination
+  paths and the untouched-tree assertion, and 117 of docs. Drift:
+  [the no-files guarantee excludes kern-link's credential
+  store](/epic-1-walking-skeleton/drift/05-credential-store-writes.md).
+
+* **Started**: [05 call the model once and return its markdown on
+  stdout](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md) (#8) —
+  branch `issue-8-single-turn-model-call`.
+
+* **Merged**: [04 resolve the hard-coded reviewer model and preflight
+  auth](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md) (#7) —
+  [PR #19](https://github.com/julienlegoux/external-reviewer/pull/19) merged into
+  `develop`.
+
 * **PR opened**: [04 resolve the hard-coded reviewer model and preflight
   auth](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md)
   (#7) — [PR #19](https://github.com/julienlegoux/external-reviewer/pull/19)
