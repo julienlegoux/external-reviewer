@@ -2,6 +2,10 @@
 
 ## 2026-08-09
 
+* **Started**: [04 resolve the hard-coded reviewer model and preflight
+  auth](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md)
+  (#7) — branch `issue-7-model-resolution-and-auth`.
+
 * **Merged**: [03 emit run diagnostics on stderr and classify exit
   codes](/epic-1-walking-skeleton/issues/03-diagnostics-and-exit-codes.md) (#6) —
   [PR #18](https://github.com/julienlegoux/external-reviewer/pull/18) merged into
