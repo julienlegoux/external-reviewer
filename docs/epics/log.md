@@ -2,6 +2,15 @@
 
 ## 2026-08-09
 
+* **Started**: [05 call the model once and return its markdown on
+  stdout](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md) (#8) —
+  branch `issue-8-single-turn-model-call`.
+
+* **Merged**: [04 resolve the hard-coded reviewer model and preflight
+  auth](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md) (#7) —
+  [PR #19](https://github.com/julienlegoux/external-reviewer/pull/19) merged into
+  `develop`.
+
 * **PR opened**: [04 resolve the hard-coded reviewer model and preflight
   auth](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md)
   (#7) — [PR #19](https://github.com/julienlegoux/external-reviewer/pull/19)
