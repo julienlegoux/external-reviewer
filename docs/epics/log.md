@@ -2,6 +2,19 @@
 
 ## 2026-08-09
 
+* **PR opened**: [04 resolve the hard-coded reviewer model and preflight
+  auth](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md)
+  (#7) — [PR #19](https://github.com/julienlegoux/external-reviewer/pull/19)
+  against `develop`. `internal/reviewer` (the `Resolver` running
+  `Refresh` → `GetModel` → `GetAuth`, the hard-coded `openai-codex/gpt-5.5`,
+  and `ErrNoReviewer` moved to where it is produced), the pre-flight wired
+  into the review seam, and a `model` diagnostics line carrying only
+  `AuthResult.Source`. 1144 changed lines against a ~300 target — 220 of
+  production code, the rest tests for the eight acceptance criteria,
+  generated `go.sum`, and the drift record. Drift:
+  [kern-link v0.2.0 does not exist](/epic-1-walking-skeleton/drift/04-kern-link-version-pin.md);
+  pinned at v0.1.1, with no API-name divergence.
+
 * **Started**: [04 resolve the hard-coded reviewer model and preflight
   auth](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md)
   (#7) — branch `issue-7-model-resolution-and-auth`.
