@@ -123,6 +123,18 @@ func TestWriteTool_RendersSummary(t *testing.T) {
 	}
 }
 
+func TestWriteModel_RendersResolvedModelAndAuthSource(t *testing.T) {
+	var buf bytes.Buffer
+
+	diag.WriteModel(&buf, "openai-codex", "gpt-5.5", "OAuth")
+
+	got := buf.String()
+	want := "model   openai-codex/gpt-5.5  auth=OAuth\n"
+	if got != want {
+		t.Errorf("WriteModel wrote %q, want %q", got, want)
+	}
+}
+
 func TestWriteWarn_RendersMessage(t *testing.T) {
 	var buf bytes.Buffer
 

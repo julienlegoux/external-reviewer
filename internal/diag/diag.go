@@ -42,6 +42,19 @@ func WriteTool(w io.Writer, summary string) {
 	_, _ = fmt.Fprintf(w, "tool    %s\n", summary)
 }
 
+// WriteModel writes the "model" line pre-flight emits once a reviewer has
+// been resolved:
+//
+//	model   openai-codex/gpt-5.5  auth=OAuth
+//
+// authSource is AuthResult.Source — a label like "OAuth" or
+// "ANTHROPIC_API_KEY". It is the only credential-adjacent value that ever
+// reaches stderr; this binary never sees a credential itself, and nothing
+// here formats one.
+func WriteModel(w io.Writer, provider, id, authSource string) {
+	_, _ = fmt.Fprintf(w, "model   %s/%s  auth=%s\n", provider, id, authSource)
+}
+
 // WriteWarn writes a "warn" line for a non-fatal diagnostic — a kern-link
 // AssistantMessageDiagnostic (already redacted) or an unrecognised
 // configuration key.

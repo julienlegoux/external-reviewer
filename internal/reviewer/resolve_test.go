@@ -18,6 +18,10 @@ import (
 // No assertion may ever find it outside kern-link: it stands in for the API
 // key or bearer token a real AuthResult carries, and the point of the
 // resolution seam is that only AuthResult.Source escapes it.
+// A planted fake credential is the point here — these tests exist to prove
+// this value never leaves kern-link.
+//
+//nolint:gosec // G101: deliberately credential-shaped test data.
 const secret = "sk-do-not-print-me-0123456789"
 
 // fauxRegistry builds an offline MutableModels holding one faux provider

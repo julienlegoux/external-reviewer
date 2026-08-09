@@ -8,12 +8,17 @@ import (
 	"testing"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // TestRun_Review drives the review/help subcommand grammar through Run,
 // table-driven over every usage case the invocation grammar has to reject
-// (or accept) before anything talks to a model.
+// (or accept) before anything talks to a model. The rows that get past
+// parsing run pre-flight for real, so the whole table resolves against an
+// offline registry.
 func TestRun_Review(t *testing.T) {
+	defer cli.SetModelsForTest(registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))()
+
 	tests := []struct {
 		name             string
 		argv             func(t *testing.T) []string
