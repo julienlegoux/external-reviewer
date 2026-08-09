@@ -45,6 +45,12 @@ v1 succeeded when all three hold ([decision](/scope/14-success-criteria.md)):
    leads, at least some of which survived verification against the files.
 3. A standard-tier review's measured cost and wall-clock time are recorded, and the
    author judges them low enough to reach for the tool again.
+   *(Amended during `define-specs`: the credentialed provider is a **subscription**
+   (`openai-codex` OAuth), so per-run dollar cost is flat and not the binding quantity.
+   What this criterion now turns on is **wall-clock time and quota/rate-limit headroom**.
+   Token and notional-cost figures are still recorded — they are the volume proxy, and
+   they become real money if a tier is ever assigned an API-key provider. See
+   [specs decision 09](/specs/09-read-only-tool-contract.md).)*
 
 Explicitly **not** a criterion: that the external reviewer finds things the native
 review missed. A second opinion that merely confirms is worth having, and making
@@ -88,9 +94,13 @@ Four bind, and `define-specs` must choose within them
   elsewhere.
 - **Runs on the user's own credentials, billed per call.** No service budget, no shared
   key. From Milestone 3 on, it also runs unsupervised inside a script.
-- **`kern-link`'s multi-turn support is unproven here.** Its documented example covers a
-  single round trip; the loop is this project's addition. Fixes land upstream in a repo
-  the author also owns.
+- **`kern-link`'s multi-turn support is unproven here.** The loop is this project's
+  addition. Fixes land upstream in a repo the author also owns.
+  *(Amended during `define-specs`: the claim that kern-link's documented example covers
+  only a single round trip was already stale — `docs/usage.md` § Tool calls documents the
+  full multi-turn loop. The constraint is weaker than written, not void: the loop is
+  still this project's code. See [specs decision 03](/specs/03-kern-link-dependency-policy.md)
+  and [07](/specs/07-agent-loop-mechanics.md).)*
 
 No deadline, and no compliance regime: the tool reads local repositories the user
 already has open.
@@ -199,17 +209,28 @@ Six risks, each tied to the milestone that retires it
 
 1. **`kern-link`'s multi-turn tool loop is unproven.** Retired by Milestones 1–2;
    mitigated by the author owning the upstream.
-2. **Foreign tool-calling fidelity varies by model.** Only Google is credentialed on this
-   machine today, so v1 is validated against one family. Retired by Milestone 2;
-   mitigated by the tier config making the model swappable without code changes.
+2. **Foreign tool-calling fidelity varies by model.** Only **OpenAI** is credentialed on
+   this machine (subscription OAuth, `openai-codex`), so v1 is validated against one
+   family. Retired by Milestone 2; mitigated by the tier config making the model
+   swappable without code changes.
+   *(Amended during `define-specs`: this said Google. The credentialed family is OpenAI,
+   which also changes the texture — the codex adapter speaks WebSocket + zstd rather than
+   SSE, and `openai-codex` has no API-key path.
+   See [specs decision 05](/specs/05-tier-assignment-schema.md).)*
 3. **Context overflow on large surfaces.** An epic's merged diff is the heaviest read in
    the pipeline and nobody has measured it. **Unmitigated in v1** — the coverage
    statement that would have made a truncated read visible was dropped along with the
    caps. Milestone 2's measurements make it observable; the mitigation is deferred.
 4. **Unsupervised spend.** Arrives at Milestone 3, when the pipeline invokes the binary
    with no human present — which is also when the numbers to size a cap exist.
+   *(Amended during `define-specs`: on a subscription this is not spend but **quota and
+   rate-limit exhaustion** — the failure is a review that starts failing, and possibly
+   other work on the same account failing with it, rather than a bill. Turns and wall
+   clock are the meaningful bounds; a cost cap is not.
+   See [specs decision 07](/specs/07-agent-loop-mechanics.md).)*
 5. **A runaway run during hand-run measurement.** The direct cost of running unbounded:
-   one bad Milestone-2 invocation can spend real money before it is noticed. Accepted
+   one bad Milestone-2 invocation can burn subscription quota — *not, on the current
+   credentials, real money* — before it is noticed. Accepted
    deliberately, since a cap guessed before any measurement would truncate legitimate
    reviews. Mitigated only by live stderr diagnostics and a human at the keyboard.
 6. **Assumed: leads-not-findings holds.** Everything downstream of a mediocre review is

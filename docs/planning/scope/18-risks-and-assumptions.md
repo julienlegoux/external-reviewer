@@ -62,9 +62,15 @@ to the milestone that retires it:
 
 1. **`kern-link`'s multi-turn tool loop is unproven.** Retired by Milestones 1–2.
    Mitigated by the author owning the upstream.
-2. **Foreign tool-calling fidelity varies by model.** Only Google is credentialed on
-   this machine today, so v1 is validated against one family. Retired by Milestone 2;
+2. **Foreign tool-calling fidelity varies by model.** Only one family is credentialed on
+   this machine, so v1 is validated against one family. Retired by Milestone 2;
    mitigated by the tier config making the model swappable without code changes.
+
+   *Corrected 2026-08-09 during `define-specs`: that family is **OpenAI**, over
+   subscription OAuth (`openai-codex`), not Google. The risk is unchanged in shape and
+   slightly different in texture — the codex adapter speaks WebSocket + zstd rather than
+   SSE, and `openai-codex` has no API-key path at all. See
+   [specs decision 05](/specs/05-tier-assignment-schema.md).*
 3. **Context overflow on large surfaces.** An epic's merged diff is the heaviest read in
    the pipeline and nobody has measured it. *Now unmitigated in v1* — the coverage
    statement that would have made a truncated read visible was dropped with the caps.

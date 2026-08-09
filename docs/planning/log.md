@@ -2,6 +2,77 @@
 
 ## 2026-08-09
 
+* **Update**: wrote [SPECS](/SPECS.md) from the completed ledger — 17 decided, 3 N/A. It
+  carries a **Departures from SCOPE** section listing every place the two now disagree and
+  why, because a developer who reads SCOPE and builds from it is the person that drift
+  actually costs.
+
+* **Access is an allow-list, and the boundary had a hole.** The recommendation was a root
+  plus a deny-list of sensitive filenames; the user rejected the shape — everything should
+  be forbidden except the directories explicitly granted, passed as parameters. `--allow`
+  is now required on every `review`. The objection that this pre-selects the reviewer's
+  evidence was raised and dismissed on the user's distinction: granting access to
+  directories is not handing over chosen files, and inside them the reviewer still chooses
+  everything. Designing that also surfaced a real defect in the previous design —
+  `git show HEAD:.env` read anything in repository history through the one tool that never
+  touches the confined root, making file-level confinement decorative. `git_read` is now
+  pathspec-scoped with `show`'s path validated.
+
+* **Ripgrep reconsidered, rejected on a better argument.** Not speed — a subprocess reading
+  the filesystem on its own authority sits outside `os.Root`, downgrading kernel-enforced
+  confinement to after-the-fact path validation. What `rg` would have brought for free, and
+  the first recommendation had quietly dropped, was gitignore awareness; `git ls-files`
+  supplies exactly that from the implementation that defines it, through a dependency
+  `git_read` already needs.
+
+* **A subscription changes what "measure" means.** The credentialed provider is
+  `openai-codex` over OAuth, so per-run cost is flat. Result caps survive but their
+  justification changes from spend to the context window; of the three quantities the
+  bounds seam watches, turns and wall clock are the meaningful ones. Rippled into SCOPE's
+  success criterion 3 and risks 4 and 5, and into three specs decisions.
+
+* **Update**: ran `define-specs` and enumerated a 20-item
+  [decision ledger](/specs/index.md) — 17 open, 3 N/A (auth, background work, data
+  migrations, none of which this program has). Two intake findings shaped it: `kern-link`
+  carries **no family field** on `ai.Model`, so the product's central safety property has
+  to be built here ([04](/specs/04-model-family-classification.md)); and its `docs/usage.md`
+  now documents the full multi-turn tool loop, so risk 1 is weaker than SCOPE states.
+
+* **Where SCOPE has been amended, and why.** Kept deliberately visible: SCOPE drifting
+  from SPECS costs a user nothing and costs a developer an afternoon of building the
+  wrong thing. Two inline amendments, both factual corrections rather than reversals —
+  the credentialed family is **OpenAI over subscription OAuth**, not Google
+  ([risk 2](/scope/18-risks-and-assumptions.md)), and the "kern-link's example covers a
+  single round trip" constraint was already stale when SCOPE was written. Each carries a
+  pointer to the specs decision that corrected it. A third divergence is recorded only in
+  the specs ledger and deliberately not in SCOPE: see the implementer note in
+  [08](/specs/08-system-prompt-and-task-assembly.md).
+
+* **The caller owns the system prompt.** The recommendation was a `const` prompt inside
+  the binary, on the argument that tool instructions belong beside the tools. Rejected:
+  an adjustment to how the reviewer is instructed must be a change to a *skill*, not a
+  new build of the binary. `--system-file` was then proposed and also rejected — a
+  prompt generated in the calling turn has no file, and a temp file per invocation is
+  machinery standing in for an argument. Settled on a JSON request object on stdin
+  (`system` + `task`, `DisallowUnknownFields`, no default prompt ever), with
+  `--system`/`--prompt` as by-hand shorthand. The binary keeps ownership of the tool
+  descriptions and schemas, which cannot drift from their implementations.
+
+* **Discovery is a query, not a document.** `kern-link` can be asked at runtime what
+  exists and what is reachable — `GetModels`, `Refresh` for dynamic providers, `GetAuth`
+  without sending a request — so a `models` subcommand lists catalog ∩ credentialed ∩
+  family-allowed with price and context window. This also forced a resolution rule:
+  dynamic providers (`openrouter`, `vercel-ai-gateway`, `nvidia`, `github-copilot`) hold
+  no models until `Refresh` runs, so refreshing precedes resolution — otherwise a
+  correctly configured tier resolves to "model not found" and falls back silently.
+
+* **Generic mechanism, one validated provider.** The binary names no provider anywhere
+  except the family classifier's data table, so all ~35 remain reachable; but v1 is
+  *validated* against `openai-codex` alone, stated as an honest boundary rather than an
+  implied promise. A rescue-only `family` override in the config was proposed for unusual
+  providers and dropped — it was the one mechanism able to weaken the fail-closed family
+  rule, and it lived on a user's disk where being wrong is silent.
+
 * **Update**: ran `define-scope` and wrote [SCOPE](/SCOPE.md) from an 18-item
   [decision ledger](/scope/index.md) — 16 decided, 2 marked N/A because
   [CONCEPT](/CONCEPT.md) already settled them (the problem, and the CLI delivery form).
