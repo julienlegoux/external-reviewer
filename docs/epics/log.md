@@ -2,6 +2,11 @@
 
 ## 2026-08-09
 
+* **Merged**: [05 call the model once and return its markdown on
+  stdout](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md) (#8) —
+  [PR #20](https://github.com/julienlegoux/external-reviewer/pull/20) merged into
+  `develop`.
+
 * **PR opened**: [05 call the model once and return its markdown on
   stdout](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md) (#8) —
   [PR #20](https://github.com/julienlegoux/external-reviewer/pull/20) against
