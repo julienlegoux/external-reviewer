@@ -3,13 +3,14 @@ type: Issue
 title: "Resolve the hard-coded reviewer model and preflight auth"
 description: "Add the kern-link dependency and the pre-loop resolution step that turns a hard-coded provider/model into a reachable, credentialed model — or ends the run at exit 1 or 2 before any request is sent."
 tags: [epic-1]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-09T11:55:00Z
 epic: 1
 issue: 04
 slug: model-resolution-and-auth
 size: M
-status: open
+status: pr-open
 gh_issue: 7
+gh_pr: 19
 resource: https://github.com/julienlegoux/external-reviewer/issues/7
 depends_on: [3]
 ---

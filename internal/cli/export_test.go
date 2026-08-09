@@ -3,18 +3,32 @@ package cli
 import (
 	"context"
 	"io"
+
+	"github.com/julienlegoux/kern-link/ai"
 )
 
-// SetReviewerForTest swaps the review execution seam — the one issues 04
-// and 05 replace with real model resolution and the round trip — for the
-// duration of a test, returning a func that restores the previous seam. It
-// lets this issue's black-box tests drive the no-reviewer and
-// reached-and-failed terminations that prove the done-line and exit-code
-// machinery handles them, without waiting on that later work.
-func SetReviewerForTest(fn func(ctx context.Context, repoPath, task string) error) func() {
-	prev := reviewer
-	reviewer = fn
-	return func() { reviewer = prev }
+// SetReviewerForTest swaps the whole review execution seam — pre-flight
+// resolution and, from issue 05, the round trip — for the duration of a
+// test, returning a func that restores the previous seam. It lets a test
+// drive the no-reviewer and reached-and-failed terminations directly, so the
+// done-line and exit-code machinery can be exercised without a registry.
+func SetReviewerForTest(fn func(ctx context.Context, repoPath, task string, stderr io.Writer) error) func() {
+	prev := performReview
+	performReview = func(ctx context.Context, req reviewRequest, stderr io.Writer) error {
+		return fn(ctx, req.RepoPath, req.Task, stderr)
+	}
+	return func() { performReview = prev }
+}
+
+// SetModelsForTest points model resolution at an offline registry for the
+// duration of a test, returning a func that restores the previous one.
+// Without it a test would resolve against every provider kern-link ships,
+// over the machine's real credential store — the network and the bill this
+// project's tests never touch.
+func SetModelsForTest(registry ai.Models) func() {
+	prev := models
+	models = registry
+	return func() { models = prev }
 }
 
 // RunContextForTest calls Run's inner seam directly with ctx, bypassing

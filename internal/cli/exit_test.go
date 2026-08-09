@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // doneLineRE parses the "done" line's key=value fields out of a run's stderr
@@ -41,7 +43,7 @@ func parseDoneLine(t *testing.T, stderr string) doneFields {
 // decides it rather than error text.
 func TestRun_NoReviewerReached_ExitsOne(t *testing.T) {
 	wrapped := fmt.Errorf("resolving model: %w", fmt.Errorf("checking auth: %w", cli.ErrNoReviewer))
-	restore := cli.SetReviewerForTest(func(context.Context, string, string) error {
+	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer) error {
 		return wrapped
 	})
 	defer restore()
@@ -69,7 +71,7 @@ func TestRun_NoReviewerReached_ExitsOne(t *testing.T) {
 // turn — again through a stubbed reviewer, since issues 04/05 supply the
 // real failure modes.
 func TestRun_ReachedAndFailed_ExitsTwo(t *testing.T) {
-	restore := cli.SetReviewerForTest(func(context.Context, string, string) error {
+	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer) error {
 		return fmt.Errorf("turn failed: stop reason error")
 	})
 	defer restore()
@@ -89,10 +91,12 @@ func TestRun_ReachedAndFailed_ExitsTwo(t *testing.T) {
 	}
 }
 
-// TestRun_Success_ExitsZero exercises the exit-0 path with the default
-// (stub) reviewer, which every syntactically valid review reaches until
-// issues 04/05 replace it.
+// TestRun_Success_ExitsZero exercises the exit-0 path end to end: real
+// pre-flight resolution against an offline registry, terminating normally
+// with nothing on stdout until issue 05 wires the round trip.
 func TestRun_Success_ExitsZero(t *testing.T) {
+	defer cli.SetModelsForTest(registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))()
+
 	var stdout, stderr bytes.Buffer
 	code := cli.Run([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
 
