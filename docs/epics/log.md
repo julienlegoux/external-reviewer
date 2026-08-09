@@ -2,6 +2,29 @@
 
 ## 2026-08-09
 
+* **Creation**: Cut
+  [Epic 1](/epic-1-walking-skeleton/EPIC_1.md) into five issues, all sized M, in a strict
+  dependency chain — issues #4 through #8 on milestone 1, each linked as a native
+  sub-issue of #1.
+
+  The split is by layer rather than by feature, so each PR closes one seam:
+  [01 scaffolding and CI](/epic-1-walking-skeleton/issues/01-scaffold-module-and-ci.md),
+  [02 the invocation grammar](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md),
+  [03 diagnostics and exit codes](/epic-1-walking-skeleton/issues/03-diagnostics-and-exit-codes.md),
+  [04 model resolution and auth pre-flight](/epic-1-walking-skeleton/issues/04-model-resolution-and-auth.md),
+  [05 the single round trip](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md).
+
+  Two judgments worth recording. **The output contract is built before there is anything
+  to output** (03 precedes 04 and 05): the `done`-on-every-path guarantee and the
+  `1`-versus-`2` classification are what every later epic depends on, and retrofitting
+  them around a working call is how a termination path gets missed. And **`kern-link`
+  enters the module at 04, not at 01**, because a require line with no import is removed
+  again by `go mod tidy` — 01's `go.mod` names the module and Go 1.26 only.
+
+  The repository is greenfield (only `docs/` and `.git`), so every issue's "Relevant
+  files / areas" states that its paths follow the layout SPECS fixes rather than a
+  verified tree.
+
 * **Creation**: Established [Epic 1: Walking skeleton](/epic-1-walking-skeleton/EPIC_1.md)
   — milestone 1, issue #1.
 
