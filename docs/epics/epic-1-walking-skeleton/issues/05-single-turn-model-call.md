@@ -3,13 +3,14 @@ type: Issue
 title: "Call the model once and return its markdown on stdout"
 description: "Drive one streamed round trip through kern-link and write the final assistant text verbatim to stdout, closing the walking skeleton and retiring the first half of the project's largest risk."
 tags: [epic-1]
-timestamp: 2026-08-09T12:35:00Z
+timestamp: 2026-08-09T13:20:00Z
 epic: 1
 issue: 05
 slug: single-turn-model-call
 size: M
-status: in-progress
+status: pr-open
 gh_issue: 8
+gh_pr: 20
 resource: https://github.com/julienlegoux/external-reviewer/issues/8
 depends_on: [4]
 ---
