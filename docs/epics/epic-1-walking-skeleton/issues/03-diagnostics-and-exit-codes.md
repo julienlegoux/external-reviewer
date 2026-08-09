@@ -8,8 +8,9 @@ epic: 1
 issue: 03
 slug: diagnostics-and-exit-codes
 size: M
-status: in-progress
+status: pr-open
 gh_issue: 6
+gh_pr: 18
 resource: https://github.com/julienlegoux/external-reviewer/issues/6
 depends_on: [2]
 ---
