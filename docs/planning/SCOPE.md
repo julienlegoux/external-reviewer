@@ -141,7 +141,9 @@ the project — that `kern-link` carries this workload at all.
   credential resolution (env keys and OAuth) — no credential handling of its own.
 - The output contract in full ([decision](/scope/09-report-output-contract.md)): the
   report as markdown on **stdout**; run diagnostics on **stderr**; exit codes `0` usable,
-  `1` no reviewer available, `2` ran but unusable. The binary writes no files.
+  `1` no reviewer available, `2` ran but unusable. The binary writes nothing inside the
+  repository under review and produces no output file — credential storage belongs to
+  `kern-link`, in `~/.pi/agent/` ([drift](/DRIFT.md)).
 - The distinction between exit `1` and exit `2` is load-bearing: the first is a normal
   silent fallback for the caller, the second is worth a line in the report.
 

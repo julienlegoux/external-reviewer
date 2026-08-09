@@ -3,11 +3,11 @@ type: Epic
 title: "Walking skeleton"
 description: "A binary that takes a repository path and a prompt, calls one hard-coded foreign model through kern-link, and returns markdown — retiring the riskiest assumption in the project."
 tags: [epic]
-timestamp: 2026-08-09T04:34:00Z
+timestamp: 2026-08-09T14:30:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/1
 epic: 1
 slug: walking-skeleton
-status: open
+status: done
 gh_issue: 1
 milestone: 1
 source: docs/planning/SCOPE.md#milestone-1-walking-skeleton

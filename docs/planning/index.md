@@ -15,4 +15,5 @@ that called it.
 * [Specs decisions](/specs/index.md) - The decision ledger behind SPECS.md.
 * [Conventions](/CONVENTIONS.md) - How code here is written, named, tested and committed: the personal baseline filtered to Go, with this project's deviations merged in.
 * [Conventions decisions](/conventions/index.md) - The deviations ledger behind CONVENTIONS.md.
+* [Drift](/DRIFT.md) - Standards above that the implementation could not follow, with the verified reason and the disposition. Read it alongside SPECS and CONVENTIONS.
 * [Log](/log.md) - History of this bundle.

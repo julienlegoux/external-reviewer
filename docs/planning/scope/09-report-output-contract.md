@@ -8,7 +8,7 @@ phase: scope
 decision: 09
 slug: report-output-contract
 status: decided
-verdict: "Markdown on stdout, diagnostics on stderr, distinct exit codes; writes no files"
+verdict: "Markdown on stdout, diagnostics on stderr, distinct exit codes; writes no file of its own"
 decided_via: triage
 depends_on: [loop-bounds-and-termination, reviewer-selection-vocabulary]
 ---
@@ -68,3 +68,13 @@ measurements out of the prose a skill quotes as leads.
 
 Also dropped from this contract by the same verdict: the appended coverage line. There
 is no bound-driven truncation left for the binary to report.
+
+**Narrowed at the close of [Epic 1](../../epics/epic-1-walking-skeleton/EPIC_1.md).** The
+"writes no files" clause above was unqualified, and Epic 1's hand run showed it cannot be:
+authenticating through `kern-link` lets the dependency rewrite `~/.pi/agent/auth.json`
+when a stored OAuth credential is expired, and create an `auth.json.lock` sidecar when it
+reads an existing store. What this contract actually guarantees — and what the code
+enforces — is that **the binary writes nothing inside the repository under review and
+produces no output file**; credential storage belongs to `kern-link`. The alternative,
+this binary reading credentials itself, was rejected as strictly worse for security
+([drift](/DRIFT.md)).

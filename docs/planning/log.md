@@ -2,6 +2,26 @@
 
 ## 2026-08-09
 
+* **Established**: [DRIFT](/DRIFT.md), promoted at the close of Epic 1 from the two drift
+  records its implementers wrote. Both entries were triaged `accepted`, which is the
+  disposition that obliges the standards to move, so they did:
+
+  * **The `kern-link` pin was ahead of its own repository.** [SPECS](/SPECS.md) named
+    v0.2.0, a tag that has never been cut — `go get` fails outright and the proxy knows
+    only v0.1.0 and v0.1.1. The table now says **v0.1.1**, the version the code actually
+    builds against and which carries every symbol SPECS names. A pin nobody can install
+    is not a standard, and bumping it once v0.2.0 exists is an ordinary version-bump PR.
+
+  * **"The binary writes no files" was true of the binary and false of the run.** Epic 1's
+    hand run showed `kern-link` rewriting `~/.pi/agent/auth.json` on OAuth rotation, and
+    creating an `auth.json.lock` sidecar whenever it reads an existing store — on the
+    binary's behalf, outside the repository. The only way to keep the literal wording
+    would be to read credentials here instead, which contradicts this document and is
+    worse for security. [SCOPE](/SCOPE.md),
+    [scope/09](/scope/09-report-output-contract.md) and SPECS now state the guarantee
+    that is real and enforced: **nothing written inside the repository under review, and
+    no output file** — credential storage belongs to `kern-link`.
+
 * **Update**: amended [SPECS](/SPECS.md) § Interfaces — the `done` line now carries the
   accumulated `in=`/`out=` token counts. The document already called tokens one of the
   line's load-bearing fields while its example omitted them, which left Epic 1's

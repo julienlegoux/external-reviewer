@@ -35,12 +35,17 @@ Two non-stdlib dependencies, and no others:
 
 | Dependency | Version | Why |
 |---|---|---|
-| `github.com/julienlegoux/kern-link` | v0.2.0 | Provider coverage, credential resolution, streaming, the tool-call protocol as typed values, cost accounting ([decision](/specs/03-kern-link-dependency-policy.md)) |
+| `github.com/julienlegoux/kern-link` | v0.1.1 | Provider coverage, credential resolution, streaming, the tool-call protocol as typed values, cost accounting ([decision](/specs/03-kern-link-dependency-policy.md)) |
 | `github.com/BurntSushi/toml` | v1.6.0 | Decoding the tier assignment file; chosen for `MetaData.Undecoded()` ([decision](/specs/05-tier-assignment-schema.md)) |
 
 No CLI framework — the command line is stdlib `flag` with one `FlagSet` per subcommand
 ([decision](/specs/02-cli-surface-and-argv.md)). No test framework, no logging library, no
 config library. `git` is an external runtime dependency (below).
+
+This table names the version that is actually installable: v0.2.0 was specified before it
+was tagged, and the newest `kern-link` tag remains v0.1.1, which carries every symbol the
+model-resolution sequence needs under the exact names used below
+([drift](/DRIFT.md)). Bumping the pin once v0.2.0 is cut is an ordinary version-bump PR.
 
 `go.mod` names a tagged `kern-link`; a `replace` directive is never committed, because a
 committed `replace` breaks `go install` for anyone whose disk does not match the author's.
@@ -198,7 +203,10 @@ reviewer it may pass an argument that does not exist.
 **Output** ([decision](/specs/12-output-and-diagnostics-format.md)): stdout is the model's
 final assistant text, **verbatim, with no envelope**, and is empty on any failure — the
 calling skill keeps sole ownership of the report file, so the binary is not in the business
-of formatting someone else's document. stderr carries prefixed human-readable lines:
+of formatting someone else's document. The binary **writes nothing inside the repository
+under review and produces no output file**; the one thing written anywhere on its behalf
+is `kern-link`'s credential store under `~/.pi/agent/`, which the dependency owns
+([drift](/DRIFT.md)). stderr carries prefixed human-readable lines:
 
 ```
 turn 3  tools=2  in=48210 out=1104  $0.0231  42.8s
@@ -274,8 +282,9 @@ recommended models would start rotting the day it was written.
 
 **No background work and no migrations** ([decisions](/specs/19-background-work.md),
 [20](/specs/20-data-migrations.md)). One synchronous run, nothing scheduled, nothing
-deferred, nothing outliving the process. A program that never writes a file has no file to
-migrate; a renamed config key surfaces through the unrecognised-key warning.
+deferred, nothing outliving the process. A program that writes no file of its own has no
+file to migrate; a renamed config key surfaces through the unrecognised-key warning, and
+`kern-link`'s credential store migrates with `kern-link`, not with this binary.
 
 ## Testing
 

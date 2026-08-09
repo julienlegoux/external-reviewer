@@ -2,6 +2,16 @@
 
 ## 2026-08-09
 
+* **Epic closed**: [Epic 1: Walking
+  skeleton](/epic-1-walking-skeleton/EPIC_1.md) (#1) — all five issues `done` and
+  merged into `develop` (PRs #16–#20, plus reconcile #21), tracking issue closed,
+  milestone 1 closed. Both drift records promoted into
+  [DRIFT](../planning/DRIFT.md) and triaged `accepted`, with SCOPE, `scope/09` and
+  SPECS amended so the standards stop contradicting the code: the `kern-link` pin is
+  now v0.1.1, and the no-files guarantee now says what it actually covers. Six agent
+  worktrees removed and every merged branch deleted local and remote. Epic 2 is
+  unblocked.
+
 * **Merged**: [05 call the model once and return its markdown on
   stdout](/epic-1-walking-skeleton/issues/05-single-turn-model-call.md) (#8) —
   [PR #20](https://github.com/julienlegoux/external-reviewer/pull/20) merged into
