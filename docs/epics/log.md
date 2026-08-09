@@ -2,6 +2,11 @@
 
 ## 2026-08-09
 
+* **Merged**: [02 parse the review invocation and exit 2 on usage
+  errors](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) (#5) —
+  [PR #17](https://github.com/julienlegoux/external-reviewer/pull/17) merged into
+  `develop`.
+
 * **PR opened**: [02 parse the review invocation and exit 2 on usage
   errors](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) (#5) —
   [PR #17](https://github.com/julienlegoux/external-reviewer/pull/17) against
