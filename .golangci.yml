@@ -1,0 +1,71 @@
+version: "2"
+
+# errcheck and govet are golangci-lint v2's default-enabled linters; gosec and
+# forbidigo are added on top for this project's safety properties: path
+# handling and process execution (SPECS Distribution & operations).
+linters:
+  enable:
+    - gosec
+    - forbidigo
+  settings:
+    # The write half of the filesystem API, and process execution, are
+    # forbidden outside _test.go files (see the exclusion rule below) — this
+    # is the structural enforcement of "the binary writes no files"
+    # (CONVENTIONS § Code style & formatting, the write-API guard).
+    forbidigo:
+      analyze-types: true
+      forbid:
+        - pattern: ^os\.Create$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.OpenFile$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.WriteFile$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Remove$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.RemoveAll$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Mkdir$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.MkdirAll$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Rename$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Symlink$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.Create$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.OpenFile$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.WriteFile$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.Remove$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.RemoveAll$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.Mkdir$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.MkdirAll$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.Rename$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.Symlink$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.Link$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^exec\.Command$
+          msg: "exec.Command is forbidden outside the git_read implementation — a subprocess reads on its own authority, outside the os.Root handle"
+        - pattern: ^exec\.CommandContext$
+          msg: "exec.CommandContext is forbidden outside the git_read implementation — a subprocess reads on its own authority, outside the os.Root handle"
+  exclusions:
+    rules:
+      # Test fixtures are built with t.TempDir() and git init, which legitimately
+      # use the write API — _test.go files are exempt from the forbidigo guard.
+      - path: _test\.go
+        linters:
+          - forbidigo
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: false
