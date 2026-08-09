@@ -2,6 +2,47 @@
 
 ## 2026-08-09
 
+* **Update**: wrote [CONVENTIONS](/CONVENTIONS.md) — the personal baseline filtered to Go,
+  with an 8-item [deviations ledger](/conventions/index.md), all accepted at triage.
+  Planning is now complete: `split-epics` can cut SCOPE.
+
+* **The read-only guarantee is now something CI fails on.** SPECS states the product's
+  central property as a fact about the source — the write half of the filesystem API is
+  not in the codebase — which is a claim about every future commit, made in a repo whose
+  commits will largely be written by agents that never read SPECS. A `forbidigo` block in
+  the already-pinned linter turns it into a check, with `exec.Command` on the list for the
+  same reason ripgrep was rejected: a subprocess reads on its own authority, outside the
+  root handle ([01](/conventions/01-write-api-guard.md)).
+
+* **Two path vocabularies, because the dev machine and CI disagree.** SCOPE's "nothing may
+  assume POSIX" constraint had no day-to-day form. It now does: *OS paths* use `filepath`
+  and never cross the model boundary; *wire paths* are `/`-separated and repo-relative
+  everywhere. Naming them is the point — a reviewer can see the bug in a diff instead of
+  waiting for a Linux runner ([02](/conventions/02-cross-platform-path-rules.md)).
+
+* **`main`/`develop` earns itself here.** Usually a matter of taste; on this project
+  distribution is `go install …@latest` on an untagged module, which resolves to the
+  **default branch's** newest commit — so `main` is literally what gets installed, and an
+  epic mid-flight on it is a broken install
+  ([03](/conventions/03-branch-model.md)).
+
+* **Three baseline rules were too weak for what SPECS decided.** The baseline treats a new
+  dependency as a one-line PR note, but SPECS said "two, and no others" — so a third module
+  reopens a specs decision instead ([07](/conventions/07-dependency-freeze.md)). Go's
+  document-every-export convention was dropped inside `internal/`, where there is no godoc
+  reader and the rule mostly produces restated names
+  ([08](/conventions/08-doc-comment-policy.md)). And "never swallow an error" was given its
+  one inversion: a failing *tool* is a value returned into the loop, not an error
+  propagated up the stack — following the baseline literally would end reviews that should
+  have continued ([06](/conventions/06-go-error-idiom.md)).
+
+* **Kept out of the ledger deliberately**: PR and issue sizing (owned by `create-issues`
+  and `split-epics` — a second statement of it here would drift from the skills that
+  enforce it), and anything SPECS already decided. Four verdicts were flagged as
+  **promotion candidates** for the baseline itself, their rationale being personal rather
+  than project-specific: cross-platform path rules, the `main`/`develop` split, black-box
+  Go test packages, and the generic half of the Go error idiom.
+
 * **Update**: wrote [SPECS](/SPECS.md) from the completed ledger — 17 decided, 3 N/A. It
   carries a **Departures from SCOPE** section listing every place the two now disagree and
   why, because a developer who reads SCOPE and builds from it is the person that drift

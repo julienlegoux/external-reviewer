@@ -13,4 +13,6 @@ that called it.
 * [Scope decisions](/scope/index.md) - The decision ledger behind SCOPE.md.
 * [Specs](/SPECS.md) - The one-way technical doors: stack, the agent loop, confinement and the tools, interfaces, testing, distribution.
 * [Specs decisions](/specs/index.md) - The decision ledger behind SPECS.md.
+* [Conventions](/CONVENTIONS.md) - How code here is written, named, tested and committed: the personal baseline filtered to Go, with this project's deviations merged in.
+* [Conventions decisions](/conventions/index.md) - The deviations ledger behind CONVENTIONS.md.
 * [Log](/log.md) - History of this bundle.
