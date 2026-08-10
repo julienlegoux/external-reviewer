@@ -3,12 +3,13 @@ type: Epic
 title: "Skeleton hardening"
 description: "Close the holes Epic 1's implementation review found — four surviving criterion-bearing mutants, two terminations that escape the done-line seam, and three contracts Epic 2 must extend but that are written nowhere."
 tags: [epic, remediation]
-timestamp: 2026-08-10T14:05:13Z
+timestamp: 2026-08-10T14:22:00Z
+resource: https://github.com/julienlegoux/external-reviewer/issues/22
 epic: 0
 slug: skeleton-hardening
-status: draft
-gh_issue: null
-milestone: null
+status: open
+gh_issue: 22
+milestone: 4
 source: docs/REPORT_2.md
 ---
 

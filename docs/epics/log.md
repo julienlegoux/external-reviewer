@@ -4,9 +4,10 @@
 
 * **Creation**: Established
   [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) by converting
-  [implementation review report 2](../REPORT_2.md) — the remediation lane, which runs
-  before [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) resumes and is retired once
-  every issue is `done` and its milestone closed.
+  [implementation review report 2](../REPORT_2.md) — milestone 4, issue
+  [#22](https://github.com/julienlegoux/external-reviewer/issues/22). The remediation
+  lane, which runs before [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) resumes and
+  is retired once every issue is `done` and its milestone closed.
 
   **36 findings extracted, 0 dropped as stale.** No non-docs commit exists between the
   reviewed range (`9bb1745^1..84f3d21`) and this conversion, and every cited `file:line`
