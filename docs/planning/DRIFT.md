@@ -3,7 +3,7 @@ type: Drift
 title: "External Reviewer — Drift"
 description: "Standards this codebase has drifted from, and why"
 tags: [planning, drift]
-timestamp: 2026-08-09T14:30:00Z
+timestamp: 2026-08-10T14:05:13Z
 ---
 
 # Drift
@@ -76,4 +76,29 @@ Append-only, newest epic first. An entry that stops being true becomes
   be re-checked against what the code enforces.
 - **Evidence**:
   [drift record 05](../epics/epic-1-walking-skeleton/drift/05-credential-store-writes.md),
+  PR #20.
+
+### 05 — the no-files check compares file mtimes, not directory mtimes
+
+- **Decided**: issue 05's criterion
+  [*"the tree's file set **and modification times** are unchanged"*](../epics/epic-1-walking-skeleton/issues/05-single-turn-model-call.md),
+  the assertable half of [SCOPE](/SCOPE.md)'s and [SPECS § Interfaces](/SPECS.md)'s
+  guarantee that the binary writes nothing inside the repository under review.
+- **Actual**: `TestRun_SuccessfulReview_TouchesNoFile`
+  (`internal/cli/roundtrip_test.go:276-299`) walks the tree twice and compares the file
+  set and every **file** mtime. Directory mtimes are collected and deliberately not
+  compared, which the test documents in place.
+- **Because**: on Windows two consecutive walks of an untouched tree already report moved
+  directory mtimes, so asserting on them makes the test flaky against the platform rather
+  than against the binary — re-verified during PR #20. The narrowing costs nothing the
+  criterion was protecting: a file created, modified or deleted inside the repository
+  changes the file set or a file mtime, and a directory whose only change is its own mtime
+  contains no such file.
+- **Disposition**: accepted — issue 05's criterion amended on 2026-08-10 to state what is
+  actually asserted, so the narrowing stops reading as an unmet criterion.
+- **Revisit when**: Epic 2's `os.Root` confinement lands. It makes the in-repository
+  guarantee structural for reads as well as writes, at which point what this test still
+  needs to cover should be re-derived rather than inherited.
+- **Evidence**: [implementation review report 2](../REPORT_2.md) § P3, which is where the
+  narrowing was first noticed as undocumented; `internal/cli/roundtrip_test.go:276-299`;
   PR #20.

@@ -1,5 +1,45 @@
 # Log
 
+## 2026-08-10
+
+* **Creation**: Established
+  [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) by converting
+  [implementation review report 2](../REPORT_2.md) — the remediation lane, which runs
+  before [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) resumes and is retired once
+  every issue is `done` and its milestone closed.
+
+  **36 findings extracted, 0 dropped as stale.** No non-docs commit exists between the
+  reviewed range (`9bb1745^1..84f3d21`) and this conversion, and every cited `file:line`
+  was re-verified against the working tree; no GitHub issue covered any finding, and
+  DRIFT's two entries were the ones the report had already excluded. Report 2 marked most
+  findings `fix-now` but filed no issues for them at the user's direction, so they came
+  back into the triage as the report intended. **34 were grouped into 15 repairs**, one
+  became drift, and **2 were recorded `won't-fix`**: the invisible red phase across Epic
+  1's five PRs (unverifiable retroactively, no code change discharges it — real feedback
+  for `implement-issue` instead), and `diag.WriteTool`/`reviewRequest.RepoPath` (dead by
+  design, callers due in Epic 2).
+
+  Grouping is by the repair, not the finding, which is where the compression came from:
+  the four surviving criterion-bearing mutants are one `run_test.go`; the two P0s are
+  among them; the four shapes of the `error:` line, the silent empty-argv path, the three
+  independent "was this interrupted?" checks and `review --help` exiting `2` are one
+  consolidation through `diag`.
+
+  **Three questions were decided rather than deferred.** The `done` line's `stop=` field
+  carries **both** vocabularies — the model's own reason on the success path, the CLI word
+  on every termination the model never reaches — because they answer different questions
+  and a usage error can never be `end_turn`; that makes SPECS' worked example literally
+  true and Epic 2's first acceptance criterion satisfiable without amending either.
+  SPECS will document the closed set, since it is a union that grows per epic and a
+  calling skill cannot parse what is written nowhere. And CONVENTIONS is the source of
+  truth for the forbidden write-API list with `.golangci.yml` mirroring it, which turns
+  an aspiration into a checkable criterion — the current list lets eight write operations
+  through, including `(*os.File).Write`, and Epic 2 is the epic that starts opening file
+  handles.
+
+  Plan and standard repairs are ordered before the code fixes, and the CI formatting gate
+  before the rest of the code, so it protects every PR after it.
+
 ## 2026-08-09
 
 * **Epic closed**: [Epic 1: Walking

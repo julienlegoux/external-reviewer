@@ -1,5 +1,17 @@
 # Log
 
+## 2026-08-10
+
+* **Update**: appended a third [DRIFT](/DRIFT.md) entry and corrected the criterion it
+  contradicts. Epic 1's no-files test compares the tree's file set and every file mtime
+  but deliberately not **directory** mtimes — on Windows two consecutive walks of an
+  untouched tree already report those moved, so asserting on them tests the platform
+  rather than the binary. The narrowing was documented in the test and nowhere else, which
+  is how [implementation review report 2](../REPORT_2.md) found it; issue 05's criterion
+  now states what is actually asserted and why the exemption costs the guarantee nothing.
+  Triaged `accepted` on the conversion of report 2 into
+  [Epic 0](../epics/epic-0-skeleton-hardening/EPIC_0.md).
+
 ## 2026-08-09
 
 * **Established**: [DRIFT](/DRIFT.md), promoted at the close of Epic 1 from the two drift

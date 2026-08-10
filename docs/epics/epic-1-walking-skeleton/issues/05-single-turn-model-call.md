@@ -68,8 +68,11 @@ all — and leaves Epic 2 the multi-turn half.
 - [ ] A scripted `AssistantMessageDiagnostic` appears on stderr as a `warn` line.
 - [ ] **The binary creates, modifies or deletes no file anywhere**: a test runs a full
       successful review against a `t.TempDir()` repository and asserts the tree's file
-      set and modification times are unchanged afterwards. This complements the forbidigo
-      guard from issue 01 rather than replacing it.
+      set and every file's modification time are unchanged afterwards. Directory mtimes
+      are exempt — two consecutive walks on Windows already report them moved, and a file
+      created, modified or deleted inside the repository moves the file set or a file
+      mtime regardless ([drift](../../../planning/DRIFT.md)). This complements the
+      forbidigo guard from issue 01 rather than replacing it.
 - [ ] A live-model test, if added at all, is gated at runtime by `os.Getenv` + `t.Skip`
       naming the missing variable — never a build tag — so `go test ./... -race` is green
       offline on a clean checkout. No golden files for model output.
