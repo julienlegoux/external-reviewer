@@ -145,9 +145,11 @@ vocabularies keep that from becoming a class of recurring bug
   continued ([specs 13](/specs/13-error-handling-and-failure-classification.md)).
 - Nothing panics across the CLI boundary; `recover()` appears nowhere.
 - The two audiences are stdout and stderr, and they are not interchangeable: stdout is
-  the model's final text verbatim and is empty on any failure; everything the human or
-  the calling script needs to understand a run goes to stderr as prefixed lines
-  ([specs 12](/specs/12-output-and-diagnostics-format.md)).
+  the model's final text verbatim, written once and only once the final message is
+  complete, so it is empty on every failure but a failed write of the report itself —
+  which is announced on stderr as an `error:` line naming the report incomplete;
+  everything the human or the calling script needs to understand a run goes to stderr as
+  prefixed lines ([specs 12](/specs/12-output-and-diagnostics-format.md)).
 
 ## Dependencies
 

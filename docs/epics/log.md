@@ -2,6 +2,32 @@
 
 ## 2026-08-11
 
+* **PR opened**: [10 survive a failing or closed stdout without escaping the done-line
+  seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
+  [PR #42](https://github.com/julienlegoux/external-reviewer/pull/42) against
+  `develop`. `Run` registers for `syscall.SIGPIPE`, so a broken reader on fd 1
+  returns `EPIPE` instead of killing the process — `review … | head -20` now exits
+  `2` with a `done` line rather than `141` with the transcript cut off.
+  `syscall.SIGPIPE` exists on Windows too, so no `//go:build` divergence ships and
+  the one path is exercised on both matrix OSes by a child-process test that selects
+  its expectation at runtime. The report's single write is classified rather than
+  all-or-nothing: a write that fails after N bytes names the report incomplete, with
+  the bytes written and the report's length, through `diag.WriteError`. SPECS
+  § Interfaces and CONVENTIONS § Error handling both said "stdout is empty on any
+  failure", which a partial write makes false; both now state the three-part
+  guarantee the code holds. No new stop-reason word — `failed` already covered it.
+  408 insertions / 16 deletions (~424 changed lines) against a ~250 M estimate, the
+  overrun being the two-OS subprocess harness.
+
+* **Started**: [10 survive a failing or closed stdout without escaping the done-line
+  seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
+  branch `issue-32-stdout-write-failures`.
+
+* **Merged**: [05 extract one importable faux harness and retire the mutable
+  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40)
+  merged into `develop`.
+
 * **Merged**: [08 handle the repository path as an OS path and emit wire
   paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
   (#30) — [PR #41](https://github.com/julienlegoux/external-reviewer/pull/41)

@@ -39,7 +39,24 @@ type reviewRequest struct {
 // stdout is written exactly once, at the very end, from the completed final
 // message — never from the text deltas as they arrive. That is what makes
 // "stdout is empty on every failure" true for the failures that stream a
-// paragraph of prose before falling over.
+// paragraph of prose before falling over: every one of them fails before the
+// single write, so nothing has been handed to the caller yet.
+//
+// The one failure that survives past that point is the write itself, and
+// bytes already on stdout cannot be unwritten. So the invariant the shipped
+// code actually holds is the three-part one below, not "stdout is empty on
+// every failure" flat:
+//
+//   - Nothing reaches stdout until the reviewer's final message is complete,
+//     so every failure before the write leaves stdout empty.
+//   - The process never terminates by signal: a broken reader on stdout comes
+//     back as an ordinary error (see handleSIGPIPE in run.go), so the run
+//     still reaches the done line and still returns a real exit code.
+//   - A write that fails after N bytes leaves those N bytes on stdout and
+//     says so on stderr, naming the report as incomplete, so a caller reading
+//     the transcript can tell a truncated report from a whole one. That is
+//     the strongest thing available: the alternative would be an output file
+//     the binary is forbidden to own (SPECS § Interfaces).
 func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
 	registry, err := ensureModels(registry)
 	if err != nil {
@@ -68,10 +85,39 @@ func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest
 	if report == "" {
 		return errors.New("the reviewer finished but its final message carried no text")
 	}
-	if _, err := io.WriteString(stdout, report); err != nil {
-		return fmt.Errorf("writing the report to stdout: %w", err)
+	return writeReport(stdout, report)
+}
+
+// writeReport performs the run's one and only write to stdout and classifies
+// what came back. Every outcome but a whole report is an ordinary exit-2
+// failure: the error returned here is what runReview renders as the single
+// error: line, so nothing about a failing stdout routes around the seam.
+//
+// The two failures are told apart because they are not the same fact. With
+// nothing written, stdout is still empty and the caller has no report at all.
+// With N bytes written, the caller holds a fragment that looks exactly like a
+// report — that is the one the diagnostic has to name, with the byte counts,
+// or a truncated review reads as a complete one.
+//
+// A short write reported with a nil error is io.Writer's contract being
+// broken rather than a disk filling; os.File cannot produce one, since
+// internal/poll loops until the buffer is drained. It is folded into the same
+// classification anyway, because the alternative is returning nil for a
+// report that was never fully delivered.
+func writeReport(stdout io.Writer, report string) error {
+	n, err := io.WriteString(stdout, report)
+	if err == nil && n < len(report) {
+		err = io.ErrShortWrite
 	}
-	return nil
+	switch {
+	case err == nil:
+		return nil
+	case n == 0:
+		return fmt.Errorf("writing the report to stdout: %w", err)
+	default:
+		return fmt.Errorf("writing the report to stdout: the report on stdout is incomplete, %d of %d bytes were written: %w",
+			n, len(report), err)
+	}
 }
 
 // recordTurn folds a completed round trip into the run state the done line
