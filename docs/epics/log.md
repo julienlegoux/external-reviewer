@@ -2,6 +2,11 @@
 
 ## 2026-08-11
 
+* **Merged**: [01 settle the done line's stop-reason vocabulary and document it in
+  SPECS](/epic-0-skeleton-hardening/issues/01-stop-reason-vocabulary.md) (#23) —
+  [PR #37](https://github.com/julienlegoux/external-reviewer/pull/37) merged into
+  `develop`.
+
 * **PR opened**: [02 widen the write-API guard to every write operation CONVENTIONS
   names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
   [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) against `develop`.
