@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/julienlegoux/external-reviewer/internal/diag"
 )
@@ -38,12 +39,47 @@ import (
 // not decided here: help/empty-argv/an-unknown-command do no I/O that a
 // cancelled context could interrupt, and runReview is the one place that
 // decides "was this interrupted?" for the one command that does.
+//
+// Run also takes SIGPIPE off the runtime's default path (see
+// handleSIGPIPE), because `external-reviewer review … | head -20` would
+// otherwise kill the process outright and skip the done line entirely.
 func Run(argv []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	defer handleSIGPIPE()()
 
 	code, _ := run(ctx, argv, stdin, stdout, stderr)
 	return code
+}
+
+// handleSIGPIPE registers for SIGPIPE and returns the func that unregisters
+// it. It is the difference between a run that ends and a run that is killed.
+//
+// os/signal's documented rule: with no Notify registered for SIGPIPE, a write
+// to a broken pipe on file descriptor 1 or 2 raises SIGPIPE and the process
+// dies by signal — a shell reports 141 — while the same write on any other
+// descriptor merely returns EPIPE. Registering for it flattens that
+// distinction: every such write returns EPIPE to Go, and the signal goes to
+// the channel instead. That is exactly what the done-line seam needs, because
+// a process killed by a signal runs no deferred function, so
+// `external-reviewer review … | head -20` would exit 141 with the transcript
+// cut off mid-run. With the registration in place the failed write comes back
+// as an ordinary error, is classified in resolveAndReview, and terminates
+// through run()'s single defer like every other failure.
+//
+// The channel is buffered and deliberately never read: nothing here wants to
+// know that a pipe broke — the write's own error says so, with the context of
+// what was being written. Dropped repeats are the point, not a leak.
+//
+// No //go:build divergence: syscall.SIGPIPE is defined on Windows too and
+// signal.Notify accepts it there, where it is simply never delivered because
+// Windows has no such signal. The one code path compiles and runs on both
+// matrix OSes, and TestRun_ClosedStdoutPipe_NeverDiesBySignal exercises it on
+// both, selecting its expectation at runtime.
+func handleSIGPIPE() func() {
+	broken := make(chan os.Signal, 1)
+	signal.Notify(broken, syscall.SIGPIPE)
+	return func() { signal.Stop(broken) }
 }
 
 // run is Run's inner seam. A defer here, rather than one at every return
