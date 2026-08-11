@@ -79,6 +79,14 @@ silently take a sibling's coverage with it:
 Post-merge green: `internal/reviewer` 29 tests and subtests, `internal/cli` 66,
 `internal/diag` 9, five consecutive repeats each, no failures.
 
+Issue 12 (PR #44) then merged too, moving the done-line and turn-line transcript
+parsers into `internal/fauxtest`. `TestRun_DoneLineCarriesTheAdaptersOwnCost`
+now reads its `$` figure through `fauxtest.ParseDoneLine`'s `DoneFields.Cost`
+rather than `internal/cli`'s own copy, so no second parser ships. All three
+mutations above were re-applied against the twice-merged tree and all three go
+red identically — the accumulator test, the cache-token test, and
+`TestRun_CancelledMidStream_ExitsTwo` 3 runs of 3.
+
 ## Argued rather than observed
 
 * Behaviour under `-race`, on either OS.
