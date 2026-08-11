@@ -3,7 +3,7 @@
 ## 2026-08-11
 
 * **Update**: appended a fourth [DRIFT](/DRIFT.md) entry at the close of
-  [Epic 0](../epics/epic-0-skeleton-hardening/EPIC_0.md). The epic's implementers wrote
+  [Epic 0](https://github.com/julienlegoux/external-reviewer/issues/22). The epic's implementers wrote
   no drift records, so the entry was swept out of the run's own log and verification
   files: [CONVENTIONS § Testing](/CONVENTIONS.md) decides `go test ./... -race`, and
   that command does not run on the development machine at all — a Windows Application
@@ -31,7 +31,7 @@
   is how [implementation review report 2](../REPORT_2.md) found it; issue 05's criterion
   now states what is actually asserted and why the exemption costs the guarantee nothing.
   Triaged `accepted` on the conversion of report 2 into
-  [Epic 0](../epics/epic-0-skeleton-hardening/EPIC_0.md).
+  [Epic 0](https://github.com/julienlegoux/external-reviewer/issues/22).
 
 ## 2026-08-09
 

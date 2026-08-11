@@ -45,10 +45,11 @@ Append-only, newest epic first. An entry that stops being true becomes
   closes — `go test ./... -race` completing locally is what discharges this entry.
   CONVENTIONS § Testing is then amended to say where the command runs, and this entry
   becomes `resolved`.
-- **Evidence**:
-  [issue 11's verification log](../epics/epic-0-skeleton-hardening/issues/11-verification.md),
-  [issue 09's hand-run SIGINT verification](../epics/epic-0-skeleton-hardening/verification/09-sigint-hand-verification.md),
-  PRs #45, #46, #42.
+- **Evidence**: PR #45 (issue 11's verification log — the constraint stated in full, and
+  the four findings it left argued rather than observed), PR #46 (issue 09's hand-run
+  SIGINT verification, the WSL cross-build in practice), PR #42 (issue 10's SIGPIPE
+  criterion, verified the same way). Epic 0's folder was retired at its close, so these
+  cite the PRs the evidence merged in rather than the files.
 
 ## Epic 1: Walking skeleton
 

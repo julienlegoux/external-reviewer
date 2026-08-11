@@ -2,7 +2,21 @@
 
 ## 2026-08-11
 
-* **Closed**: [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) (#22) —
+* **Retirement**: Epic 0 (Skeleton hardening) retired - 12 issues, milestone 4 closed.
+  Consumed reports docs/REPORT_2.md. Fixed: the four surviving criterion-bearing mutants
+  and the two terminations that escaped the done-line seam, plus the three contracts Epic
+  2 extends — the stop-reason vocabulary in SPECS, the write-API guard in CONVENTIONS and
+  `.golangci.yml`, and Epic 2's own issues 01 and 03 amended with Epic 1's structural
+  warnings.
+
+  `docs/REPORT_1.md` was **not** consumed by this lane — it was applied earlier as a
+  revision to the twelve issues of Epics 1 and 2, recorded below on 2026-08-09.
+
+  The folder `docs/epics/epic-0-skeleton-hardening/` is gone; milestone 4 and issues
+  #22–#34 survive on GitHub and every link that pointed into the folder was repointed
+  there first. The epic-0 slot is free for the next triage cycle.
+
+* **Closed**: [Epic 0: Skeleton hardening](https://github.com/julienlegoux/external-reviewer/issues/22) (#22) —
   all **12 issues** `done` on 12 merged PRs (#35–#46, plus reconcile PR #47), milestone 4
   closed, tracking issue #22 closed. Every issue's bookkeeping was already reconciled by
   PR #47; the close verified it against GitHub rather than trusting it, and found no
@@ -31,17 +45,17 @@
   its issues already carry the two structural warnings issue 03 amended into them.
 
 * **Merged**: [11 bound the turn and fix its cost and cancellation
-  precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
+  precedence](https://github.com/julienlegoux/external-reviewer/issues/33) (#33) —
   [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45) merged into
   `develop`.
 
 * **Merged**: [09 read the task prompt under a context, a byte bound and real
-  validation](/epic-0-skeleton-hardening/issues/09-bounded-validated-prompt.md)
+  validation](https://github.com/julienlegoux/external-reviewer/issues/31)
   (#31) — [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46)
   merged into `develop`.
 
 * **PR opened**: [11 bound the turn and fix its cost and cancellation
-  precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
+  precedence](https://github.com/julienlegoux/external-reviewer/issues/33) (#33) —
   [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45) against
   `develop`. `Conversation.Next` keeps the adapter's service-tier-adjusted
   `Usage.Cost` and computes from the price sheet only where the adapter
@@ -57,16 +71,16 @@
   intermittent `windows-latest` failure (`stop=failed` instead of
   `interrupted`) 3 runs out of 3. ~871 changed lines against a ~250 M target,
   386 of them the new test file. Evidence, including what was argued rather
-  than observed, in
-  [11-verification](/epic-0-skeleton-hardening/issues/11-verification.md).
+  than observed, in the issue's verification log on
+  [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45).
 
 * **Merged**: [12 escape provider-controlled text on stderr and finish diag's
-  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md)
+  polish](https://github.com/julienlegoux/external-reviewer/issues/34)
   (#34) — [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44)
   merged into `develop`.
 
 * **PR opened**: [09 read the task prompt under a context, a byte bound and real
-  validation](/epic-0-skeleton-hardening/issues/09-bounded-validated-prompt.md)
+  validation](https://github.com/julienlegoux/external-reviewer/issues/31)
   (#31) — [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46) against
   `develop`. `runReviewCommand`'s stdin read moves into `readPromptFromStdin(ctx,
   stdin)`: the read runs on its own goroutine feeding a buffered channel, selected
@@ -82,21 +96,21 @@
   `promptSet := *prompt != ""` collapse by a dedicated test, verified red by hand
   under the mutation. The real-`SIGINT` acceptance criterion was verified by hand
   against a real Linux kernel via `wsl -d docker-desktop` (issue 10's own environment
-  for its SIGPIPE criterion), transcript at
-  `docs/epics/epic-0-skeleton-hardening/verification/09-sigint-hand-verification.md`.
+  for its SIGPIPE criterion), transcript on
+  [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46).
   No new stop-reason word — `usage` and `interrupted` already covered every path. 365
   insertions / 9 deletions (~374 changed lines) against a ~250 M estimate, under the
   ~500 target.
 
 * **Merged**: [06 kill the four surviving mutants on the request side of the
-  round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
+  round trip](https://github.com/julienlegoux/external-reviewer/issues/28)
   (#28) — [PR #43](https://github.com/julienlegoux/external-reviewer/pull/43)
   merged into `develop`. Reconciled independently by issue 11's and issue 12's
   runs — the issue file still read `pr-open` though GitHub issue #28 was
   already closed.
 
 * **PR opened**: [12 escape provider-controlled text on stderr and finish diag's
-  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md) (#34) —
+  polish](https://github.com/julienlegoux/external-reviewer/issues/34) (#34) —
   [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44) against `develop`.
   `diag.escapeControlChars`, applied inside `WriteWarn` and `WriteError`, renders every
   control character — `\n`/`\r` and the ESC byte an ANSI/OSC sequence opens with — as its
@@ -118,16 +132,16 @@
   shared parser.
 
 * **Started**: [12 escape provider-controlled text on stderr and finish diag's
-  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md) (#34) —
+  polish](https://github.com/julienlegoux/external-reviewer/issues/34) (#34) —
   branch `issue-12-transcript-parsing-fauxtest`.
 
 * **Merged**: [10 survive a failing or closed stdout without escaping the
-  done-line seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md)
+  done-line seam](https://github.com/julienlegoux/external-reviewer/issues/32)
   (#32) — [PR #42](https://github.com/julienlegoux/external-reviewer/pull/42)
   merged into `develop`.
 
 * **PR opened**: [06 kill the four surviving mutants on the request side of
-  the round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
+  the round trip](https://github.com/julienlegoux/external-reviewer/issues/28)
   (#28) — [PR #43](https://github.com/julienlegoux/external-reviewer/pull/43)
   against `develop`. `internal/reviewer/run_test.go` (new, `package
   reviewer_test`) asserts the task prompt reaches the model verbatim from
@@ -145,11 +159,11 @@
   issue was blocked on it). 263 changed lines against a ~300 M target.
 
 * **Started**: [06 kill the four surviving mutants on the request side of
-  the round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
+  the round trip](https://github.com/julienlegoux/external-reviewer/issues/28)
   (#28) — branch `issue-06-work`.
 
 * **PR opened**: [10 survive a failing or closed stdout without escaping the done-line
-  seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
+  seam](https://github.com/julienlegoux/external-reviewer/issues/32) (#32) —
   [PR #42](https://github.com/julienlegoux/external-reviewer/pull/42) against
   `develop`. `Run` registers for `syscall.SIGPIPE`, so a broken reader on fd 1
   returns `EPIPE` instead of killing the process — `review … | head -20` now exits
@@ -166,27 +180,27 @@
   overrun being the two-OS subprocess harness.
 
 * **Started**: [10 survive a failing or closed stdout without escaping the done-line
-  seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
+  seam](https://github.com/julienlegoux/external-reviewer/issues/32) (#32) —
   branch `issue-32-stdout-write-failures`.
 
 * **Started**: [11 bound the turn and fix its cost and cancellation
-  precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
+  precedence](https://github.com/julienlegoux/external-reviewer/issues/33) (#33) —
   branch `issue-33-turn-hardening`.
 
 * **Merged**: [05 extract one importable faux harness and retire the mutable
-  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  package-level seams](https://github.com/julienlegoux/external-reviewer/issues/27)
   (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40)
   merged into `develop`. Reconciled independently by both issue 10's and issue
   12's runs — the issue file still read `pr-open` though GitHub issue #27 was
   already closed and the merge predates both issue 08's and issue 10's own PRs.
 
 * **Merged**: [08 handle the repository path as an OS path and emit wire
-  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  paths on stderr](https://github.com/julienlegoux/external-reviewer/issues/30)
   (#30) — [PR #41](https://github.com/julienlegoux/external-reviewer/pull/41)
   merged into `develop`.
 
 * **PR opened**: [08 handle the repository path as an OS path and emit wire
-  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  paths on stderr](https://github.com/julienlegoux/external-reviewer/issues/30)
   (#30) — [PR #41](https://github.com/julienlegoux/external-reviewer/pull/41)
   against `develop`. `runReviewCommand` now runs the positional repository
   path through `filepath.Clean` before `os.Stat`, and every diagnostic that
@@ -202,16 +216,16 @@
   production, 62 test) against a ~200 M target.
 
 * **Started**: [08 handle the repository path as an OS path and emit wire
-  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  paths on stderr](https://github.com/julienlegoux/external-reviewer/issues/30)
   (#30) — branch `issue-08-path-boundary`.
 
 * **Merged**: [07 write one prefixed error: line from diag on every exit-2
-  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  path](https://github.com/julienlegoux/external-reviewer/issues/29) (#29) —
   [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) merged into
   `develop`.
 
 * **Fix**: [05 extract one importable faux harness and retire the mutable
-  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  package-level seams](https://github.com/julienlegoux/external-reviewer/issues/27)
   (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40).
   A windows-latest `go test ./... -race` run caught
   `TestRun_CancelledMidStream_ExitsTwo` classifying a mid-stream cancellation
@@ -230,11 +244,11 @@
   rather than racing a real stream. The full cancellation-*precedence*
   restructuring — preferring a complete message over a late `ctx.Err()`,
   making the guard reachable from `internal/reviewer`'s own suite — is left
-  to [issue 11](/epic-0-skeleton-hardening/issues/11-turn-hardening.md),
+  to [issue 11](https://github.com/julienlegoux/external-reviewer/issues/33),
   which owns it; this fix stays at the classification seam only.
 
 * **PR opened**: [05 extract one importable faux harness and retire the mutable
-  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  package-level seams](https://github.com/julienlegoux/external-reviewer/issues/27)
   (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40)
   against `develop`. `internal/fauxtest` (new, non-`_test.go`, imported by no
   product file) carries the auth-provider decorator, the four auth shapes and
@@ -259,11 +273,11 @@
   registry threading and `asInterrupted` fix all alongside each other.
 
 * **Started**: [05 extract one importable faux harness and retire the mutable
-  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  package-level seams](https://github.com/julienlegoux/external-reviewer/issues/27)
   (#27) — branch `issue-05-fixture-package`.
 
 * **PR opened**: [07 write one prefixed error: line from diag on every exit-2
-  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  path](https://github.com/julienlegoux/external-reviewer/issues/29) (#29) —
   [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) against
   `develop`. `diag.WriteError` becomes the one writer every hand-rolled
   `fmt.Fprint*` in `internal/cli` routed through, including the previously
@@ -277,16 +291,16 @@
   lines) against a ~350 M target.
 
 * **Started**: [07 write one prefixed error: line from diag on every exit-2
-  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  path](https://github.com/julienlegoux/external-reviewer/issues/29) (#29) —
   branch `issue-07-error-line-seam`.
 
 * **Merged**: [04 enforce gofmt in CI, normalise line endings, and lint on both
-  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  OSes](https://github.com/julienlegoux/external-reviewer/issues/26) (#26) —
   [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) merged into
   `develop`.
 
 * **PR opened**: [04 enforce gofmt in CI, normalise line endings, and lint on both
-  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  OSes](https://github.com/julienlegoux/external-reviewer/issues/26) (#26) —
   [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) against
   `develop`. A top-level `formatters:` block (`gofmt`) in `.golangci.yml`,
   `.gitattributes` (`* text=auto eol=lf`) with `git add --renormalize .` a
@@ -295,21 +309,21 @@
   deletions (~30 changed lines) against a ~40-line target.
 
 * **Started**: [04 enforce gofmt in CI, normalise line endings, and lint on both
-  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  OSes](https://github.com/julienlegoux/external-reviewer/issues/26) (#26) —
   branch `issue-26-ci-formatting-gate`.
 
 * **Merged**: [02 widen the write-API guard to every write operation CONVENTIONS
-  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  names](https://github.com/julienlegoux/external-reviewer/issues/24) (#24) —
   [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) merged into
   `develop`.
 
 * **Merged**: [01 settle the done line's stop-reason vocabulary and document it in
-  SPECS](/epic-0-skeleton-hardening/issues/01-stop-reason-vocabulary.md) (#23) —
+  SPECS](https://github.com/julienlegoux/external-reviewer/issues/23) (#23) —
   [PR #37](https://github.com/julienlegoux/external-reviewer/pull/37) merged into
   `develop`.
 
 * **PR opened**: [02 widen the write-API guard to every write operation CONVENTIONS
-  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  names](https://github.com/julienlegoux/external-reviewer/issues/24) (#24) —
   [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) against `develop`.
   CONVENTIONS' enumeration and `.golangci.yml`'s `forbidigo.forbid` list both gain
   `os.Chmod`, `os.Chtimes`, `os.Truncate`, `os.Link`, `os.Root.Chmod`,
@@ -321,11 +335,11 @@
   ~60-line target.
 
 * **Started**: [02 widen the write-API guard to every write operation CONVENTIONS
-  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  names](https://github.com/julienlegoux/external-reviewer/issues/24) (#24) —
   branch `issue-24-write-api-guard-coverage`.
 
 * **Merged**: [03 carry Epic 1's structural warnings into Epic 2's
-  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  issues](https://github.com/julienlegoux/external-reviewer/issues/25) (#25) —
   [PR #35](https://github.com/julienlegoux/external-reviewer/pull/35) merged into
   `develop`.
 
@@ -348,17 +362,17 @@
   amending the issues is not discharging them, only Epic 2's own PR can do that.
 
 * **PR opened**: [03 carry Epic 1's structural warnings into Epic 2's
-  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  issues](https://github.com/julienlegoux/external-reviewer/issues/25) (#25) —
   [PR #35](https://github.com/julienlegoux/external-reviewer/pull/35) against
   `develop`. 56 changed lines against an S-sized ~500 target, all under
   `docs/epics/`: two new Scope bullets on Epic 2 issue 03, one on issue 01, both
   GitHub bodies re-synced.
 
 * **Started**: [03 carry Epic 1's structural warnings into Epic 2's
-  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  issues](https://github.com/julienlegoux/external-reviewer/issues/25) (#25) —
   branch `issue-25-epic-2-plan-amendments`.
 
-* **Creation**: Cut [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) into
+* **Creation**: Cut [Epic 0: Skeleton hardening](https://github.com/julienlegoux/external-reviewer/issues/22) into
   **12 issues** on milestone 4, all linked as native sub-issues of
   [#22](https://github.com/julienlegoux/external-reviewer/issues/22) — none sized `L`.
   The epic's 15 scope groups compress to 12 PRs because three pairs are one change:
@@ -395,14 +409,14 @@
   extraction.
 
 * **PR opened**:
-  [01 — Settle the done line's stop-reason vocabulary and document it in SPECS](/epic-0-skeleton-hardening/issues/01-stop-reason-vocabulary.md)
+  [01 — Settle the done line's stop-reason vocabulary and document it in SPECS](https://github.com/julienlegoux/external-reviewer/issues/23)
   (issue [#23](https://github.com/julienlegoux/external-reviewer/issues/23)) as
   [PR #37](https://github.com/julienlegoux/external-reviewer/pull/37) against `develop`.
 
 ## 2026-08-10
 
 * **Creation**: Established
-  [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) by converting
+  [Epic 0: Skeleton hardening](https://github.com/julienlegoux/external-reviewer/issues/22) by converting
   [implementation review report 2](../REPORT_2.md) — milestone 4, issue
   [#22](https://github.com/julienlegoux/external-reviewer/issues/22). The remediation
   lane, which runs before [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) resumes and
