@@ -3,12 +3,12 @@ type: Issue
 title: "Survive a failing or closed stdout without escaping the done-line seam"
 description: "Stop SIGPIPE killing the process before the done line, and classify a mid-report write failure as an ordinary exit-2 termination that says the report is incomplete."
 tags: [epic-0]
-timestamp: 2026-08-11T09:40:00Z
+timestamp: 2026-08-11T08:49:37Z
 epic: 0
 issue: 10
 slug: stdout-write-failures
 size: M
-status: pr-open
+status: done
 gh_issue: 32
 gh_pr: 42
 resource: https://github.com/julienlegoux/external-reviewer/issues/32

@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -356,6 +357,101 @@ func TestRun_DiagnosticWithNewlineAndANSI_ProducesOneInertWarnLine(t *testing.T)
 	}
 	if !strings.Contains(stderr, `\x1b[31m`) {
 		t.Errorf("stderr = %q, want the ANSI escape rendered as literal text", stderr)
+	}
+}
+
+// TestRun_ThinkingAndToolCall_NeverReachStdoutOrReport is the report side of
+// the round trip, asserted through Run rather than directly against
+// FinalText (internal/reviewer/run_test.go covers that half): a scripted
+// response carrying a thinking block and a tool call alongside two text
+// blocks must still leave stdout holding exactly the two text blocks
+// concatenated, with the thinking content nowhere on either stream.
+func TestRun_ThinkingAndToolCall_NeverReachStdoutOrReport(t *testing.T) {
+	const thinking = "mulling it over"
+	want := "finding one.\nfinding two.\n"
+	content := []ai.AssistantContentPart{
+		faux.Thinking(thinking),
+		faux.Text("finding one.\n"),
+		faux.ToolCall("read_file", map[string]any{"path": "a.go"}, nil),
+		faux.Text("finding two.\n"),
+	}
+
+	code, stdout, stderr := runReviewOver(t, scripted(t, 0, faux.Step(faux.AssistantMessage(content, nil))), t.TempDir())
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr)
+	}
+	if stdout != want {
+		t.Errorf("stdout = %q, want the two text blocks concatenated: %q", stdout, want)
+	}
+	if strings.Contains(stdout, thinking) {
+		t.Errorf("stdout = %q, want the thinking content filtered out", stdout)
+	}
+	if strings.Contains(stderr, thinking) {
+		t.Errorf("stderr = %q, want the thinking content filtered out", stderr)
+	}
+}
+
+// cacheAwareModels builds an offline registry whose one streamed response
+// carries a fixed Usage, including non-zero CacheRead and CacheWrite. It
+// deliberately does not use kern-link's faux provider: faux's own cache
+// simulation (ai/providers/faux/faux.go's withUsageEstimate) always reports
+// zero cache tokens unless a caller sets ai.SimpleStreamOptions.SessionID and
+// reuses it across calls, which internal/reviewer's Conversation.Next never
+// does — so a scripted faux response cannot carry non-zero cache tokens.
+// This is a minimal hand-built ai.Provider, the same technique
+// resolve_test.go's dynamicRegistry already uses for RefreshModels.
+func cacheAwareModels(t *testing.T, usage ai.Usage) ai.Models {
+	t.Helper()
+	provider := ai.CreateProvider(ai.CreateProviderOptions{
+		ID:   reviewer.DefaultProviderID,
+		Auth: fauxtest.CredentialedAuth("OAuth"),
+		Models: []*ai.Model{{
+			ID:       reviewer.DefaultModelID,
+			Name:     reviewer.DefaultModelID,
+			Provider: reviewer.DefaultProviderID,
+			Cost:     ai.ModelCost{Input: 100, Output: 200},
+		}},
+		Api: ai.StreamFuncs{
+			StreamSimpleFunc: func(context.Context, *ai.Model, ai.Context, *ai.SimpleStreamOptions) *ai.Stream {
+				stream := ai.NewStream()
+				message := &ai.AssistantMessage{
+					Content:    []ai.AssistantContentPart{faux.Text(markdownAnswer)},
+					StopReason: ai.StopReasonStop,
+					Usage:      usage,
+				}
+				stream.Push(ai.DoneEvent{Reason: message.StopReason, Message: message})
+				return stream
+			},
+		},
+	})
+	models := ai.CreateModels(nil)
+	models.SetProvider(provider)
+	return models
+}
+
+// TestRun_CacheTokens_IncludedInInAccounting is the cache-token half of the
+// in= figure report 2 found unasserted: internal/cli/review.go sums
+// turn.Usage.Input, CacheRead and CacheWrite into the done line's in=, and
+// this scripts a turn where CacheRead and CacheWrite are both non-zero.
+// Deleting "+ turn.Usage.CacheRead + turn.Usage.CacheWrite" at
+// internal/cli/review.go:142 (recordTurn) must turn this red.
+func TestRun_CacheTokens_IncludedInInAccounting(t *testing.T) {
+	usage := ai.Usage{Input: 120, Output: 40, CacheRead: 55, CacheWrite: 30}
+
+	code, stdout, stderr := runReviewOver(t, cacheAwareModels(t, usage), t.TempDir())
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr)
+	}
+	if stdout != markdownAnswer {
+		t.Fatalf("stdout = %q, want the reviewer's answer", stdout)
+	}
+
+	fields := fauxtest.ParseDoneLine(t, stderr)
+	wantIn := strconv.Itoa(usage.Input + usage.CacheRead + usage.CacheWrite)
+	if fields.In != wantIn {
+		t.Errorf("done in = %q, want %q (Input + CacheRead + CacheWrite)", fields.In, wantIn)
 	}
 }
 
