@@ -6,7 +6,10 @@ package diag
 import (
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 	"time"
+	"unicode"
 )
 
 // State accumulates one run's diagnostics — turn count, accumulated input
@@ -56,23 +59,37 @@ func WriteModel(w io.Writer, provider, id, authSource string) {
 }
 
 // WriteWarn writes a "warn" line for a non-fatal diagnostic — a kern-link
-// AssistantMessageDiagnostic (already redacted) or an unrecognised
-// configuration key.
+// AssistantMessageDiagnostic or an unrecognised configuration key. message
+// is escaped by escapeControlChars first: no version of kern-link redacts a
+// diagnostic's message (issue 12), so this is provider-controlled text, and
+// without escaping, a newline in it could forge a second line — a fake
+// "done … stop=ok" ahead of the real one — or an ANSI/OSC sequence could
+// reach the terminal raw. Escaping control characters is not redaction: a
+// credential value that reached this function would still print, verbatim
+// with its control characters spelled out; nothing here removes or scans
+// for one (SPECS § Security — this binary formats no credential in the
+// first place).
 func WriteWarn(w io.Writer, message string) {
-	_, _ = fmt.Fprintf(w, "warn    %s\n", message)
+	_, _ = fmt.Fprintf(w, "warn    %s\n", escapeControlChars(message))
 }
 
 // WriteError writes the "error:" line naming what was wrong on an exit-2
 // path — the one prefixed rendering every hand-rolled fmt.Fprint* used to
 // duplicate across internal/cli, padded to the same 8-column width every
 // other diag.Write* uses ("error:" is 6 characters, so 2 trailing spaces
-// rather than WriteWarn's 4). message is lowercase, unpunctuated and states
-// what was attempted (CONVENTIONS § Error handling); nothing here formats or
-// classifies the underlying error, only renders text a caller already
-// decided to print. It is never called on the exit-1 silent-fallback path —
-// SPECS calls that the case the caller needs no line about.
+// rather than WriteWarn's 4). For a hand-written call site message is
+// already lowercase and unpunctuated, stating what was attempted
+// (CONVENTIONS § Error handling); for a reached-and-failed turn it also
+// carries err.Error(), which can hold a provider's own error body verbatim.
+// Either way message is escaped by escapeControlChars first — the same
+// defence WriteWarn applies, for the same reason: a newline in a provider's
+// error text must not forge a second, well-formed line ahead of the real
+// done line. Nothing here formats or classifies the underlying error, only
+// renders text a caller already decided to print. It is never called on the
+// exit-1 silent-fallback path — SPECS calls that the case the caller needs
+// no line about.
 func WriteError(w io.Writer, message string) {
-	_, _ = fmt.Fprintf(w, "error:  %s\n", message)
+	_, _ = fmt.Fprintf(w, "error:  %s\n", escapeControlChars(message))
 }
 
 // WriteDone writes the "done" line SPECS fixes:
@@ -90,12 +107,50 @@ func WriteDone(w io.Writer, s *State) {
 
 // formatElapsed renders a duration the way SPECS' examples show it: seconds
 // with one decimal place under a minute ("42.8s"), minutes and whole seconds
-// at or above a minute ("2m14s").
+// from a minute up to an hour ("2m14s"), and hours, minutes and whole
+// seconds at or above an hour ("1h35m0s") — a run reviewing a large
+// repository can run long enough that "95m0s" would otherwise be the only
+// rendering with no unit boundary above minutes.
 func formatElapsed(d time.Duration) string {
-	if d < time.Minute {
+	switch {
+	case d < time.Minute:
 		return fmt.Sprintf("%.1fs", d.Seconds())
+	case d < time.Hour:
+		m := d / time.Minute
+		s := (d % time.Minute) / time.Second
+		return fmt.Sprintf("%dm%ds", m, s)
+	default:
+		h := d / time.Hour
+		m := (d % time.Hour) / time.Minute
+		s := (d % time.Minute) / time.Second
+		return fmt.Sprintf("%dh%dm%ds", h, m, s)
 	}
-	m := d / time.Minute
-	s := (d % time.Minute) / time.Second
-	return fmt.Sprintf("%dm%ds", m, s)
+}
+
+// escapeControlChars renders s safe for a single line of the line-oriented
+// stderr protocol SPECS fixes: every rune unicode.IsControl reports true for
+// — C0 controls including "\n", "\r" and ESC (0x1B, the byte every ANSI/OSC
+// sequence opens with), plus the C1 range — is replaced by its Go escape
+// ("\n", "\x1b", …) via strconv.QuoteRune with the surrounding quotes
+// stripped. Everything else, any printable script included, passes through
+// unchanged. This is deliberately narrow: it stops a control character from
+// splitting the line or reaching the terminal raw, and it is not a general
+// string sanitiser or a secret scanner — a credential that reached this
+// function would still print, just with any control characters in it spelled
+// out rather than a redaction removing them (issue 12's Out of scope).
+func escapeControlChars(s string) string {
+	if !strings.ContainsFunc(s, unicode.IsControl) {
+		return s
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if !unicode.IsControl(r) {
+			b.WriteRune(r)
+			continue
+		}
+		q := strconv.QuoteRune(r)
+		b.WriteString(q[1 : len(q)-1]) // strip the surrounding single quotes
+	}
+	return b.String()
 }

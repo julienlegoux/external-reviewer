@@ -34,9 +34,9 @@ func TestRun_EmptyArgv_UsageError(t *testing.T) {
 		t.Errorf("stderr = %q, want an error:  no command given line", stderr.String())
 	}
 	assertOnlyKnownPrefixedLines(t, stderr.String())
-	fields := parseDoneLine(t, stderr.String())
-	if fields.stop != "usage" {
-		t.Errorf("done stop = %q, want usage", fields.stop)
+	fields := fauxtest.ParseDoneLine(t, stderr.String())
+	if fields.Stop != "usage" {
+		t.Errorf("done stop = %q, want usage", fields.Stop)
 	}
 }
 
@@ -62,8 +62,8 @@ func TestRun_Help_DoneLineStopIsHelp(t *testing.T) {
 			if code != 0 {
 				t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
 			}
-			if fields := parseDoneLine(t, stderr.String()); fields.stop != "help" {
-				t.Errorf("done stop = %q, want help", fields.stop)
+			if fields := fauxtest.ParseDoneLine(t, stderr.String()); fields.Stop != "help" {
+				t.Errorf("done stop = %q, want help", fields.Stop)
 			}
 		})
 	}
@@ -101,12 +101,12 @@ func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 		t.Errorf("stderr = %q, want an interruption reason", stderr.String())
 	}
 	assertOnlyKnownPrefixedLines(t, stderr.String())
-	fields := parseDoneLine(t, stderr.String())
-	if fields.stop != "interrupted" {
-		t.Errorf("done stop = %q, want interrupted", fields.stop)
+	fields := fauxtest.ParseDoneLine(t, stderr.String())
+	if fields.Stop != "interrupted" {
+		t.Errorf("done stop = %q, want interrupted", fields.Stop)
 	}
-	if fields.in != "0" || fields.out != "0" {
-		t.Errorf("done in/out = %q/%q, want 0/0 (a path that never reached a model)", fields.in, fields.out)
+	if fields.In != "0" || fields.Out != "0" {
+		t.Errorf("done in/out = %q/%q, want 0/0 (a path that never reached a model)", fields.In, fields.Out)
 	}
 }
 

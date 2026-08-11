@@ -22,10 +22,43 @@
   than observed, in
   [11-verification](/epic-0-skeleton-hardening/issues/11-verification.md).
 
+* **Merged**: [12 escape provider-controlled text on stderr and finish diag's
+  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md)
+  (#34) — [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44)
+  merged into `develop`.
+
 * **Merged**: [06 kill the four surviving mutants on the request side of the
   round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
   (#28) — [PR #43](https://github.com/julienlegoux/external-reviewer/pull/43)
-  merged into `develop`.
+  merged into `develop`. Reconciled independently by issue 11's and issue 12's
+  runs — the issue file still read `pr-open` though GitHub issue #28 was
+  already closed.
+
+* **PR opened**: [12 escape provider-controlled text on stderr and finish diag's
+  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md) (#34) —
+  [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44) against `develop`.
+  `diag.escapeControlChars`, applied inside `WriteWarn` and `WriteError`, renders every
+  control character — `\n`/`\r` and the ESC byte an ANSI/OSC sequence opens with — as its
+  Go escape rather than letting it reach the terminal raw or split the line; a provider
+  error body carrying a newline and a well-formed `done … stop=ok` line can no longer
+  forge a second done line ahead of the real one. The false "kern-link redacts
+  diagnostics upstream" comment is removed everywhere it appeared, including
+  `docs/planning/SPECS.md` itself. `internal/diag/diag_test.go`'s tests are table-driven,
+  `formatElapsed` gains an hour unit, and the duplicated done-line/turn-line transcript
+  parsers move into `internal/fauxtest` as `ParseDoneLine`/`ParseTurnLine`, issue 05's
+  shared harness. 706 changed lines against a ~280-line M estimate — over by roughly
+  2.5x but under the 1000-line L ceiling, so opened as-is; the growth is almost entirely
+  the table-driven rewrite (307 lines) and the two new integration tests proving the
+  injection is actually stopped, both of which the issue's own size note anticipated as
+  the bulk of the diff, just underestimated. Reconciled issue 05 to `done` at the start
+  of this run (already merged, issue file still read `pr-open`) and merged `origin/develop`
+  once to pick up issue 10's concurrently-merged PR #42, resolving a duplicate reconcile
+  of issue 05 as a union and re-homing issue 10's new `stdout_test.go` onto the same
+  shared parser.
+
+* **Started**: [12 escape provider-controlled text on stderr and finish diag's
+  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md) (#34) —
+  branch `issue-12-transcript-parsing-fauxtest`.
 
 * **Merged**: [10 survive a failing or closed stdout without escaping the
   done-line seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md)
@@ -82,7 +115,9 @@
 * **Merged**: [05 extract one importable faux harness and retire the mutable
   package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
   (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40)
-  merged into `develop`.
+  merged into `develop`. Reconciled independently by both issue 10's and issue
+  12's runs — the issue file still read `pr-open` though GitHub issue #27 was
+  already closed and the merge predates both issue 08's and issue 10's own PRs.
 
 * **Merged**: [08 handle the repository path as an OS path and emit wire
   paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)

@@ -13,6 +13,7 @@ import (
 	"github.com/julienlegoux/kern-link/ai/providers/faux"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 )
 
 // failingStdout is the stdout a test controls: it hands back the first accept
@@ -97,8 +98,8 @@ func TestRun_StdoutRefusesEveryByte_ExitsTwo(t *testing.T) {
 	if lines := errorLines(stderr); len(lines) != 1 {
 		t.Errorf("stderr carries %d error: lines, want exactly 1: %q", len(lines), stderr)
 	}
-	if fields := parseDoneLine(t, stderr); fields.stop != "failed" {
-		t.Errorf("done stop = %q, want failed", fields.stop)
+	if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop != "failed" {
+		t.Errorf("done stop = %q, want failed", fields.Stop)
 	}
 	assertOnlyKnownPrefixedLines(t, stderr)
 }
@@ -133,8 +134,8 @@ func TestRun_StdoutFailsMidReport_NamesTheReportIncomplete(t *testing.T) {
 		t.Errorf("error line = %q, want it to carry %q — the bytes written and the report's own length",
 			lines[0], counts)
 	}
-	if fields := parseDoneLine(t, stderr); fields.stop != "failed" {
-		t.Errorf("done stop = %q, want failed", fields.stop)
+	if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop != "failed" {
+		t.Errorf("done stop = %q, want failed", fields.Stop)
 	}
 	assertOnlyKnownPrefixedLines(t, stderr)
 }
@@ -279,7 +280,7 @@ func TestRun_ClosedStdoutPipe_NeverDiesBySignal(t *testing.T) {
 	if code != 0 && code != 1 && code != 2 {
 		t.Errorf("child exit code = %d, want 0, 1 or 2 (stderr: %q)", code, stderr.String())
 	}
-	if fields := parseDoneLine(t, stderr.String()); fields.stop == "" {
+	if fields := fauxtest.ParseDoneLine(t, stderr.String()); fields.Stop == "" {
 		t.Errorf("done line carries no stop reason: %q", stderr.String())
 	}
 }
