@@ -2,6 +2,36 @@
 
 ## 2026-08-11
 
+* **Merged**: [09 read the task prompt under a context, a byte bound and real
+  validation](/epic-0-skeleton-hardening/issues/09-bounded-validated-prompt.md)
+  (#31) — [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46)
+  merged into `develop`.
+
+* **PR opened**: [11 bound the turn and fix its cost and cancellation
+  precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
+  [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45) against
+  `develop`. `Conversation.Next` keeps the adapter's service-tier-adjusted
+  `Usage.Cost` and computes from the price sheet only where the adapter
+  reported none; a `DefaultStreamTimeout` of ten minutes bounds the round trip
+  from this side and is handed to the adapter as well, with a turn that ends on
+  it reporting the new `reviewer.ErrStreamTimeout` — deliberately not a context
+  error, so it takes SPECS' existing `failed` branch and adds no `stop=` word;
+  and a second, non-cancellable read of `stream.Result` makes a message that is
+  already there beat a cancellation that landed beside it, with `endedBecause`
+  stating the remaining order once. `internal/cli`'s `asInterrupted` is removed
+  as redundant with what `Next` now returns, leaving `interruptedError` the one
+  decision point. Deleting the reviewer-side guard reproduces issue 05's
+  intermittent `windows-latest` failure (`stop=failed` instead of
+  `interrupted`) 3 runs out of 3. ~871 changed lines against a ~250 M target,
+  386 of them the new test file. Evidence, including what was argued rather
+  than observed, in
+  [11-verification](/epic-0-skeleton-hardening/issues/11-verification.md).
+
+* **Merged**: [12 escape provider-controlled text on stderr and finish diag's
+  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md)
+  (#34) — [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44)
+  merged into `develop`.
+
 * **PR opened**: [09 read the task prompt under a context, a byte bound and real
   validation](/epic-0-skeleton-hardening/issues/09-bounded-validated-prompt.md)
   (#31) — [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46) against
@@ -28,8 +58,8 @@
 * **Merged**: [06 kill the four surviving mutants on the request side of the
   round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
   (#28) — [PR #43](https://github.com/julienlegoux/external-reviewer/pull/43)
-  merged into `develop`. Reconciled at the start of issue 12's second merge
-  round — the issue file still read `pr-open` though GitHub issue #28 was
+  merged into `develop`. Reconciled independently by issue 11's and issue 12's
+  runs — the issue file still read `pr-open` though GitHub issue #28 was
   already closed.
 
 * **PR opened**: [12 escape provider-controlled text on stderr and finish diag's
@@ -105,6 +135,10 @@
 * **Started**: [10 survive a failing or closed stdout without escaping the done-line
   seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
   branch `issue-32-stdout-write-failures`.
+
+* **Started**: [11 bound the turn and fix its cost and cancellation
+  precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
+  branch `issue-33-turn-hardening`.
 
 * **Merged**: [05 extract one importable faux harness and retire the mutable
   package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
