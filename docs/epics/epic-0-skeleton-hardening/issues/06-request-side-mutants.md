@@ -3,13 +3,14 @@ type: Issue
 title: "Kill the four surviving mutants on the request side of the round trip"
 description: "Add internal/reviewer/run_test.go and the cache-token assertion in cli, so the prompt reaching the model, FinalText's concatenation and filtering, the messages accumulator and the cache half of in= are all observed."
 tags: [epic-0]
-timestamp: 2026-08-11T09:00:00Z
+timestamp: 2026-08-11T09:15:00Z
 epic: 0
 issue: 06
 slug: request-side-mutants
 size: M
-status: in-progress
+status: pr-open
 gh_issue: 28
+gh_pr: 43
 resource: https://github.com/julienlegoux/external-reviewer/issues/28
 depends_on: [5]
 ---
