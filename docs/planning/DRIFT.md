@@ -18,7 +18,7 @@ Append-only, newest epic first. An entry that stops being true becomes
 
 ## Epic 0: Skeleton hardening
 
-### 09, 10, 11 — the decided test command does not run on the development machine
+### 09, 10, 11 — the decided test command does not run on the development machine — resolved (2026-08-11)
 
 - **Decided**: [CONVENTIONS § Testing](/CONVENTIONS.md) names the command without
   qualification — *"`go test ./... -race` is the command"* — resting on
@@ -41,10 +41,20 @@ Append-only, newest epic first. An entry that stops being true becomes
   `build-essential`. Epic 2 lands the multi-turn loop, which is the concurrency the
   race detector exists for; finding a data race in CI on an OS the author cannot
   reproduce on is the expensive version of this.
-- **Revisit when**: [#48](https://github.com/julienlegoux/external-reviewer/issues/48)
-  closes — `go test ./... -race` completing locally is what discharges this entry.
-  CONVENTIONS § Testing is then amended to say where the command runs, and this entry
-  becomes `resolved`.
+- **Resolved (2026-08-11)** by [#48](https://github.com/julienlegoux/external-reviewer/issues/48),
+  through neither branch of the disposition above: the author's own Linux VPS already had
+  gcc and a Go toolchain, so `scripts/test-remote.sh` syncs the working tree there over
+  ssh and runs the command, and nothing was installed on the Windows host at all. The
+  suite now completes with `-race` from the development machine, and the detector was
+  observed firing — a deliberately racy probe test reported `WARNING: DATA RACE` and
+  exit `1` — rather than assumed live. [CONVENTIONS § Testing](/CONVENTIONS.md) now says
+  where the command runs.
+- **Residual, deliberately not covered**: the Windows Application Control policy is
+  untouched, so `go test` still cannot execute its own binaries natively on the host and
+  `windows-latest` behaviour remains observable only in CI. That half needs administrator
+  rights on the machine, which is why it outlived this entry; it is the smaller half,
+  since the two-OS split this project actually cares about — `os.Root` semantics and path
+  separators — is asserted by tests the CI matrix runs on both.
 - **Evidence**: PR #45 (issue 11's verification log — the constraint stated in full, and
   the four findings it left argued rather than observed), PR #46 (issue 09's hand-run
   SIGINT verification, the WSL cross-build in practice), PR #42 (issue 10's SIGPIPE

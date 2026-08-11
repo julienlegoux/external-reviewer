@@ -60,7 +60,9 @@ travels with the issue is its acceptance criteria and nothing else
 
 ## Repository layout
 
-- The top level stays small: `main.go`, `go.mod`, `docs/`, CI config. Everything else
+- The top level stays small: `main.go`, `go.mod`, `docs/`, CI config, and `scripts/` for
+  the developer-machine tooling that is not Go and cannot live in a package
+  (today: `test-remote.sh`, see § Testing). Everything else
   lives under `internal/` — the root is `package main` because
   `go install …@latest` only yields a binary of that name if it is
   ([specs 01](/specs/01-language-module-toolchain.md)).
@@ -109,6 +111,23 @@ vocabularies keep that from becoming a class of recurring bug
 - Standard library `testing` only. No `testify`, no assertion helpers, no mocking
   framework ([specs 16](/specs/16-testing-infrastructure.md)). `go test ./... -race` is
   the command.
+- **That command runs on a remote Linux host, not on the Windows development machine**,
+  and `scripts/test-remote.sh` is how — it copies the working tree over ssh, runs
+  `go test` there with `-race` appended, and exits with what the remote exited with:
+
+  ```sh
+  scripts/test-remote.sh                                  # the whole suite
+  scripts/test-remote.sh ./internal/cli -run TestFoo -v   # one test, for red-green
+  ```
+
+  It syncs the *working tree*, not `HEAD`, so an uncommitted failing test is watchable
+  going red and then green — which is what strict red-green above needs. The remote
+  defaults to the ssh alias `vps` and needs only a Go toolchain and a C compiler;
+  `EXTERNAL_REVIEWER_TEST_REMOTE` points it at any other host. The Windows host cannot
+  run the command itself: a local Application Control policy blocks the temporary
+  binaries `go test` builds, and `-race` needs cgo, which no C compiler here provides
+  ([drift](/DRIFT.md#09-10-11--the-decided-test-command-does-not-run-on-the-development-machine--resolved-2026-08-11)).
+  `windows-latest` behaviour is therefore still observed only in CI.
 - **Black-box by default** ([decision](/conventions/05-test-package-layout.md)): tests
   are `package foo_test`. In-package tests are the exception, for unexported logic with
   no reachable path through the package's API, and go in a file named
