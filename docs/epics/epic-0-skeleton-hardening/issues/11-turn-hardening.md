@@ -3,12 +3,12 @@ type: Issue
 title: "Bound the turn and fix its cost and cancellation precedence"
 description: "Three repairs in Conversation.Next: report the adapter's service-tier-adjusted cost, arm a stream timeout so a silent provider cannot hang forever, and prefer a complete message over a late ctx.Err()."
 tags: [epic-0]
-timestamp: 2026-08-11T03:33:08Z
+timestamp: 2026-08-11T09:10:00Z
 epic: 0
 issue: 11
 slug: turn-hardening
 size: M
-status: open
+status: in-progress
 gh_issue: 33
 resource: https://github.com/julienlegoux/external-reviewer/issues/33
 depends_on: [6]
