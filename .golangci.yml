@@ -33,6 +33,14 @@ linters:
           msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
         - pattern: ^os\.Symlink$
           msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Chmod$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Chtimes$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Truncate$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Link$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
         - pattern: ^os\.Root\.Create$
           msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
         - pattern: ^os\.Root\.OpenFile$
@@ -52,6 +60,14 @@ linters:
         - pattern: ^os\.Root\.Symlink$
           msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
         - pattern: ^os\.Root\.Link$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.Root\.Chmod$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.File\.Write$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.File\.WriteString$
+          msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
+        - pattern: ^os\.File\.Truncate$
           msg: "the write half of the filesystem API is forbidden — see CONVENTIONS § Code style & formatting"
         - pattern: ^exec\.Command$
           msg: "exec.Command is forbidden outside the git_read implementation — a subprocess reads on its own authority, outside the os.Root handle"

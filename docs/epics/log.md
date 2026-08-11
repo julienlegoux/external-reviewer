@@ -2,6 +2,27 @@
 
 ## 2026-08-11
 
+* **PR opened**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) against `develop`.
+  CONVENTIONS' enumeration and `.golangci.yml`'s `forbidigo.forbid` list both gain
+  `os.Chmod`, `os.Chtimes`, `os.Truncate`, `os.Link`, `os.Root.Chmod`,
+  `(*os.File).Write`, `(*os.File).WriteString` and `(*os.File).Truncate`, plus
+  `os.Root.Link` named in CONVENTIONS for the first time; a probe file
+  (`testdata/probe/probe.go`, skipped by `golangci-lint`'s default `./...`
+  expansion) verifies all nine now fire and the repository itself still reports zero
+  findings. 53 insertions / 6 deletions across 5 files (~59 changed lines) against a
+  ~60-line target.
+
+* **Started**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  branch `issue-24-write-api-guard-coverage`.
+
+* **Merged**: [03 carry Epic 1's structural warnings into Epic 2's
+  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  [PR #35](https://github.com/julienlegoux/external-reviewer/pull/35) merged into
+  `develop`.
+
 * **Amended**: [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) issue
   [03 — multi-turn loop and dispatch](/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md)
   (#11) and issue
