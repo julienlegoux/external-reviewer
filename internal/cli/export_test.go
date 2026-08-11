@@ -45,12 +45,3 @@ func ClassifyForTest(err error) int { return classify(err) }
 // context.Canceled — must answer the same way, without going through a real
 // (or stubbed) review execution to construct it.
 func InterruptedErrorForTest(err error) bool { return interruptedError(err) }
-
-// AsInterruptedForTest exposes asInterrupted directly, so the race it
-// resolves — a failing turn's error winning the classification race against
-// stream.Result observing ctx.Err() directly — can be pinned deterministically,
-// by constructing both inputs by hand instead of racing a real stream against
-// a real cancellation.
-func AsInterruptedForTest(ctx context.Context, turnErr error) error {
-	return asInterrupted(ctx, turnErr)
-}

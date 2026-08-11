@@ -115,15 +115,23 @@ func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 // interruptedError check classifies every shape a cancelled run's terminal
 // error can take, including a *ai.ModelsError — the type Resolver.Resolve
 // returns for a broken credential — wrapping context.Canceled rather than a
-// bare wrapped error. Before this issue, a second check lived in
-// internal/reviewer (Conversation.Next) as a belt-and-braces fallback for
-// exactly this shape; deleting it was believed to change no observable
-// behaviour, on the premise that kern-link v0.1.1 always preserves the
-// cancellation cause through stream.Result(ctx)'s own error. That premise is
-// only half true — see TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded
-// below for the race that disproved it and asInterrupted, the narrow fix
-// that keeps this still being the one place the question is decided (a
-// second wrap, not a second decision point).
+// bare wrapped error.
+//
+// The decision point is here; producing the cause is internal/reviewer's job.
+// A failing turn that ends under a cancelled context now leaves
+// Conversation.Next already carrying context.Canceled (its
+// TestNext_AbortedMessageUnderCancelledContextIsInterrupted pins that
+// deterministically), which is what let internal/cli's own asInterrupted
+// wrap — a second guard answering the same question one layer further out —
+// be deleted rather than left overlapping it.
+//
+// The last row is the other half of the same boundary: a turn that ran out
+// of this binary's own stream timeout is a dead connection, not an
+// interruption, and must not borrow the word. It is asserted here rather
+// than end to end because reaching the real timeout through Run would mean
+// waiting out reviewer.DefaultStreamTimeout — ten minutes — while the bound
+// itself is asserted in milliseconds against Conversation.StreamTimeout in
+// internal/reviewer's TestNext_SilentProviderEndsAtTheStreamTimeout.
 //
 // This asserts interruptedError directly (via cli.InterruptedErrorForTest)
 // rather than driving the classification through a full Run: reaching a
@@ -141,6 +149,8 @@ func TestRunReview_InterruptionDecidedOnce(t *testing.T) {
 		{"a bare error wrapping context.Canceled", fmt.Errorf("streaming: %w", context.Canceled), true},
 		{"a bare error wrapping context.DeadlineExceeded", fmt.Errorf("streaming: %w", context.DeadlineExceeded), true},
 		{"a *ai.ModelsError wrapping context.Canceled", ai.NewModelsError(ai.ModelsErrorAuth, "resolving credentials", context.Canceled), true},
+		{"a turn that stopped aborted under a cancelled context", fmt.Errorf("the reviewer's turn stopped with reason %q: %s: %w", ai.StopReasonAborted, "Request was aborted", context.Canceled), true},
+		{"a stream timeout", fmt.Errorf("streaming the reviewer's turn: %w", reviewer.ErrStreamTimeout), false},
 		{"an unrelated failure", errors.New("turn failed: stop reason error"), false},
 	}
 
@@ -151,56 +161,4 @@ func TestRunReview_InterruptionDecidedOnce(t *testing.T) {
 			}
 		})
 	}
-}
-
-// TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded pins the fix for
-// a real windows-latest `go test -race` failure on this issue's own PR (CI
-// run 31459008705): the identical commit passed the same job moments
-// earlier (run 31459006569), so this was never a bad assertion — it was a
-// genuine race in kern-link's Stream.Result(ctx), which selects between its
-// result channel and ctx.Done(). When a cancellation lands mid-stream,
-// either can win: if ctx.Done() wins, Result returns ctx.Err() directly and
-// Conversation.Next's error already wraps it — the path
-// TestRunContext_CancelledContext_ExitsTwo and (usually)
-// TestRun_CancelledMidStream_ExitsTwo exercise. But if the provider's own
-// goroutine notices the cancellation first and finishes with a
-// StopReasonAborted message before Result's select runs, Result returns
-// that message with a nil error, and Conversation.Next's returned error —
-// "the reviewer's turn stopped with reason %q: %s" — wraps nothing that
-// errors.Is(_, context.Canceled) can find. That is exactly the failure CI
-// hit: stop=failed instead of stop=interrupted.
-//
-// Rather than trying to force that exact goroutine interleaving from a
-// black-box test — inherently non-deterministic, and the reason the bug
-// shipped in the first place — this constructs both of asInterrupted's
-// inputs directly, so the fix is pinned regardless of which race outcome
-// the runtime happens to hit on any given run or platform.
-func TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded(t *testing.T) {
-	turnErr := fmt.Errorf("the reviewer's turn stopped with reason %q: %s", ai.StopReasonAborted, "Request was aborted")
-
-	t.Run("context still live: turnErr passes through, not classified as interrupted", func(t *testing.T) {
-		got := cli.AsInterruptedForTest(context.Background(), turnErr)
-		if cli.InterruptedErrorForTest(got) {
-			t.Errorf("AsInterruptedForTest(live ctx, %v) = %v, want it not classified as interrupted", turnErr, got)
-		}
-	})
-
-	t.Run("context already ended: turnErr is reclassified as interrupted", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		got := cli.AsInterruptedForTest(ctx, turnErr)
-		if !cli.InterruptedErrorForTest(got) {
-			t.Errorf("AsInterruptedForTest(cancelled ctx, %v) = %v, want it classified as interrupted", turnErr, got)
-		}
-	})
-
-	t.Run("nil turnErr: a complete message is never touched, cancelled context or not", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		if got := cli.AsInterruptedForTest(ctx, nil); got != nil {
-			t.Errorf("AsInterruptedForTest(cancelled ctx, nil) = %v, want nil", got)
-		}
-	})
 }

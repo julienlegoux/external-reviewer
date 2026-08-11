@@ -10,6 +10,7 @@
 package fauxtest
 
 import (
+	"context"
 	"testing"
 
 	"github.com/julienlegoux/kern-link/ai"
@@ -54,6 +55,30 @@ type RegistryOptions struct {
 	// adapter's own service-tier-scaled figure) has something to multiply.
 	// Tests that don't assert on cost leave this false.
 	Priced bool
+	// Stream replaces the faux provider's own streaming with a script the
+	// test writes event by event. Leave it nil for the ordinary path —
+	// faux.Handle's queued responses, realistic chunking and abort
+	// handling — and set it only for the two things the faux provider
+	// cannot express: a terminal message whose Usage.Cost is already filled
+	// in (faux recomputes Usage from the prompt and leaves Cost zero), and a
+	// provider that accepts the stream and then sends nothing at all.
+	Stream StreamScript
+}
+
+// StreamScript is the provider seam a test drives directly: it returns the
+// *ai.Stream a single StreamSimple call answers with, so the test owns which
+// events are pushed and exactly when — including pushing none. It carries
+// ai.SimpleStreamOptions rather than ai.StreamOptions because StreamSimple is
+// the entry point internal/reviewer uses, and opts.Timeout is one of the
+// things this epic asserts on.
+type StreamScript func(ctx context.Context, model *ai.Model, chat ai.Context, opts *ai.SimpleStreamOptions) *ai.Stream
+
+// SilentStream is the hang this epic bounds, as a StreamScript: a provider
+// that accepts the connection, returns a live stream and then never pushes a
+// single event — not even a terminal one. Nothing but a timeout ends a turn
+// that meets it.
+func SilentStream(context.Context, *ai.Model, ai.Context, *ai.SimpleStreamOptions) *ai.Stream {
+	return ai.NewStream()
 }
 
 // NewRegistry builds the offline MutableModels a test resolves against and
@@ -79,7 +104,32 @@ func NewRegistry(t testing.TB, opts RegistryOptions) (ai.MutableModels, *faux.Ha
 		TokensPerSecond: opts.TokensPerSecond,
 	})
 
+	provider := handle.Provider
+	if opts.Stream != nil {
+		provider = scriptedProvider(opts.ProviderID, handle.Models, opts.Stream)
+	}
+
 	models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: opts.Credentials})
-	models.SetProvider(NewAuthProvider(handle.Provider, opts.Auth))
+	models.SetProvider(NewAuthProvider(provider, opts.Auth))
 	return models, handle
+}
+
+// scriptedProvider serves the same models faux built — same ids, same price
+// sheet, so pricing stays described in one place — behind the test's own
+// stream script instead of faux's response queue.
+func scriptedProvider(providerID string, models []*ai.Model, script StreamScript) ai.Provider {
+	return ai.CreateProvider(ai.CreateProviderOptions{
+		ID:     providerID,
+		Models: models,
+		Api: ai.StreamFuncs{
+			StreamFunc: func(ctx context.Context, model *ai.Model, chat ai.Context, opts *ai.StreamOptions) *ai.Stream {
+				var simple *ai.SimpleStreamOptions
+				if opts != nil {
+					simple = &ai.SimpleStreamOptions{StreamOptions: *opts}
+				}
+				return script(ctx, model, chat, simple)
+			},
+			StreamSimpleFunc: ai.SimpleStreamFunc(script),
+		},
+	})
 }

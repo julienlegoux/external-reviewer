@@ -214,6 +214,58 @@ func TestRun_FailedTurn_ExitsTwo(t *testing.T) {
 	}
 }
 
+// TestRun_DoneLineCarriesTheAdaptersOwnCost is the $ figure's end of the
+// cost repair. kern-link's openai-responses adapter fills Usage.Cost and then
+// scales it by the service tier — 2.5x for "priority", 0.5x for "flex" — and
+// internal/reviewer used to run ai.CalculateCost over the same usage again,
+// which can only reproduce the base price sheet and throw the adjustment
+// away. The scripted turn below reports a cost the price sheet cannot
+// produce, and the done line has to carry that number and no other.
+func TestRun_DoneLineCarriesTheAdaptersOwnCost(t *testing.T) {
+	// 2.5x the base-sheet figure for the same tokens against fauxtest's price
+	// sheet ($100/1e6 in, $200/1e6 out): $0.2000 recomputed, $0.5000 as the
+	// adapter reported it.
+	const (
+		adjustedTotal = 0.5
+		baseSheetLine = "$0.2000"
+	)
+	answer := &ai.AssistantMessage{
+		Content:    []ai.AssistantContentPart{ai.TextContent{Text: markdownAnswer}},
+		StopReason: ai.StopReasonStop,
+		Usage: ai.Usage{
+			Input: 1000, Output: 500, TotalTokens: 1500,
+			Cost: ai.UsageCost{Input: 0.25, Output: 0.25, Total: adjustedTotal},
+		},
+	}
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: reviewer.DefaultProviderID,
+		ModelIDs:   []string{reviewer.DefaultModelID},
+		Auth:       fauxtest.CredentialedAuth("OAuth"),
+		Priced:     true,
+		Stream: func(context.Context, *ai.Model, ai.Context, *ai.SimpleStreamOptions) *ai.Stream {
+			stream := ai.NewStream()
+			stream.Push(ai.DoneEvent{Reason: answer.StopReason, Message: answer})
+			return stream
+		},
+	})
+
+	code, stdout, stderr := runReviewOver(t, models, t.TempDir())
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr)
+	}
+	if stdout != markdownAnswer {
+		t.Fatalf("stdout = %q, want the reviewer's answer", stdout)
+	}
+	fields := parseDoneLine(t, stderr)
+	if fields.cost != "0.5000" {
+		t.Errorf("done cost = $%s, want $0.5000 — the adapter's own service-tier-adjusted total", fields.cost)
+	}
+	if strings.Contains(stderr, baseSheetLine) {
+		t.Errorf("stderr = %q, want no %s anywhere: that is the base price sheet recomputed over the adapter's figure", stderr, baseSheetLine)
+	}
+}
+
 // TestRun_CancelledMidStream_ExitsTwo is the one termination a human at the
 // keyboard controls, and the only brake on an unbounded run: the response is
 // throttled to a crawl and the context is cancelled while deltas are still
@@ -221,12 +273,12 @@ func TestRun_FailedTurn_ExitsTwo(t *testing.T) {
 // stream.Result(ctx) or by the provider's own StopReasonAborted message
 // first is a race by construction, so both must land on the same outcome —
 // exit 2, an empty stdout, and an interruption on the transcript. It is not
-// always the same outcome by accident: asInterrupted (review.go) is what
-// makes the second race path also classify as interrupted, added after a
-// windows-latest `go test -race` run caught the outcome diverging (see
-// TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded in run_test.go
-// for that race pinned deterministically, without depending on this test's
-// own timing).
+// always the same outcome by accident: reviewer.Conversation.Next attaches
+// the cancellation cause to a turn that stopped aborted under an ended
+// context, which is what makes the second race path classify as interrupted
+// too (see TestNext_AbortedMessageUnderCancelledContextIsInterrupted in
+// internal/reviewer/turn_test.go for that path pinned deterministically,
+// without depending on this test's own timing).
 func TestRun_CancelledMidStream_ExitsTwo(t *testing.T) {
 	models := scripted(t, 1, faux.Step(faux.TextMessage(strings.Repeat("a long answer that is still streaming. ", 20), nil)))
 
