@@ -134,17 +134,17 @@ func TestWriteTurn_RendersFields(t *testing.T) {
 	}{
 		{
 			name: "sub-minute elapsed renders seconds with one decimal",
-			n: 3, tools: 2, inTok: 48210, outTok: 1104, cost: 0.0231, elapsed: 42800 * time.Millisecond,
+			n:    3, tools: 2, inTok: 48210, outTok: 1104, cost: 0.0231, elapsed: 42800 * time.Millisecond,
 			want: "turn 3  tools=2  in=48210 out=1104  $0.0231  42.8s\n",
 		},
 		{
 			name: "elapsed of exactly one minute takes the minutes branch, not seconds",
-			n: 1, tools: 0, inTok: 100, outTok: 50, cost: 0.0001, elapsed: time.Minute,
+			n:    1, tools: 0, inTok: 100, outTok: 50, cost: 0.0001, elapsed: time.Minute,
 			want: "turn 1  tools=0  in=100 out=50  $0.0001  1m0s\n",
 		},
 		{
 			name: "elapsed of 95 minutes renders an hour unit",
-			n: 1, tools: 0, inTok: 100, outTok: 50, cost: 0.0001, elapsed: 95 * time.Minute,
+			n:    1, tools: 0, inTok: 100, outTok: 50, cost: 0.0001, elapsed: 95 * time.Minute,
 			want: "turn 1  tools=0  in=100 out=50  $0.0001  1h35m0s\n",
 		},
 	}
