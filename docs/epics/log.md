@@ -2,6 +2,11 @@
 
 ## 2026-08-11
 
+* **Merged**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) merged into
+  `develop`.
+
 * **PR opened**: [02 widen the write-API guard to every write operation CONVENTIONS
   names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
   [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) against `develop`.

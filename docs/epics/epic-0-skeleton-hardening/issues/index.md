@@ -4,7 +4,7 @@ Plan and standard repairs first — each one changes the contract the code work 
 against — then the CI gate that protects every PR after it, then the code.
 
 * [Settle the done line's stop-reason vocabulary and document it in SPECS](./01-stop-reason-vocabulary.md) - S, open, [#23](https://github.com/julienlegoux/external-reviewer/issues/23)
-* [Widen the write-API guard to every write operation CONVENTIONS names](./02-write-api-guard-coverage.md) - S, pr-open, [#24](https://github.com/julienlegoux/external-reviewer/issues/24), [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36)
+* [Widen the write-API guard to every write operation CONVENTIONS names](./02-write-api-guard-coverage.md) - S, done, [#24](https://github.com/julienlegoux/external-reviewer/issues/24), [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36)
 * [Carry Epic 1's structural warnings into Epic 2's issues](./03-epic-2-plan-amendments.md) - S, done, [#25](https://github.com/julienlegoux/external-reviewer/issues/25), [PR #35](https://github.com/julienlegoux/external-reviewer/pull/35)
 * [Enforce gofmt in CI, normalise line endings, and lint on both OSes](./04-ci-formatting-gate.md) - S, open, [#26](https://github.com/julienlegoux/external-reviewer/issues/26)
 * [Extract one importable faux harness and retire the mutable package-level seams](./05-shared-faux-harness.md) - M, open, [#27](https://github.com/julienlegoux/external-reviewer/issues/27)
