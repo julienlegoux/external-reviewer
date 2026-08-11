@@ -2,6 +2,11 @@
 
 ## 2026-08-11
 
+* **Merged**: [05 extract one importable faux harness and retire the mutable
+  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40)
+  merged into `develop`.
+
 * **Merged**: [08 handle the repository path as an OS path and emit wire
   paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
   (#30) — [PR #41](https://github.com/julienlegoux/external-reviewer/pull/41)
