@@ -2,6 +2,26 @@
 
 ## 2026-08-11
 
+* **PR opened**: [11 bound the turn and fix its cost and cancellation
+  precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
+  [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45) against
+  `develop`. `Conversation.Next` keeps the adapter's service-tier-adjusted
+  `Usage.Cost` and computes from the price sheet only where the adapter
+  reported none; a `DefaultStreamTimeout` of ten minutes bounds the round trip
+  from this side and is handed to the adapter as well, with a turn that ends on
+  it reporting the new `reviewer.ErrStreamTimeout` — deliberately not a context
+  error, so it takes SPECS' existing `failed` branch and adds no `stop=` word;
+  and a second, non-cancellable read of `stream.Result` makes a message that is
+  already there beat a cancellation that landed beside it, with `endedBecause`
+  stating the remaining order once. `internal/cli`'s `asInterrupted` is removed
+  as redundant with what `Next` now returns, leaving `interruptedError` the one
+  decision point. Deleting the reviewer-side guard reproduces issue 05's
+  intermittent `windows-latest` failure (`stop=failed` instead of
+  `interrupted`) 3 runs out of 3. ~871 changed lines against a ~250 M target,
+  386 of them the new test file. Evidence, including what was argued rather
+  than observed, in
+  [11-verification](/epic-0-skeleton-hardening/issues/11-verification.md).
+
 * **Started**: [11 bound the turn and fix its cost and cancellation
   precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
   branch `issue-33-turn-hardening`.
