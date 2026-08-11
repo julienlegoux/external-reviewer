@@ -2,6 +2,10 @@
 
 ## 2026-08-11
 
+* **Started**: [12 escape provider-controlled text on stderr and finish diag's
+  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md) (#34) —
+  branch `issue-12-transcript-parsing-fauxtest`.
+
 * **PR opened**: [10 survive a failing or closed stdout without escaping the done-line
   seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
   [PR #42](https://github.com/julienlegoux/external-reviewer/pull/42) against
