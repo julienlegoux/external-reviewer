@@ -2,6 +2,26 @@
 
 ## 2026-08-11
 
+* **PR opened**: [08 handle the repository path as an OS path and emit wire
+  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  (#30) — [PR #41](https://github.com/julienlegoux/external-reviewer/pull/41)
+  against `develop`. `runReviewCommand` now runs the positional repository
+  path through `filepath.Clean` before `os.Stat`, and every diagnostic that
+  reaches stderr converts it to a `filepath.ToSlash` wire form with the OS's
+  own error sentence dropped entirely — the message states only what was
+  attempted, lowercase and unpunctuated; classification stays on the wrapped
+  error via `errors.Is`/`errors.As`. `TestRun_Review_PathDiagnostics_AreWireForm`
+  is table-driven over the nonexistent-path and not-a-directory cases and
+  builds its expectation from `filepath.ToSlash` of the same native path,
+  with no `runtime.GOOS` branch; run against the pre-fix source it
+  reproduced the exact reported bug (double-escaped backslashes, the OS's
+  capitalised sentence) on this Windows dev machine. 84 changed lines (22
+  production, 62 test) against a ~200 M target.
+
+* **Started**: [08 handle the repository path as an OS path and emit wire
+  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  (#30) — branch `issue-08-path-boundary`.
+
 * **Merged**: [07 write one prefixed error: line from diag on every exit-2
   path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
   [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) merged into
