@@ -2,16 +2,15 @@ package cli_test
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
@@ -165,12 +164,11 @@ func TestRun_Review(t *testing.T) {
 			// gets past parsing consumes a scripted response, and a shared
 			// faux provider would leave the second one talking to an empty
 			// queue.
-			defer cli.SetModelsForTest(registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))()
-
 			argv := tc.argv(t)
 
 			var stdout, stderr bytes.Buffer
-			code := cli.Run(argv, strings.NewReader(tc.stdin), &stdout, &stderr)
+			code := cli.RunForTest(argv, strings.NewReader(tc.stdin), &stdout, &stderr,
+				registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 			if code != tc.wantExit {
 				t.Errorf("exit code = %d, want %d (stderr: %q)", code, tc.wantExit, stderr.String())
@@ -231,13 +229,9 @@ func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
 // half of the pair TestRun_BrokenCredential_ExitsTwo already writes for the
 // exit-2 sibling.
 func TestRun_NoReviewerReached_WritesNoErrorLine(t *testing.T) {
-	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer, io.Writer) error {
-		return cli.ErrNoReviewer
-	})
-	defer restore()
-
 	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunForTest([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+		registry(t, fauxtest.UnconfiguredAuth(), nil, reviewer.DefaultModelID))
 
 	if code != 1 {
 		t.Fatalf("exit code = %d, want 1 (stderr: %q)", code, stderr.String())

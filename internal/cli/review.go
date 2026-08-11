@@ -25,30 +25,23 @@ type reviewRequest struct {
 	Task     string
 }
 
-// performReview is everything a syntactically valid review does once parsing
-// is done: pre-flight resolution and the round trip that follows it.
-// export_test.go exposes SetReviewerForTest so a test can replace the whole
-// of it and drive a termination path directly.
-var performReview = resolveAndReview
-
-// models is the provider registry resolution runs against. It stays nil in a
-// real process — reviewer.DefaultModels builds the real one, over kern-link's
-// own credential store, on the first review — and is set by tests to an
-// offline registry so no test can reach the network or spend money.
-var models ai.Models
-
 // resolveAndReview runs the pre-flight that can end a run before a single
 // request is sent, then takes the one turn Epic 1 ships and writes the
 // reviewer's own markdown to stdout. Nothing about the credential exists at
 // this layer: resolution returns a source label, never an AuthResult, so
 // there is no credential value here to leak.
 //
+// registry reaches here as an explicit dependency threaded from run's inner
+// seam (see run.go and ensureModels below) rather than through a
+// package-level mutable — the only seam a test replaces is the argument it
+// passes in.
+//
 // stdout is written exactly once, at the very end, from the completed final
 // message — never from the text deltas as they arrive. That is what makes
 // "stdout is empty on every failure" true for the failures that stream a
 // paragraph of prose before falling over.
-func resolveAndReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
-	registry, err := reviewModels()
+func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
+	registry, err := ensureModels(registry)
 	if err != nil {
 		return err
 	}
@@ -68,7 +61,7 @@ func resolveAndReview(ctx context.Context, req reviewRequest, stdout, stderr io.
 	turn, turnErr := conversation.Next(ctx)
 	recordTurn(stderr, state, turn)
 	if turnErr != nil {
-		return turnErr
+		return asInterrupted(ctx, turnErr)
 	}
 
 	report := reviewer.FinalText(turn.Message)
@@ -146,20 +139,21 @@ func diagnosticMessage(diagnostic ai.AssistantMessageDiagnostic) string {
 	return kind + ": " + diagnostic.Error.Message
 }
 
-// reviewModels returns the injected registry when a test set one, and builds
-// the real one otherwise. A credential store that cannot even be located is
-// a broken machine rather than an absent reviewer, so it propagates as an
-// ordinary error — exit 2 with a reason — rather than the silent exit 1 an
-// unconfigured provider gets.
-func reviewModels() (ai.Models, error) {
-	if models != nil {
-		return models, nil
+// ensureModels returns registry unchanged when a caller supplied one — every
+// test does, as an explicit argument — and builds the real one, over
+// kern-link's own credential store, otherwise. A credential store that
+// cannot even be located is a broken machine rather than an absent
+// reviewer, so it propagates as an ordinary error — exit 2 with a reason —
+// rather than the silent exit 1 an unconfigured provider gets.
+func ensureModels(registry ai.Models) (ai.Models, error) {
+	if registry != nil {
+		return registry, nil
 	}
-	registry, err := reviewer.DefaultModels()
+	built, err := reviewer.DefaultModels()
 	if err != nil {
 		return nil, fmt.Errorf("building the model registry: %w", err)
 	}
-	return registry, nil
+	return built, nil
 }
 
 // runReviewCommand parses the `review` subcommand's flags and positional
@@ -176,7 +170,7 @@ func reviewModels() (ai.Models, error) {
 // its default behaviour would otherwise put an unprefixed "Usage of
 // review:" block on stderr ahead of the diag.WriteError line below, which
 // is exactly the second, unprefixed line the acceptance criteria forbid.
-func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State) error {
+func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models) error {
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
@@ -255,24 +249,16 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return errors.New("empty task prompt")
 	}
 
-	return runReview(ctx, reviewRequest{RepoPath: repoPath, Task: task}, stdout, stderr, state)
+	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task}, stdout, stderr, state)
 }
 
 // runReview calls the review seam and folds its outcome into state's stop
-// reason. Cancellation is checked before the generic failure case: a run a
-// human interrupted is not a run that failed, and the transcript has to say
-// which of the two happened. Both are exit 2 all the same.
-//
-// This is the one place "was this interrupted?" is decided: whether the
-// terminal error, at any wrap depth, wraps context.Canceled or
-// context.DeadlineExceeded — including a *ai.ModelsError from Resolve,
-// whose Unwrap exposes exactly that when the pre-flight call itself was
-// cancelled. internal/cli/run.go and internal/reviewer/run.go used to carry
-// their own copies of this question; both were deletable without changing
-// observable behaviour, because this check already covers what they
-// covered (verified by running the full suite with each removed).
-func runReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
-	err := performReview(ctx, req, stdout, stderr, state)
+// reason. Cancellation (interruptedError) is checked before the generic
+// failure case: a run a human interrupted is not a run that failed, and the
+// transcript has to say which of the two happened. Both are exit 2 all the
+// same.
+func runReview(ctx context.Context, registry ai.Models, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
+	err := resolveAndReview(ctx, registry, req, stdout, stderr, state)
 	switch {
 	case err == nil:
 		// state.StopReason already carries the model's own reason: recordTurn
@@ -280,7 +266,7 @@ func runReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer,
 		// not a CLI word (SPECS § Interfaces).
 	case errors.Is(err, ErrNoReviewer):
 		state.StopReason = "no_reviewer"
-	case errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded):
+	case interruptedError(err):
 		state.StopReason = "interrupted"
 		diag.WriteError(stderr, "run interrupted")
 	default:
@@ -288,4 +274,54 @@ func runReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer,
 		diag.WriteError(stderr, err.Error())
 	}
 	return err
+}
+
+// interruptedError reports whether err represents a run a human (or a
+// deadline) interrupted rather than one that failed on its own — the same
+// question at any wrap depth, whatever shape the terminal error takes:
+// context.Canceled/context.DeadlineExceeded directly, or wrapped inside a
+// *ai.ModelsError from Resolve, whose Unwrap exposes exactly that when the
+// pre-flight call itself was cancelled, or folded in by asInterrupted when a
+// failing turn's own error text carries no cancellation cause at all. This
+// is the one place "was this interrupted?" is decided.
+func interruptedError(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+}
+
+// asInterrupted turns a failing turn's error into one interruptedError
+// recognises whenever ctx has actually ended — regardless of which race
+// produced turnErr's exact shape. kern-link's Stream.Result(ctx) selects
+// between its result channel and ctx.Done(); when a cancellation lands
+// while a response is still streaming, either case can win: if ctx.Done()
+// wins, Result returns ctx.Err() directly and turnErr already wraps it
+// (Conversation.Next's "streaming the reviewer's turn: %w"), but if the
+// provider's own goroutine notices the cancellation first and finishes with
+// a StopReasonAborted message before Result's select runs, Result returns
+// that message with a nil error, and Conversation.Next's
+// "the reviewer's turn stopped with reason %q: %s" carries no wrapped
+// cancellation cause at all — confirmed by a windows-latest `go test -race`
+// failure on this issue's own PR (CI run 31459008705), where the identical
+// commit passed the same job moments earlier. A nil turnErr — a complete,
+// successful message — is never touched here, so a report that finished
+// before a late cancellation lands is not discarded by this check; only a
+// turn that already failed can be reclassified.
+//
+// This is deliberately narrow: it answers "was ctx done when the turn
+// ended?", not "should a complete message ever be preferred over a late
+// cancellation?" — the latter is internal/reviewer's own precedence
+// question between StreamSimple's result and ctx.Err(), which
+// epic 0 issue 11 ("bound the turn and fix its cost and cancellation
+// precedence") owns restructuring inside Conversation.Next itself, with its
+// own scripted-and-deterministic test. Once issue 11 lands, this check may
+// become redundant with what Conversation.Next itself returns; it is not
+// removed pre-emptively here because a redundant-but-correct classification
+// is safer than an unclassified regression between the two PRs.
+func asInterrupted(ctx context.Context, turnErr error) error {
+	if turnErr == nil {
+		return nil
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return fmt.Errorf("%w: %w", turnErr, ctxErr)
+	}
+	return turnErr
 }

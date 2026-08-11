@@ -3,12 +3,12 @@ type: Issue
 title: "Handle the repository path as an OS path and emit wire paths on stderr"
 description: "Establish the OS-path/wire-path boundary CONVENTIONS decided and no product file implements, so Epic 2's --allow arguments arrive with a precedent to copy."
 tags: [epic-0]
-timestamp: 2026-08-11T09:15:00Z
+timestamp: 2026-08-11T09:30:00Z
 epic: 0
 issue: 08
 slug: os-and-wire-paths
 size: M
-status: pr-open
+status: done
 gh_issue: 30
 gh_pr: 41
 resource: https://github.com/julienlegoux/external-reviewer/issues/30

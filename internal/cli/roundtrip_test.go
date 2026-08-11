@@ -16,6 +16,7 @@ import (
 	"github.com/julienlegoux/kern-link/ai/providers/faux"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
@@ -35,10 +36,9 @@ var turnLineRE = regexp.MustCompile(
 // models, returning the exit code and both streams.
 func runReviewOver(t *testing.T, models ai.Models, repoPath string) (int, string, string) {
 	t.Helper()
-	defer cli.SetModelsForTest(models)()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunForTest([]string{"review", "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr, models)
 	return code, stdout.String(), stderr.String()
 }
 
@@ -49,7 +49,7 @@ func runReviewOver(t *testing.T, models ai.Models, repoPath string) (int, string
 // machine allows.
 func scripted(t *testing.T, tokensPerSecond float64, responses ...faux.ResponseStep) ai.Models {
 	t.Helper()
-	models, handle := registryWith(t, credentialedAuth("OAuth"), nil, tokensPerSecond, reviewer.DefaultModelID)
+	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, tokensPerSecond, reviewer.DefaultModelID)
 	handle.SetResponses(responses...)
 	return models
 }
@@ -217,19 +217,25 @@ func TestRun_FailedTurn_ExitsTwo(t *testing.T) {
 // TestRun_CancelledMidStream_ExitsTwo is the one termination a human at the
 // keyboard controls, and the only brake on an unbounded run: the response is
 // throttled to a crawl and the context is cancelled while deltas are still
-// arriving. Whether the cancellation is observed by kern-link's stream or by
-// the provider first is a race by construction, so both must land on the same
-// outcome — exit 2, an empty stdout, and an interruption on the transcript.
+// arriving. Whether the cancellation is observed by kern-link's
+// stream.Result(ctx) or by the provider's own StopReasonAborted message
+// first is a race by construction, so both must land on the same outcome —
+// exit 2, an empty stdout, and an interruption on the transcript. It is not
+// always the same outcome by accident: asInterrupted (review.go) is what
+// makes the second race path also classify as interrupted, added after a
+// windows-latest `go test -race` run caught the outcome diverging (see
+// TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded in run_test.go
+// for that race pinned deterministically, without depending on this test's
+// own timing).
 func TestRun_CancelledMidStream_ExitsTwo(t *testing.T) {
 	models := scripted(t, 1, faux.Step(faux.TextMessage(strings.Repeat("a long answer that is still streaming. ", 20), nil)))
-	defer cli.SetModelsForTest(models)()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	time.AfterFunc(25*time.Millisecond, cancel)
 	defer cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunContextForTest(ctx, []string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
