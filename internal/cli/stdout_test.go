@@ -239,6 +239,11 @@ func TestRun_ClosedStdoutPipe_NeverDiesBySignal(t *testing.T) {
 		t.Fatalf("creating the handshake pipe: %v", err)
 	}
 
+	// os.Args[0] is this very test binary and the argument is a constant, so
+	// there is no input to taint; re-executing the test binary is the only way
+	// to get a real pipe onto a real fd 1. -test.paniconexit0 is deliberately
+	// not passed on, so the child's os.Exit carries Run's code out unchanged.
+	//nolint:gosec // G204/G702: the command is this process's own binary and a literal flag.
 	cmd := exec.Command(os.Args[0], "-test.run=^TestBrokenStdoutPipeChild$")
 	cmd.Env = append(os.Environ(), brokenPipeChildEnv+"=1")
 	cmd.Stdin = stdinRead
