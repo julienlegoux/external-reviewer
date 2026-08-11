@@ -2,6 +2,11 @@
 
 ## 2026-08-11
 
+* **Merged**: [09 read the task prompt under a context, a byte bound and real
+  validation](/epic-0-skeleton-hardening/issues/09-bounded-validated-prompt.md)
+  (#31) — [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46)
+  merged into `develop`.
+
 * **PR opened**: [11 bound the turn and fix its cost and cancellation
   precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
   [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45) against
@@ -26,6 +31,29 @@
   polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md)
   (#34) — [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44)
   merged into `develop`.
+
+* **PR opened**: [09 read the task prompt under a context, a byte bound and real
+  validation](/epic-0-skeleton-hardening/issues/09-bounded-validated-prompt.md)
+  (#31) — [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46) against
+  `develop`. `runReviewCommand`'s stdin read moves into `readPromptFromStdin(ctx,
+  stdin)`: the read runs on its own goroutine feeding a buffered channel, selected
+  against `ctx.Done()`, so a `SIGINT` (or any cancellation) reaching a blocked read
+  now terminates through the ordinary `done`-line seam — `stop=interrupted` — instead
+  of hanging forever; the goroutine left behind when `ctx` wins is a documented,
+  bounded leak for the process's remaining lifetime. The read is also bounded to 1
+  MiB via `io.LimitReader`, with a named `errPromptTooLarge` sentinel classification
+  inspects through `errors.Is`. The emptiness test moves to
+  `strings.TrimSpace(task) == ""`, catching `--prompt " "` and `echo |`'s lone
+  newline, while the prompt actually sent to the model is never rewritten. The
+  `--prompt ""` flag-presence check (`fs.Visit`) is unchanged and pinned against the
+  `promptSet := *prompt != ""` collapse by a dedicated test, verified red by hand
+  under the mutation. The real-`SIGINT` acceptance criterion was verified by hand
+  against a real Linux kernel via `wsl -d docker-desktop` (issue 10's own environment
+  for its SIGPIPE criterion), transcript at
+  `docs/epics/epic-0-skeleton-hardening/verification/09-sigint-hand-verification.md`.
+  No new stop-reason word — `usage` and `interrupted` already covered every path. 365
+  insertions / 9 deletions (~374 changed lines) against a ~250 M estimate, under the
+  ~500 target.
 
 * **Merged**: [06 kill the four surviving mutants on the request side of the
   round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)

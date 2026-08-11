@@ -87,6 +87,35 @@ mutations above were re-applied against the twice-merged tree and all three go
 red identically — the accumulator test, the cache-token test, and
 `TestRun_CancelledMidStream_ExitsTwo` 3 runs of 3.
 
+## After merging issue 09 (PR #46)
+
+Issue 09 made the stdin read cancellable, so a `SIGINT` is now observable before
+the model call. That narrows the same window this issue narrowed from the other
+end (`Next` refusing to open a stream under an ended context), which raises a
+fair question: is `TestRunContext_CancelledContext_ExitsTwo`'s
+`in=0 out=0` assertion still testing this issue's guard, or has issue 09's
+earlier exit made it vacuous?
+
+**It is not vacuous.** That test invokes `review --prompt x <dir>`, so `fs.Visit`
+sets `promptSet` and `readPromptFromStdin` is never called — issue 09's
+cancellable read is not on this path at all. The run reaches
+`conversation.Next`, and removing this issue's already-ended-context short
+circuit fails the test **3 runs of 3** with `done in/out = "2"/"3", want 0/0`.
+The guard is what keeps those counts at zero.
+
+All three standing mutations re-confirmed against the tree with issue 09 merged:
+
+| Mutation | Result |
+| --- | --- |
+| `c.messages = append(c.messages, message)` deleted | `TestConversation_Next_AccumulatesMessagesInOrder` fails — `carried 1 messages, want 2` |
+| `+ turn.Usage.CacheRead + turn.Usage.CacheWrite` deleted | `TestRun_CacheTokens_IncludedInInAccounting` fails — `done in = "120", want "205"` |
+| this issue's `endedBecause` branch deleted | `TestNext_AbortedMessageUnderCancelledContextIsInterrupted` and `TestNext_AbortingProviderStillReportsTheStreamTimeout` fail; `TestRun_CancelledMidStream_ExitsTwo` fails 3 of 3 with `done stop = "failed", want interrupted` |
+| this issue's already-ended-context short circuit deleted | `TestRunContext_CancelledContext_ExitsTwo` fails 3 of 3 with `done in/out = "2"/"3"` |
+
+Green with issue 09 merged: `internal/reviewer` 29, `internal/cli` 74,
+`internal/diag` 18 tests and subtests, five consecutive repeats each, no
+failures.
+
 ## Argued rather than observed
 
 * Behaviour under `-race`, on either OS.
