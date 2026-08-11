@@ -111,23 +111,34 @@ vocabularies keep that from becoming a class of recurring bug
 - Standard library `testing` only. No `testify`, no assertion helpers, no mocking
   framework ([specs 16](/specs/16-testing-infrastructure.md)). `go test ./... -race` is
   the command.
-- **That command runs on a remote Linux host, not on the Windows development machine**,
-  and `scripts/test-remote.sh` is how — it copies the working tree over ssh, runs
-  `go test` there with `-race` appended, and exits with what the remote exited with:
+- **The command splits in two on the Windows development machine**, and the split is
+  the machine's Application Control policy, not a preference
+  ([drift](/DRIFT.md#09-10-11--the-decided-test-command-does-not-run-on-the-development-machine--resolved-2026-08-11)):
 
-  ```sh
-  scripts/test-remote.sh                                  # the whole suite
-  scripts/test-remote.sh ./internal/cli -run TestFoo -v   # one test, for red-green
-  ```
+  - **`go test ./...` runs natively**, and is the fast inner loop — no ssh, no sync.
+    It needs one machine-local setting, `go env -w GOTMPDIR=C:\dev\gotmp` or any path
+    outside `%LOCALAPPDATA%\Temp`. Without it the policy refuses the temporary binaries
+    `go test` builds and every package fails before a test runs. The setting lives in
+    the user's Go env file, not in this repository.
+  - **`-race` runs on a remote Linux host**, through `scripts/test-remote.sh`, which
+    copies the working tree over ssh, runs `go test` there with `-race` appended, and
+    exits with what the remote exited with:
 
-  It syncs the *working tree*, not `HEAD`, so an uncommitted failing test is watchable
-  going red and then green — which is what strict red-green above needs. The remote
-  defaults to the ssh alias `vps` and needs only a Go toolchain and a C compiler;
-  `EXTERNAL_REVIEWER_TEST_REMOTE` points it at any other host. The Windows host cannot
-  run the command itself: a local Application Control policy blocks the temporary
-  binaries `go test` builds, and `-race` needs cgo, which no C compiler here provides
-  ([drift](/DRIFT.md#09-10-11--the-decided-test-command-does-not-run-on-the-development-machine--resolved-2026-08-11)).
-  `windows-latest` behaviour is therefore still observed only in CI.
+    ```sh
+    scripts/test-remote.sh                                  # the whole suite
+    scripts/test-remote.sh ./internal/cli -run TestFoo -v   # one test, for red-green
+    ```
+
+    It syncs the *working tree*, not `HEAD`, so an uncommitted failing test is watchable
+    going red and then green — which is what strict red-green above needs. The remote
+    defaults to the ssh alias `vps` and needs only a Go toolchain and a C compiler;
+    `EXTERNAL_REVIEWER_TEST_REMOTE` points it at any other host.
+
+  `-race` cannot run natively here: it needs cgo, and the same policy refuses the
+  unsigned DLLs a Windows C toolchain loads at startup — a Go test binary is a single
+  static executable and passes, `gcc.exe` is not and does not. So a race that only
+  surfaces under the Windows scheduler is caught by CI, not locally. **Nothing else is
+  CI-only**: `windows-latest` behaviour is otherwise reproducible on the spot.
 - **Black-box by default** ([decision](/conventions/05-test-package-layout.md)): tests
   are `package foo_test`. In-package tests are the exception, for unexported logic with
   no reachable path through the package's API, and go in a file named

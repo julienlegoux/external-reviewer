@@ -49,12 +49,24 @@ Append-only, newest epic first. An entry that stops being true becomes
   observed firing — a deliberately racy probe test reported `WARNING: DATA RACE` and
   exit `1` — rather than assumed live. [CONVENTIONS § Testing](/CONVENTIONS.md) now says
   where the command runs.
-- **Residual, deliberately not covered**: the Windows Application Control policy is
-  untouched, so `go test` still cannot execute its own binaries natively on the host and
-  `windows-latest` behaviour remains observable only in CI. That half needs administrator
-  rights on the machine, which is why it outlived this entry; it is the smaller half,
-  since the two-OS split this project actually cares about — `os.Root` semantics and path
-  separators — is asserted by tests the CI matrix runs on both.
+- **Then the Windows half fell too, the same day, and without administrator rights.**
+  The policy was never exempted; it turned out not to need exempting. `go test` builds its
+  temporary binaries under `GOTMPDIR`, and pointing that at `C:\dev\gotmp` instead of the
+  default `%LOCALAPPDATA%\Temp` is enough — `go test ./...` now completes natively on the
+  Windows host, exit `0`, with no Code Integrity block logged. That, not the remote, is
+  the fast red-green loop; the remote is what `-race` needs.
+- **Residual, verified rather than assumed**: `-race` still cannot run natively on
+  Windows. It needs cgo, and the policy refuses the unsigned DLLs a Windows C toolchain
+  loads at startup — WinLibs `gcc.exe` was installed and blocked on `libiconv-2.dll`,
+  under `%LOCALAPPDATA%` and again after being copied to `C:\dev`, with Mark-of-the-Web
+  cleared. The rule is about loading unsigned *modules*, not about paths, which is why a
+  Go test binary passes (one static executable, no DLLs) and `gcc` does not. Closing this
+  means disabling Smart App Control, which Windows does not let you re-enable without a
+  reinstall — a bad trade for one narrow class of bug. So a race that only surfaces under
+  the Windows scheduler is caught by CI; everything else about `windows-latest` is
+  reproducible locally, and `-race` itself runs on the remote.
+- **Revisit when**: a statically linked Windows C toolchain is on hand — `zig cc` as `CC`
+  is the candidate, untried — or the machine's policy changes for unrelated reasons.
 - **Evidence**: PR #45 (issue 11's verification log — the constraint stated in full, and
   the four findings it left argued rather than observed), PR #46 (issue 09's hand-run
   SIGINT verification, the WSL cross-build in practice), PR #42 (issue 10's SIGPIPE

@@ -2,10 +2,11 @@
 #
 # Run the decided test command -- `go test ./... -race` -- on a remote Linux host.
 #
-# The development machine is Windows and cannot run it: a local Application Control
-# policy blocks the temporary binaries `go test` builds and executes, and `-race`
-# needs cgo, which no C compiler on this host can provide. See
-# docs/planning/DRIFT.md and docs/planning/CONVENTIONS.md section Testing.
+# The development machine is Windows and runs `go test ./...` natively -- but not
+# with `-race`, which needs cgo, and the machine's Application Control policy refuses
+# the unsigned DLLs a Windows C toolchain loads at startup. So the plain suite stays
+# local and fast, and `-race` comes here. See docs/planning/DRIFT.md and
+# docs/planning/CONVENTIONS.md section Testing.
 #
 # The remote needs three things: a Go toolchain, a C compiler, and an ssh entry.
 # Nothing is installed by this script and nothing is left running -- it copies the
