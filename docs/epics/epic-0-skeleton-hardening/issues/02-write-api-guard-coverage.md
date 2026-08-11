@@ -3,12 +3,12 @@ type: Issue
 title: "Widen the write-API guard to every write operation CONVENTIONS names"
 description: "Amend CONVENTIONS' forbidden write-API enumeration and mirror it in .golangci.yml so the eight operations that pass the repo's own config today are rejected."
 tags: [epic-0]
-timestamp: 2026-08-11T03:44:28Z
+timestamp: 2026-08-11T03:51:17Z
 epic: 0
 issue: 02
 slug: write-api-guard-coverage
 size: S
-status: pr-open
+status: done
 gh_issue: 24
 gh_pr: 36
 resource: https://github.com/julienlegoux/external-reviewer/issues/24
