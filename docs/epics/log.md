@@ -38,6 +38,11 @@
   defect repairs, `documentation` for the plan amendments, `enhancement` for the harness
   extraction.
 
+* **In progress**: started
+  [01 — Settle the done line's stop-reason vocabulary and document it in SPECS](/epic-0-skeleton-hardening/issues/01-stop-reason-vocabulary.md)
+  (issue [#23](https://github.com/julienlegoux/external-reviewer/issues/23)) on branch
+  `issue-23-stop-reason-vocabulary`.
+
 ## 2026-08-10
 
 * **Creation**: Established

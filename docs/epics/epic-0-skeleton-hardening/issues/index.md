@@ -3,7 +3,7 @@
 Plan and standard repairs first — each one changes the contract the code work is judged
 against — then the CI gate that protects every PR after it, then the code.
 
-* [Settle the done line's stop-reason vocabulary and document it in SPECS](./01-stop-reason-vocabulary.md) - S, open, [#23](https://github.com/julienlegoux/external-reviewer/issues/23)
+* [Settle the done line's stop-reason vocabulary and document it in SPECS](./01-stop-reason-vocabulary.md) - S, in-progress, [#23](https://github.com/julienlegoux/external-reviewer/issues/23)
 * [Widen the write-API guard to every write operation CONVENTIONS names](./02-write-api-guard-coverage.md) - S, open, [#24](https://github.com/julienlegoux/external-reviewer/issues/24)
 * [Carry Epic 1's structural warnings into Epic 2's issues](./03-epic-2-plan-amendments.md) - S, open, [#25](https://github.com/julienlegoux/external-reviewer/issues/25)
 * [Enforce gofmt in CI, normalise line endings, and lint on both OSes](./04-ci-formatting-gate.md) - S, open, [#26](https://github.com/julienlegoux/external-reviewer/issues/26)
