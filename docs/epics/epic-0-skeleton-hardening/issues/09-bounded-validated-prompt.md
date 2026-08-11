@@ -3,13 +3,14 @@ type: Issue
 title: "Read the task prompt under a context, a byte bound and real validation"
 description: "Make the stdin read cancellable so SIGINT is observable before the model call, bound it explicitly, and reject whitespace-only and empty-flag prompts before they buy an API call."
 tags: [epic-0]
-timestamp: 2026-08-11T09:00:00Z
+timestamp: 2026-08-11T12:00:00Z
 epic: 0
 issue: 09
 slug: bounded-validated-prompt
 size: M
-status: in-progress
+status: pr-open
 gh_issue: 31
+gh_pr: 46
 resource: https://github.com/julienlegoux/external-reviewer/issues/31
 depends_on: [8]
 ---
