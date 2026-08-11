@@ -20,6 +20,29 @@
   path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
   branch `issue-07-error-line-seam`.
 
+* **PR opened**: [04 enforce gofmt in CI, normalise line endings, and lint on both
+  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) against
+  `develop`. A top-level `formatters:` block (`gofmt`) in `.golangci.yml`,
+  `.gitattributes` (`* text=auto eol=lf`) with `git add --renormalize .` a
+  verified no-op against the LF-only index, and the `lint` job joined onto the
+  `[ubuntu-latest, windows-latest]` matrix. 7 files changed, 23 insertions / 7
+  deletions (~30 changed lines) against a ~40-line target.
+
+* **Merged**: [04 enforce gofmt in CI, normalise line endings, and lint on both
+  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) merged into
+  `develop`.
+
+* **Started**: [04 enforce gofmt in CI, normalise line endings, and lint on both
+  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  branch `issue-26-ci-formatting-gate`.
+
+* **Merged**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) merged into
+  `develop`.
+
 * **Merged**: [01 settle the done line's stop-reason vocabulary and document it in
   SPECS](/epic-0-skeleton-hardening/issues/01-stop-reason-vocabulary.md) (#23) —
   [PR #37](https://github.com/julienlegoux/external-reviewer/pull/37) merged into

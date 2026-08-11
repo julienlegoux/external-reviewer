@@ -85,3 +85,9 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   uniq-by-line: false
+
+# golangci-lint v2 moved formatters out of `linters` — gofmt only runs in CI
+# when named here (CONVENTIONS § Code style & formatting: "gofmt is law").
+formatters:
+  enable:
+    - gofmt
