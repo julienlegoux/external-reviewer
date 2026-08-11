@@ -2,6 +2,25 @@
 
 ## 2026-08-11
 
+* **PR opened**: [05 extract one importable faux harness and retire the mutable
+  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40)
+  against `develop`. `internal/fauxtest` (new, non-`_test.go`, imported by no
+  product file) carries the auth-provider decorator, the four auth shapes and
+  one registry builder with options, replacing three divergent copies across
+  `internal/reviewer/resolve_test.go`, `internal/cli/preflight_test.go` and
+  `internal/cli/roundtrip_test.go`. `var performReview` and `var models`
+  (`internal/cli/review.go`) are retired: the registry now reaches
+  `resolveAndReview` as an explicit parameter threaded from `run`'s inner seam,
+  with `export_test.go` exposing `RunForTest`/`RunWithModelsForTest`
+  constructors instead of setters. `exit_test.go`'s two stubbed terminations
+  are re-homed onto the faux-driven tests that already cover the same exit
+  codes for real; the two-level `ErrNoReviewer` wrap survives as a new test
+  asserted directly against `classify`. No behaviour change — every prior
+  assertion still exists, in the same or a more direct form. 325 insertions /
+  374 deletions across 11 files (~700 changed lines, including this run's
+  issue-04 reconcile and issue-05 bookkeeping) against a ~500-line M target.
+
 * **Started**: [05 extract one importable faux harness and retire the mutable
   package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
   (#27) — branch `issue-05-fixture-package`.
