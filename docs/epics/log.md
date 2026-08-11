@@ -22,6 +22,59 @@
   than observed, in
   [11-verification](/epic-0-skeleton-hardening/issues/11-verification.md).
 
+* **Merged**: [06 kill the four surviving mutants on the request side of the
+  round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
+  (#28) — [PR #43](https://github.com/julienlegoux/external-reviewer/pull/43)
+  merged into `develop`.
+
+* **Merged**: [10 survive a failing or closed stdout without escaping the
+  done-line seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md)
+  (#32) — [PR #42](https://github.com/julienlegoux/external-reviewer/pull/42)
+  merged into `develop`.
+
+* **PR opened**: [06 kill the four surviving mutants on the request side of
+  the round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
+  (#28) — [PR #43](https://github.com/julienlegoux/external-reviewer/pull/43)
+  against `develop`. `internal/reviewer/run_test.go` (new, `package
+  reviewer_test`) asserts the task prompt reaches the model verbatim from
+  inside a scripted `faux.StepFunc`, that the unexported `messages`
+  accumulator holds the user and assistant messages in order after a turn
+  (observed black-box by inspecting the *second* turn's incoming context),
+  and that `FinalText` concatenates text blocks in order while filtering
+  thinking blocks and tool calls. `internal/cli/roundtrip_test.go` gains the
+  same filtering claim asserted through `Run`, plus a cache-token test built
+  on a hand-rolled `ai.Provider` (`resolve_test.go`'s `dynamicRegistry`
+  pattern) since `faux`'s own cache simulation always reports zero without
+  `SessionID` reuse, which `Conversation.Next` never does. All four named
+  mutations applied by hand, watched red, reverted, watched green. Also
+  reconciles issue 05 to `done` (PR #40 merged into `develop` while this
+  issue was blocked on it). 263 changed lines against a ~300 M target.
+
+* **Started**: [06 kill the four surviving mutants on the request side of
+  the round trip](/epic-0-skeleton-hardening/issues/06-request-side-mutants.md)
+  (#28) — branch `issue-06-work`.
+
+* **PR opened**: [10 survive a failing or closed stdout without escaping the done-line
+  seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
+  [PR #42](https://github.com/julienlegoux/external-reviewer/pull/42) against
+  `develop`. `Run` registers for `syscall.SIGPIPE`, so a broken reader on fd 1
+  returns `EPIPE` instead of killing the process — `review … | head -20` now exits
+  `2` with a `done` line rather than `141` with the transcript cut off.
+  `syscall.SIGPIPE` exists on Windows too, so no `//go:build` divergence ships and
+  the one path is exercised on both matrix OSes by a child-process test that selects
+  its expectation at runtime. The report's single write is classified rather than
+  all-or-nothing: a write that fails after N bytes names the report incomplete, with
+  the bytes written and the report's length, through `diag.WriteError`. SPECS
+  § Interfaces and CONVENTIONS § Error handling both said "stdout is empty on any
+  failure", which a partial write makes false; both now state the three-part
+  guarantee the code holds. No new stop-reason word — `failed` already covered it.
+  408 insertions / 16 deletions (~424 changed lines) against a ~250 M estimate, the
+  overrun being the two-OS subprocess harness.
+
+* **Started**: [10 survive a failing or closed stdout without escaping the done-line
+  seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
+  branch `issue-32-stdout-write-failures`.
+
 * **Started**: [11 bound the turn and fix its cost and cancellation
   precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
   branch `issue-33-turn-hardening`.

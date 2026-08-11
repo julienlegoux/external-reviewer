@@ -3,23 +3,22 @@ package cli
 import (
 	"context"
 	"io"
-	"os"
-	"os/signal"
 
 	"github.com/julienlegoux/kern-link/ai"
 )
 
 // RunForTest calls Run's full behavior — including its signal.NotifyContext
-// wiring — against registry rather than the network, for every test that
-// isn't specifically exercising cancellation. It is the constructor a test
-// uses in place of mutating a package-level registry variable: registry is
-// passed in as an explicit argument, once, at the call site.
+// and SIGPIPE wiring — against registry rather than the network, for every
+// test that isn't specifically exercising cancellation. It is the
+// constructor a test uses in place of mutating a package-level registry
+// variable: registry is passed in as an explicit argument, once, at the call
+// site.
+//
+// It delegates to runProcess, which is Run's own body, rather than keeping a
+// second copy of the wiring: a replica drifts the moment the real entry
+// point gains anything, and this one had already missed handleSIGPIPE.
 func RunForTest(argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) int {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
-
-	code, _ := run(ctx, argv, stdin, stdout, stderr, registry)
-	return code
+	return runProcess(argv, stdin, stdout, stderr, registry)
 }
 
 // RunWithModelsForTest calls Run's inner seam directly with ctx and
