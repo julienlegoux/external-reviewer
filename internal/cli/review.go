@@ -84,7 +84,12 @@ func resolveAndReview(ctx context.Context, req reviewRequest, stdout, stderr io.
 // renders from and writes the turn's own line, plus a warn line for every
 // non-fatal diagnostic kern-link attached to the message. It runs on the
 // failure paths too: a turn that stopped with an error still consumed tokens,
-// and its diagnostics are usually why it stopped.
+// and its diagnostics are usually why it stopped. state.StopReason is set
+// here to the turn's own reason on every call — runReview's switch
+// unconditionally overwrites it with the CLI word on any termination the
+// model's own turn does not explain (a failed turn, no_reviewer,
+// interrupted), so the value set here is only ever what the done line
+// actually renders on the success path.
 func recordTurn(stderr io.Writer, state *diag.State, turn reviewer.Turn) {
 	if turn.Message == nil {
 		return
@@ -97,11 +102,27 @@ func recordTurn(stderr io.Writer, state *diag.State, turn reviewer.Turn) {
 	state.InputTokens += int64(turn.Usage.Input + turn.Usage.CacheRead + turn.Usage.CacheWrite)
 	state.OutputTokens += int64(turn.Usage.Output)
 	state.Cost += turn.Usage.Cost.Total
+	state.StopReason = modelStopReason(turn.StopReason)
 
 	for _, diagnostic := range turn.Message.Diagnostics {
 		diag.WriteWarn(stderr, diagnosticMessage(diagnostic))
 	}
 	diag.WriteTurn(stderr, state.Turns, turn.Tools, state.InputTokens, state.OutputTokens, state.Cost, turn.Elapsed)
+}
+
+// stopReasonUnspecified is the done line's named fallback for a successful
+// turn whose assistant message carried no StopReason at all, so stop= can
+// never render with nothing after it (SPECS § Interfaces).
+const stopReasonUnspecified = "unspecified"
+
+// modelStopReason renders a turn's own StopReason for the done line's
+// success path, spelled exactly as kern-link spells it — no translation
+// table between the model's vocabulary and the CLI's.
+func modelStopReason(reason ai.StopReason) string {
+	if reason == "" {
+		return stopReasonUnspecified
+	}
+	return string(reason)
 }
 
 // diagnosticMessage renders one AssistantMessageDiagnostic as a warn line's
@@ -216,7 +237,9 @@ func runReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer,
 	err := performReview(ctx, req, stdout, stderr, state)
 	switch {
 	case err == nil:
-		state.StopReason = "ok"
+		// state.StopReason already carries the model's own reason: recordTurn
+		// set it from the successful turn, verbatim as kern-link spells it —
+		// not a CLI word (SPECS § Interfaces).
 	case errors.Is(err, ErrNoReviewer):
 		state.StopReason = "no_reviewer"
 	case errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded):

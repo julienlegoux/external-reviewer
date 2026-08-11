@@ -3,13 +3,14 @@ type: Issue
 title: "Settle the done line's stop-reason vocabulary and document it in SPECS"
 description: "Render the model's own stop reason on the success path and the CLI word on every termination the model never reaches, and document the closed set in SPECS § Interfaces."
 tags: [epic-0]
-timestamp: 2026-08-11T03:33:08Z
+timestamp: 2026-08-11T16:30:00Z
 epic: 0
 issue: 01
 slug: stop-reason-vocabulary
 size: S
-status: open
+status: pr-open
 gh_issue: 23
+gh_pr: 37
 resource: https://github.com/julienlegoux/external-reviewer/issues/23
 depends_on: []
 ---

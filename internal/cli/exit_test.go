@@ -107,7 +107,12 @@ func TestRun_Success_ExitsZero(t *testing.T) {
 		t.Errorf("stdout = %q, want the reviewer's answer %q", stdout.String(), scriptedAnswer)
 	}
 	fields := parseDoneLine(t, stderr.String())
-	if fields.stop != "ok" {
-		t.Errorf("done stop = %q, want ok", fields.stop)
+	// "stop" is kern-link's own StopReasonStop — faux.TextMessage's default
+	// when no AssistantMessageOptions.StopReason is scripted. The done line's
+	// success path renders the model's own reason verbatim, not a CLI word:
+	// see TestRun_SuccessfulTurn_DoneLineRendersModelsOwnStopReason for the
+	// no-translation-table proof.
+	if fields.stop != "stop" {
+		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.stop)
 	}
 }
