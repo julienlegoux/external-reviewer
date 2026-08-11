@@ -97,6 +97,28 @@ func TestRun_Review(t *testing.T) {
 			wantStderrNonEmp: true,
 		},
 		{
+			// echo with nothing to say pipes a single newline, not an
+			// empty stream -- strings.TrimSpace is what catches this; the
+			// old `task == ""` check did not.
+			name: "whitespace-only stdin (echo with no arguments) is a usage error",
+			argv: func(t *testing.T) []string {
+				return []string{"review", t.TempDir()}
+			},
+			stdin:            "\n",
+			wantExit:         2,
+			wantStdoutEmpty:  true,
+			wantStderrNonEmp: true,
+		},
+		{
+			name: "whitespace-only --prompt is a usage error",
+			argv: func(t *testing.T) []string {
+				return []string{"review", "--prompt", " ", t.TempDir()}
+			},
+			wantExit:         2,
+			wantStdoutEmpty:  true,
+			wantStderrNonEmp: true,
+		},
+		{
 			name: "an unknown flag is a usage error",
 			argv: func(t *testing.T) []string {
 				return []string{"review", "--nope", t.TempDir()}
@@ -312,4 +334,32 @@ func TestRun_Review_NoTestCausesProcessExit(t *testing.T) {
 	// the assertion — os.Exit would have terminated the test binary instead.
 	var stdout, stderr bytes.Buffer
 	_ = cli.Run([]string{"review", "--nope", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+}
+
+// TestRun_Review_PromptFlagEmptyString_IsUsageError pins the flag-presence
+// check's fs.Visit form: `--prompt ""` must be read as "the flag was given,
+// with an empty value" — not "the flag was not given, fall back to stdin".
+// Stdin here carries a real, non-empty prompt so the two readings diverge:
+// the correct fs.Visit-based check takes the (empty) flag value and rejects
+// it, exit 2, without ever touching stdin. The mutation this pins —
+// collapsing the check to `promptSet := *prompt != ""` — would instead see
+// *prompt == "" and read the mismatched value as "not set", fall back to the
+// stdin prompt below, and succeed at exit 0 with the reviewer's answer on
+// stdout. Applying that exact mutation by hand and re-running this test
+// turns it red, as recorded in this issue's PR body.
+func TestRun_Review_PromptFlagEmptyString_IsUsageError(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := cli.RunForTest([]string{"review", "--prompt", "", t.TempDir()}, strings.NewReader("review this"), &stdout, &stderr,
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Errorf("stdout = %q, want empty — the empty --prompt value must not fall back to reading stdin", stdout.String())
+	}
+	if n := strings.Count(stderr.String(), "error:  "); n != 1 {
+		t.Errorf("stderr = %q, want exactly one error: line", stderr.String())
+	}
+	assertOnlyKnownPrefixedLines(t, stderr.String())
 }
