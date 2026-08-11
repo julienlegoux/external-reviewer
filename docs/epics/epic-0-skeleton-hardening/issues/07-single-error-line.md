@@ -3,12 +3,12 @@ type: Issue
 title: "Write one prefixed error: line from diag on every exit-2 path"
 description: "Give diag the error line, route all eight hand-rolled sites through it including the silent empty-argv path, make review --help exit 0, collapse the three interruption checks, and assert the exit-1 path's silence."
 tags: [epic-0]
-timestamp: 2026-08-11T03:33:08Z
+timestamp: 2026-08-11T06:00:00Z
 epic: 0
 issue: 07
 slug: single-error-line
 size: M
-status: open
+status: in-progress
 gh_issue: 29
 resource: https://github.com/julienlegoux/external-reviewer/issues/29
 depends_on: [1]
