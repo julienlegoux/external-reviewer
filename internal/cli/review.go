@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/julienlegoux/kern-link/ai"
@@ -204,18 +205,29 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		state.StopReason = usageStopReason
 		return fmt.Errorf("unexpected extra arguments: %s", strings.Join(positional[1:], " "))
 	}
-	repoPath := positional[0]
+	// repoPath is an OS path from here on: filepath.Clean makes it canonical
+	// for whichever platform this binary runs on, and os.Stat below takes it
+	// native. wireRepoPath is the boundary conversion CONVENTIONS § Paths and
+	// platforms names — every diagnostic below reaches stderr /-separated via
+	// filepath.ToSlash, never the OS-native form, so a Windows run never puts
+	// a backslash (or flag's %q double-escaping of one) on stderr.
+	repoPath := filepath.Clean(positional[0])
+	wireRepoPath := filepath.ToSlash(repoPath)
 
 	info, err := os.Stat(repoPath)
 	if err != nil {
-		diag.WriteError(stderr, fmt.Sprintf("repository path %q: %v", repoPath, err))
+		// The OS's own sentence (capitalised, full-stopped, and spelled
+		// differently per platform) never reaches stderr; the message states
+		// only what was attempted. err is still wrapped for errors.Is/As —
+		// classification stays on the wrapped error, never on message text.
+		diag.WriteError(stderr, fmt.Sprintf("repository path %q could not be accessed", wireRepoPath))
 		state.StopReason = usageStopReason
-		return fmt.Errorf("checking repository path %q: %w", repoPath, err)
+		return fmt.Errorf("repository path %q could not be accessed: %w", wireRepoPath, err)
 	}
 	if !info.IsDir() {
-		diag.WriteError(stderr, fmt.Sprintf("repository path %q is not a directory", repoPath))
+		diag.WriteError(stderr, fmt.Sprintf("repository path %q is not a directory", wireRepoPath))
 		state.StopReason = usageStopReason
-		return fmt.Errorf("repository path %q is not a directory", repoPath)
+		return fmt.Errorf("repository path %q is not a directory", wireRepoPath)
 	}
 
 	promptSet := false
