@@ -209,6 +209,65 @@ func ensureModels(registry ai.Models) (ai.Models, error) {
 	return built, nil
 }
 
+// maxPromptBytes bounds the stdin read: the task prompt is an instruction,
+// not a document — the reviewer reads repository content itself, through
+// the tools Epic 2 wires, not through this read. 1 MiB is orders of
+// magnitude above any legitimate instruction while still stopping an
+// accidental multi-gigabyte pipe (`cat 8GB.bin | external-reviewer review
+// /repo`) from buffering fully into memory — or reaching a third-party model
+// in full — before validation ever runs (CONVENTIONS § Dependencies
+// L155-156, the supply-chain and exposure surface).
+const maxPromptBytes = 1 << 20 // 1 MiB
+
+// errPromptTooLarge is the named sentinel a stdin body over maxPromptBytes
+// returns. Classification inspects it with errors.Is — never by matching
+// the rendered message text (CONVENTIONS § Error handling).
+var errPromptTooLarge = errors.New("task prompt exceeds the maximum size")
+
+// readPromptFromStdin reads the task prompt from stdin under ctx, bounded to
+// maxPromptBytes+1 bytes — the +1 is what distinguishes "exactly at the
+// bound" (returned whole) from "over it" (errPromptTooLarge) without ever
+// reading past the bound itself.
+//
+// io.ReadAll(stdin) alone is not cancellable: the underlying Read blocks in
+// the runtime with nothing available to interrupt it from another
+// goroutine, short of closing stdin — which this function does not own
+// (os.Stdin is the process's; a caller's io.Reader may not even support
+// Close). So the read runs on its own goroutine, feeding a result over a
+// channel buffered to 1; this function selects between that channel and
+// ctx.Done(). When ctx wins, it returns ctx.Err() immediately, and the
+// goroutine is deliberately abandoned: it is still blocked inside the real
+// Read call (or will eventually unblock, e.g. when stdin reaches EOF at
+// process exit), and its result lands in the buffered channel with no
+// receiver rather than blocking forever on the send — a bounded leak for
+// the remainder of the process's life, not an unbounded one, since run's
+// caller is terminating through the done-line seam either way once this
+// returns.
+func readPromptFromStdin(ctx context.Context, stdin io.Reader) (string, error) {
+	type result struct {
+		data []byte
+		err  error
+	}
+	done := make(chan result, 1)
+	go func() {
+		data, err := io.ReadAll(io.LimitReader(stdin, maxPromptBytes+1))
+		done <- result{data: data, err: err}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case r := <-done:
+		if r.err != nil {
+			return "", r.err
+		}
+		if len(r.data) > maxPromptBytes {
+			return "", fmt.Errorf("stdin carried more than %d bytes: %w", maxPromptBytes, errPromptTooLarge)
+		}
+		return string(r.data), nil
+	}
+}
+
 // runReviewCommand parses the `review` subcommand's flags and positional
 // repository path out of args, resolves the task prompt from --prompt or
 // stdin, and validates both before anything talks to a model. It returns
@@ -288,15 +347,37 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 	if promptSet {
 		task = *prompt
 	} else {
-		data, err := io.ReadAll(stdin)
+		data, err := readPromptFromStdin(ctx, stdin)
 		if err != nil {
-			diag.WriteError(stderr, fmt.Sprintf("reading task prompt from stdin: %v", err))
-			state.StopReason = usageStopReason
-			return fmt.Errorf("reading task prompt from stdin: %w", err)
+			switch {
+			case interruptedError(err):
+				// ctx ended (SIGINT via run.go's signal.NotifyContext, or a
+				// test's own cancellation) while the read was still blocked:
+				// this is an interruption, not a usage mistake, and the done
+				// line has to say which of the two happened — the same
+				// judgment runReview's own switch makes for a cancelled
+				// model call.
+				diag.WriteError(stderr, "run interrupted")
+				state.StopReason = "interrupted"
+				return err
+			case errors.Is(err, errPromptTooLarge):
+				diag.WriteError(stderr, err.Error())
+				state.StopReason = usageStopReason
+				return err
+			default:
+				diag.WriteError(stderr, fmt.Sprintf("reading task prompt from stdin: %v", err))
+				state.StopReason = usageStopReason
+				return fmt.Errorf("reading task prompt from stdin: %w", err)
+			}
 		}
-		task = string(data)
+		task = data
 	}
-	if task == "" {
+	// strings.TrimSpace decides emptiness only. task itself — what reaches
+	// reviewRequest.Task and eventually the model — is never rewritten, so a
+	// caller's own leading/trailing whitespace around real text still
+	// reaches the model verbatim (asserted in
+	// TestRun_Review_PromptWhitespaceReachesModelVerbatim).
+	if strings.TrimSpace(task) == "" {
 		diag.WriteError(stderr, "empty task prompt: pass --prompt or provide one on stdin")
 		state.StopReason = usageStopReason
 		return errors.New("empty task prompt")
