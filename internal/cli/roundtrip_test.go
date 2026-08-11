@@ -355,7 +355,7 @@ func cacheAwareModels(t *testing.T, usage ai.Usage) ai.Models {
 // turn.Usage.Input, CacheRead and CacheWrite into the done line's in=, and
 // this scripts a turn where CacheRead and CacheWrite are both non-zero.
 // Deleting "+ turn.Usage.CacheRead + turn.Usage.CacheWrite" at
-// internal/cli/review.go:96 must turn this red.
+// internal/cli/review.go:142 (recordTurn) must turn this red.
 func TestRun_CacheTokens_IncludedInInAccounting(t *testing.T) {
 	usage := ai.Usage{Input: 120, Output: 40, CacheRead: 55, CacheWrite: 30}
 

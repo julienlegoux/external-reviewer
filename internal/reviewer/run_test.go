@@ -110,7 +110,7 @@ func TestConversation_Next_AccumulatesMessagesInOrder(t *testing.T) {
 // round trip: FinalText's doc comment (run.go:100-102) promises the text
 // blocks concatenated in order with nothing inserted between them, and that
 // thinking blocks and tool calls never reach the answer. Inserting a break
-// after out.WriteString(text.Text) at run.go:110 must turn the first case
+// after out.WriteString(text.Text) at run.go:119 must turn the first case
 // red — it would return only the first text block instead of both
 // concatenated.
 func TestFinalText_ConcatenatesAndFiltersContent(t *testing.T) {

@@ -201,9 +201,24 @@ implementations, because a description that drifts from its implementation tells
 reviewer it may pass an argument that does not exist.
 
 **Output** ([decision](/specs/12-output-and-diagnostics-format.md)): stdout is the model's
-final assistant text, **verbatim, with no envelope**, and is empty on any failure — the
-calling skill keeps sole ownership of the report file, so the binary is not in the business
-of formatting someone else's document. The binary **writes nothing inside the repository
+final assistant text, **verbatim, with no envelope** — the calling skill keeps sole
+ownership of the report file, so the binary is not in the business of formatting someone
+else's document.
+
+**Nothing is written to stdout until the reviewer's final message is complete**, and it is
+then written exactly once, never as the text deltas arrive. Every failure the run can reach
+before that write therefore leaves stdout empty, including the ones that stream a paragraph
+of prose before falling over. The write itself is the one failure that survives past that
+point, and bytes already handed to the caller cannot be unwritten — buffering the report to
+a file the binary would have to own is precisely what this section forbids. So the guarantee
+is stated as it actually holds: **stdout is empty on every failure but a failed write of the
+report, and a failed write is announced on stderr as an `error:` line naming the report
+incomplete, with the bytes written and the report's full length.** A caller reading the
+transcript can always tell a truncated report from a whole one. `external-reviewer review …
+| head -20` is the ordinary case — the process handles `SIGPIPE` rather than dying by it, so
+it exits `2` through the usual seam with a `done` line, never `141`.
+
+The binary **writes nothing inside the repository
 under review and produces no output file**; the one thing written anywhere on its behalf
 is `kern-link`'s credential store under `~/.pi/agent/`, which the dependency owns
 ([drift](/DRIFT.md)). stderr carries prefixed human-readable lines:
@@ -241,7 +256,7 @@ different questions and a usage error can never carry a model's own reason:
   an empty prompt), `help` (`help`/`--help`/`-h`), `no_reviewer` (exit `1`: no reviewer was
   ever reachable), `interrupted` (`SIGINT` or a cancelled context), `failed` (reached and
   then unusable for any other reason — a failed turn, a broken credential, an empty final
-  message).
+  message, a report that could not be written to stdout).
 
 This is a union that only grows: a later epic adds a value no code can produce yet rather
 than repurposing one of the above. Epic 2 adds at least `bounds`, for a run that ends at
