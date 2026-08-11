@@ -2,6 +2,10 @@
 
 ## 2026-08-11
 
+* **Started**: [05 extract one importable faux harness and retire the mutable
+  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  (#27) — branch `issue-05-fixture-package`.
+
 * **Merged**: [04 enforce gofmt in CI, normalise line endings, and lint on both
   OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
   [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) merged into

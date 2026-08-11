@@ -24,30 +24,23 @@ type reviewRequest struct {
 	Task     string
 }
 
-// performReview is everything a syntactically valid review does once parsing
-// is done: pre-flight resolution and the round trip that follows it.
-// export_test.go exposes SetReviewerForTest so a test can replace the whole
-// of it and drive a termination path directly.
-var performReview = resolveAndReview
-
-// models is the provider registry resolution runs against. It stays nil in a
-// real process — reviewer.DefaultModels builds the real one, over kern-link's
-// own credential store, on the first review — and is set by tests to an
-// offline registry so no test can reach the network or spend money.
-var models ai.Models
-
 // resolveAndReview runs the pre-flight that can end a run before a single
 // request is sent, then takes the one turn Epic 1 ships and writes the
 // reviewer's own markdown to stdout. Nothing about the credential exists at
 // this layer: resolution returns a source label, never an AuthResult, so
 // there is no credential value here to leak.
 //
+// registry reaches here as an explicit dependency threaded from run's inner
+// seam (see run.go and ensureModels below) rather than through a
+// package-level mutable — the only seam a test replaces is the argument it
+// passes in.
+//
 // stdout is written exactly once, at the very end, from the completed final
 // message — never from the text deltas as they arrive. That is what makes
 // "stdout is empty on every failure" true for the failures that stream a
 // paragraph of prose before falling over.
-func resolveAndReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
-	registry, err := reviewModels()
+func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
+	registry, err := ensureModels(registry)
 	if err != nil {
 		return err
 	}
@@ -140,20 +133,21 @@ func diagnosticMessage(diagnostic ai.AssistantMessageDiagnostic) string {
 	return kind + ": " + diagnostic.Error.Message
 }
 
-// reviewModels returns the injected registry when a test set one, and builds
-// the real one otherwise. A credential store that cannot even be located is
-// a broken machine rather than an absent reviewer, so it propagates as an
-// ordinary error — exit 2 with a reason — rather than the silent exit 1 an
-// unconfigured provider gets.
-func reviewModels() (ai.Models, error) {
-	if models != nil {
-		return models, nil
+// ensureModels returns registry unchanged when a caller supplied one — every
+// test does, as an explicit argument — and builds the real one, over
+// kern-link's own credential store, otherwise. A credential store that
+// cannot even be located is a broken machine rather than an absent
+// reviewer, so it propagates as an ordinary error — exit 2 with a reason —
+// rather than the silent exit 1 an unconfigured provider gets.
+func ensureModels(registry ai.Models) (ai.Models, error) {
+	if registry != nil {
+		return registry, nil
 	}
-	registry, err := reviewer.DefaultModels()
+	built, err := reviewer.DefaultModels()
 	if err != nil {
 		return nil, fmt.Errorf("building the model registry: %w", err)
 	}
-	return registry, nil
+	return built, nil
 }
 
 // runReviewCommand parses the `review` subcommand's flags and positional
@@ -165,7 +159,7 @@ func reviewModels() (ai.Models, error) {
 // here; a reached-and-failed error is written to stderr too, but a
 // not-reached one (ErrNoReviewer) is not, since SPECS calls that path the
 // silent-fallback case the caller needs no line about.
-func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State) error {
+func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models) error {
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
@@ -226,15 +220,15 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return errors.New("empty task prompt")
 	}
 
-	return runReview(ctx, reviewRequest{RepoPath: repoPath, Task: task}, stdout, stderr, state)
+	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task}, stdout, stderr, state)
 }
 
 // runReview calls the review seam and folds its outcome into state's stop
 // reason. Cancellation is checked before the generic failure case: a run a
 // human interrupted is not a run that failed, and the transcript has to say
 // which of the two happened. Both are exit 2 all the same.
-func runReview(ctx context.Context, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
-	err := performReview(ctx, req, stdout, stderr, state)
+func runReview(ctx context.Context, registry ai.Models, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
+	err := resolveAndReview(ctx, registry, req, stdout, stderr, state)
 	switch {
 	case err == nil:
 		// state.StopReason already carries the model's own reason: recordTurn

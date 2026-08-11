@@ -59,7 +59,7 @@ func TestRun_Help_DoneLineStopIsHelp(t *testing.T) {
 }
 
 // TestRunContext_CancelledContext_ExitsTwo drives the interruption path
-// directly against the inner run seam (RunContextForTest) with a
+// directly against the inner run seam (RunWithModelsForTest) with a
 // pre-cancelled context, since delivering a real SIGINT is not portable to
 // the Windows CI runner — Run's signal.NotifyContext wiring itself is
 // exercised only by constructing Run in the other tests in this package.
@@ -68,7 +68,7 @@ func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 	cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunContextForTest(ctx, []string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, nil)
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())

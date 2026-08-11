@@ -16,6 +16,7 @@ import (
 	"github.com/julienlegoux/kern-link/ai/providers/faux"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
@@ -35,10 +36,9 @@ var turnLineRE = regexp.MustCompile(
 // models, returning the exit code and both streams.
 func runReviewOver(t *testing.T, models ai.Models, repoPath string) (int, string, string) {
 	t.Helper()
-	defer cli.SetModelsForTest(models)()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunForTest([]string{"review", "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr, models)
 	return code, stdout.String(), stderr.String()
 }
 
@@ -49,7 +49,7 @@ func runReviewOver(t *testing.T, models ai.Models, repoPath string) (int, string
 // machine allows.
 func scripted(t *testing.T, tokensPerSecond float64, responses ...faux.ResponseStep) ai.Models {
 	t.Helper()
-	models, handle := registryWith(t, credentialedAuth("OAuth"), nil, tokensPerSecond, reviewer.DefaultModelID)
+	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, tokensPerSecond, reviewer.DefaultModelID)
 	handle.SetResponses(responses...)
 	return models
 }
@@ -222,14 +222,13 @@ func TestRun_FailedTurn_ExitsTwo(t *testing.T) {
 // outcome — exit 2, an empty stdout, and an interruption on the transcript.
 func TestRun_CancelledMidStream_ExitsTwo(t *testing.T) {
 	models := scripted(t, 1, faux.Step(faux.TextMessage(strings.Repeat("a long answer that is still streaming. ", 20), nil)))
-	defer cli.SetModelsForTest(models)()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	time.AfterFunc(25*time.Millisecond, cancel)
 	defer cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunContextForTest(ctx, []string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
