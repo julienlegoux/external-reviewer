@@ -62,6 +62,19 @@ func WriteWarn(w io.Writer, message string) {
 	_, _ = fmt.Fprintf(w, "warn    %s\n", message)
 }
 
+// WriteError writes the "error:" line naming what was wrong on an exit-2
+// path — the one prefixed rendering every hand-rolled fmt.Fprint* used to
+// duplicate across internal/cli, padded to the same 8-column width every
+// other diag.Write* uses ("error:" is 6 characters, so 2 trailing spaces
+// rather than WriteWarn's 4). message is lowercase, unpunctuated and states
+// what was attempted (CONVENTIONS § Error handling); nothing here formats or
+// classifies the underlying error, only renders text a caller already
+// decided to print. It is never called on the exit-1 silent-fallback path —
+// SPECS calls that the case the caller needs no line about.
+func WriteError(w io.Writer, message string) {
+	_, _ = fmt.Fprintf(w, "error:  %s\n", message)
+}
+
 // WriteDone writes the "done" line SPECS fixes:
 //
 //	done    turns=7  in=182430 out=9106  $0.0918  2m14s  stop=end_turn

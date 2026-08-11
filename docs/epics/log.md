@@ -2,6 +2,24 @@
 
 ## 2026-08-11
 
+* **PR opened**: [07 write one prefixed error: line from diag on every exit-2
+  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) against
+  `develop`. `diag.WriteError` becomes the one writer every hand-rolled
+  `fmt.Fprint*` in `internal/cli` routed through, including the previously
+  silent empty-argv path; `fs.SetOutput(io.Discard)` and a `flag.ErrHelp`
+  split stop `review --help`/`review -h` from exiting 2 and stop flag's own
+  usage dump from reaching stderr; the three "was this interrupted?" checks
+  collapse to the one in `runReview`, deleting the top-of-`run()`
+  short-circuit and `reviewer.Conversation.Next`'s belt-and-braces check
+  (both confirmed redundant against the kern-link v0.1.1 pin by running the
+  full suite with each removed). 294 insertions / 55 deletions (~349 changed
+  lines) against a ~350 M target.
+
+* **Started**: [07 write one prefixed error: line from diag on every exit-2
+  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  branch `issue-07-error-line-seam`.
+
 * **PR opened**: [04 enforce gofmt in CI, normalise line endings, and lint on both
   OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
   [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) against
@@ -11,6 +29,11 @@
   `[ubuntu-latest, windows-latest]` matrix. 7 files changed, 23 insertions / 7
   deletions (~30 changed lines) against a ~40-line target.
 
+* **Merged**: [04 enforce gofmt in CI, normalise line endings, and lint on both
+  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) merged into
+  `develop`.
+
 * **Started**: [04 enforce gofmt in CI, normalise line endings, and lint on both
   OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
   branch `issue-26-ci-formatting-gate`.
@@ -18,6 +41,11 @@
 * **Merged**: [02 widen the write-API guard to every write operation CONVENTIONS
   names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
   [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) merged into
+  `develop`.
+
+* **Merged**: [01 settle the done line's stop-reason vocabulary and document it in
+  SPECS](/epic-0-skeleton-hardening/issues/01-stop-reason-vocabulary.md) (#23) —
+  [PR #37](https://github.com/julienlegoux/external-reviewer/pull/37) merged into
   `develop`.
 
 * **PR opened**: [02 widen the write-API guard to every write operation CONVENTIONS

@@ -2,6 +2,9 @@ package cli_test
 
 import (
 	"bytes"
+	"context"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -135,6 +138,24 @@ func TestRun_Review(t *testing.T) {
 			wantExit:        0,
 			wantStdoutEmpty: false,
 		},
+		{
+			// review --help must exit 0 like top-level help, not the exit-2
+			// usage error flag.ErrHelp used to be classified as.
+			name: "review --help prints usage and exits 0",
+			argv: func(t *testing.T) []string {
+				return []string{"review", "--help"}
+			},
+			wantExit:        0,
+			wantStdoutEmpty: false,
+		},
+		{
+			name: "review -h prints usage and exits 0",
+			argv: func(t *testing.T) []string {
+				return []string{"review", "-h"}
+			},
+			wantExit:        0,
+			wantStdoutEmpty: false,
+		},
 	}
 
 	for _, tc := range tests {
@@ -162,7 +183,69 @@ func TestRun_Review(t *testing.T) {
 			if tc.wantStderrNonEmp && stderr.Len() == 0 {
 				t.Error("stderr is empty, want a reason naming what was wrong")
 			}
+			assertOnlyKnownPrefixedLines(t, stderr.String())
+			if tc.wantExit == 2 {
+				if n := strings.Count(stderr.String(), "error:  "); n != 1 {
+					t.Errorf("stderr = %q, want exactly one error: line, found %d", stderr.String(), n)
+				}
+			}
 		})
+	}
+}
+
+// errStdin is an io.Reader that always fails, used to exercise the "stdin
+// read failure" exit-2 path — the one exit-2 reason the existing table
+// cannot reach with a plain strings.Reader.
+type errStdin struct{}
+
+func (errStdin) Read([]byte) (int, error) { return 0, errors.New("device error") }
+
+// TestRun_Review_StdinReadFailure_ExitsTwo covers the one exit-2 usage
+// reason not reachable through TestRun_Review's table: a stdin read that
+// itself errors, rather than merely returning nothing.
+func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"review", t.TempDir()}, errStdin{}, &stdout, &stderr)
+
+	if code != 2 {
+		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Errorf("stdout = %q, want empty", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "error:  reading task prompt from stdin") {
+		t.Errorf("stderr = %q, want an error: line naming the stdin failure", stderr.String())
+	}
+	assertOnlyKnownPrefixedLines(t, stderr.String())
+	if fields := parseDoneLine(t, stderr.String()); fields.stop != "usage" {
+		t.Errorf("done stop = %q, want usage", fields.stop)
+	}
+}
+
+// TestRun_NoReviewerReached_WritesNoErrorLine is the exit-1 path's silence,
+// asserted rather than assumed: ErrNoReviewer is SPECS' silent-fallback
+// case, the one termination that gets no error: line at all. Adding
+// fmt.Fprintln(stderr, "error:", err) to runReview's errors.Is(err,
+// ErrNoReviewer) branch is the change that must turn this red — the missing
+// half of the pair TestRun_BrokenCredential_ExitsTwo already writes for the
+// exit-2 sibling.
+func TestRun_NoReviewerReached_WritesNoErrorLine(t *testing.T) {
+	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer, io.Writer) error {
+		return cli.ErrNoReviewer
+	})
+	defer restore()
+
+	var stdout, stderr bytes.Buffer
+	code := cli.Run([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit code = %d, want 1 (stderr: %q)", code, stderr.String())
+	}
+	if strings.Contains(stderr.String(), "error:") {
+		t.Errorf("stderr = %q, want no error: line on the silent-fallback exit-1 path", stderr.String())
+	}
+	if fields := parseDoneLine(t, stderr.String()); fields.stop != "no_reviewer" {
+		t.Errorf("done stop = %q, want no_reviewer", fields.stop)
 	}
 }
 
