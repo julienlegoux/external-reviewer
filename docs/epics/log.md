@@ -1,5 +1,43 @@
 # Log
 
+## 2026-08-11
+
+* **Creation**: Cut [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) into
+  **12 issues** on milestone 4, all linked as native sub-issues of
+  [#22](https://github.com/julienlegoux/external-reviewer/issues/22) — none sized `L`.
+  The epic's 15 scope groups compress to 12 PRs because three pairs are one change:
+  a whitespace-only prompt, an unbounded `io.ReadAll` and an uninterruptible stdin read
+  are one rewrite of the same call; cost, timeout and cancellation precedence are three
+  repairs inside one 40-line `Conversation.Next`; and the escaping of provider-controlled
+  text lands beside `internal/diag`'s own polish.
+
+  **Order follows the epic's own rule** — plan and standard repairs first, since each one
+  changes the contract the code is judged against
+  ([#23](https://github.com/julienlegoux/external-reviewer/issues/23) the stop-reason
+  vocabulary, [#24](https://github.com/julienlegoux/external-reviewer/issues/24) the
+  write-API guard, [#25](https://github.com/julienlegoux/external-reviewer/issues/25) the
+  amendments to Epic 2's own issues), then the CI formatting gate
+  ([#26](https://github.com/julienlegoux/external-reviewer/issues/26)) because it protects
+  every PR after it, then the code. Two deviations from the epic's narrative order were
+  deliberate: the shared `faux` harness
+  ([#27](https://github.com/julienlegoux/external-reviewer/issues/27)) moves *ahead* of the
+  test work rather than after it, since every remaining issue scripts `faux` and the point
+  of the harness is that they build on one copy; and `#24` blocks `#26` only because both
+  edit `.golangci.yml`.
+
+  **Three issues carry a judgment the implementer must make explicit rather than
+  discover.** `#24`'s probe file cannot be committed where CI lints it — it would fail the
+  repository's own gate — so the verification is a recorded manual run. `#32`'s invariant
+  ("stdout is empty on any failure") cannot be discharged by retracting bytes already
+  written, so the issue asks which of the three defensible readings ships and requires
+  SPECS to be amended in the same PR if the wording has to change. And `#31`'s Ctrl-C
+  criterion is hand-verified, since delivering a real `SIGINT` is not portable to the
+  Windows runner — the constraint issue 03 of Epic 1 already documented.
+
+  Labels follow the repository's existing scheme rather than a new one: `bug` for the
+  defect repairs, `documentation` for the plan amendments, `enhancement` for the harness
+  extraction.
+
 ## 2026-08-10
 
 * **Creation**: Established
