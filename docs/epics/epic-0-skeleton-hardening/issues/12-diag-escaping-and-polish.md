@@ -3,13 +3,14 @@ type: Issue
 title: "Escape provider-controlled text on stderr and finish diag's polish"
 description: "Stop an error body forging a done line in a transcript SPECS makes parseable, delete the false redaction comment, and give diag table-driven tests and an hour unit."
 tags: [epic-0]
-timestamp: 2026-08-11T03:33:08Z
+timestamp: 2026-08-11T11:30:00Z
 epic: 0
 issue: 12
 slug: diag-escaping-and-polish
 size: M
-status: open
+status: pr-open
 gh_issue: 34
+gh_pr: 44
 resource: https://github.com/julienlegoux/external-reviewer/issues/34
 depends_on: [5, 7]
 ---
