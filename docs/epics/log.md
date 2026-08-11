@@ -2,6 +2,28 @@
 
 ## 2026-08-11
 
+* **PR opened**: [12 escape provider-controlled text on stderr and finish diag's
+  polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md) (#34) —
+  [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44) against `develop`.
+  `diag.escapeControlChars`, applied inside `WriteWarn` and `WriteError`, renders every
+  control character — `\n`/`\r` and the ESC byte an ANSI/OSC sequence opens with — as its
+  Go escape rather than letting it reach the terminal raw or split the line; a provider
+  error body carrying a newline and a well-formed `done … stop=ok` line can no longer
+  forge a second done line ahead of the real one. The false "kern-link redacts
+  diagnostics upstream" comment is removed everywhere it appeared, including
+  `docs/planning/SPECS.md` itself. `internal/diag/diag_test.go`'s tests are table-driven,
+  `formatElapsed` gains an hour unit, and the duplicated done-line/turn-line transcript
+  parsers move into `internal/fauxtest` as `ParseDoneLine`/`ParseTurnLine`, issue 05's
+  shared harness. 706 changed lines against a ~280-line M estimate — over by roughly
+  2.5x but under the 1000-line L ceiling, so opened as-is; the growth is almost entirely
+  the table-driven rewrite (307 lines) and the two new integration tests proving the
+  injection is actually stopped, both of which the issue's own size note anticipated as
+  the bulk of the diff, just underestimated. Reconciled issue 05 to `done` at the start
+  of this run (already merged, issue file still read `pr-open`) and merged `origin/develop`
+  once to pick up issue 10's concurrently-merged PR #42, resolving a duplicate reconcile
+  of issue 05 as a union and re-homing issue 10's new `stdout_test.go` onto the same
+  shared parser.
+
 * **Started**: [12 escape provider-controlled text on stderr and finish diag's
   polish](/epic-0-skeleton-hardening/issues/12-diag-escaping-and-polish.md) (#34) —
   branch `issue-12-transcript-parsing-fauxtest`.

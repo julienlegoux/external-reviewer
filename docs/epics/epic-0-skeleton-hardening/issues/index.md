@@ -14,4 +14,4 @@ against — then the CI gate that protects every PR after it, then the code.
 * [Read the task prompt under a context, a byte bound and real validation](./09-bounded-validated-prompt.md) - M, open, [#31](https://github.com/julienlegoux/external-reviewer/issues/31)
 * [Survive a failing or closed stdout without escaping the done-line seam](./10-stdout-write-failures.md) - M, pr-open, [#32](https://github.com/julienlegoux/external-reviewer/issues/32), [PR #42](https://github.com/julienlegoux/external-reviewer/pull/42)
 * [Bound the turn and fix its cost and cancellation precedence](./11-turn-hardening.md) - M, open, [#33](https://github.com/julienlegoux/external-reviewer/issues/33)
-* [Escape provider-controlled text on stderr and finish diag's polish](./12-diag-escaping-and-polish.md) - M, in-progress, [#34](https://github.com/julienlegoux/external-reviewer/issues/34)
+* [Escape provider-controlled text on stderr and finish diag's polish](./12-diag-escaping-and-polish.md) - M, pr-open, [#34](https://github.com/julienlegoux/external-reviewer/issues/34), [PR #44](https://github.com/julienlegoux/external-reviewer/pull/44)
