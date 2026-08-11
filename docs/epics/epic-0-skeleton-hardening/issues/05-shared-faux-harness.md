@@ -3,7 +3,7 @@ type: Issue
 title: "Extract one importable faux harness and retire the mutable package-level seams"
 description: "Replace the ~75 duplicated harness lines across two test packages with one importable fixture package, and remove performReview and models from product code."
 tags: [epic-0]
-timestamp: 2026-08-11T10:00:00Z
+timestamp: 2026-08-11T10:20:00Z
 epic: 0
 issue: 05
 slug: shared-faux-harness
