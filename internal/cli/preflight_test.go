@@ -2,8 +2,6 @@ package cli_test
 
 import (
 	"bytes"
-	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -11,25 +9,9 @@ import (
 	"github.com/julienlegoux/kern-link/ai/providers/faux"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
-
-// preflightSecret is the credential value every scripted provider below
-// hands back. Finding it on stdout or stderr is the failure this file exists
-// to make impossible.
-//
-//nolint:gosec // G101: deliberately credential-shaped test data.
-const preflightSecret = "sk-do-not-print-me-0123456789"
-
-// authProvider decorates a provider with a scripted auth strategy, leaving
-// its identity and model list alone — the seam that drives GetAuth's
-// documented outcomes without a provider able to reach anything.
-type authProvider struct {
-	ai.Provider
-	auth ai.ProviderAuth
-}
-
-func (p authProvider) Auth() ai.ProviderAuth { return p.auth }
 
 // registryWith builds the offline registry a run resolves against and
 // streams from: kern-link's in-process faux provider under the hard-coded
@@ -37,28 +19,20 @@ func (p authProvider) Auth() ai.ProviderAuth { return p.auth }
 // credential store on disk. The handle it returns is the scripting surface —
 // what the model answers, and how fast.
 //
-// The models carry a price sheet so ai.CalculateCost has something to
-// multiply: a run that reports $0.0000 for every turn cannot tell cost
-// accounting that works from cost accounting that was never wired.
+// The models carry a price sheet (fauxtest.RegistryOptions.Priced) so
+// ai.CalculateCost has something to multiply: a run that reports $0.0000 for
+// every turn cannot tell cost accounting that works from cost accounting
+// that was never wired.
 func registryWith(t *testing.T, auth ai.ProviderAuth, credentials ai.CredentialStore, tokensPerSecond float64, modelIDs ...string) (ai.Models, *faux.Handle) {
 	t.Helper()
-
-	definitions := make([]faux.ModelDefinition, 0, len(modelIDs))
-	for _, id := range modelIDs {
-		definitions = append(definitions, faux.ModelDefinition{
-			ID:   id,
-			Cost: &ai.ModelCost{Input: 100, Output: 200},
-		})
-	}
-	handle := faux.New(&faux.Options{
-		Provider:        reviewer.DefaultProviderID,
-		Models:          definitions,
+	return fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID:      reviewer.DefaultProviderID,
+		ModelIDs:        modelIDs,
+		Auth:            auth,
+		Credentials:     credentials,
 		TokensPerSecond: tokensPerSecond,
+		Priced:          true,
 	})
-
-	models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: credentials})
-	models.SetProvider(authProvider{Provider: handle.Provider, auth: auth})
-	return models, handle
 }
 
 // registry is registryWith for the tests that care about pre-flight rather
@@ -75,81 +49,13 @@ func registry(t *testing.T, auth ai.ProviderAuth, credentials ai.CredentialStore
 // assert on the report's exact bytes script their own.
 const scriptedAnswer = "no findings\n"
 
-// credentialedAuth resolves successfully, hiding preflightSecret in every
-// field an AuthResult can hide one in, behind a Source label that is safe to
-// print.
-func credentialedAuth(source string) ai.ProviderAuth {
-	return ai.ProviderAuth{APIKey: &ai.APIKeyAuth{
-		Name: "Faux API key",
-		Resolve: func(context.Context, ai.APIKeyResolveInput) (*ai.AuthResult, error) {
-			bearer := "Bearer " + preflightSecret
-			return &ai.AuthResult{
-				Auth: ai.ModelAuth{
-					APIKey:  preflightSecret,
-					Headers: ai.ProviderHeaders{"authorization": &bearer},
-				},
-				Env:    ai.ProviderEnv{"FAUX_API_KEY": preflightSecret},
-				Source: source,
-			}, nil
-		},
-	}}
-}
-
-// unconfiguredAuth is the provider-unconfigured case kern-link reports as
-// GetAuth returning (nil, nil).
-func unconfiguredAuth() ai.ProviderAuth {
-	return ai.ProviderAuth{APIKey: &ai.APIKeyAuth{
-		Name: "Faux API key",
-		Resolve: func(context.Context, ai.APIKeyResolveInput) (*ai.AuthResult, error) {
-			return nil, nil
-		},
-	}}
-}
-
-// brokenAPIKeyAuth fails api-key resolution: a ModelsError with code "auth".
-func brokenAPIKeyAuth() ai.ProviderAuth {
-	return ai.ProviderAuth{APIKey: &ai.APIKeyAuth{
-		Name: "Faux API key",
-		Resolve: func(context.Context, ai.APIKeyResolveInput) (*ai.AuthResult, error) {
-			return nil, errors.New("credential store unreadable")
-		},
-	}}
-}
-
-// expiredOAuthAuth stores an expired OAuth credential whose refresh fails: a
-// ModelsError with code "oauth". The stored credential carries
-// preflightSecret, so anything that logs a credential shows up in the
-// no-leak assertions below.
-func expiredOAuthAuth(t *testing.T) (ai.ProviderAuth, ai.CredentialStore) {
-	t.Helper()
-
-	store := ai.NewInMemoryCredentialStore()
-	if _, err := store.Modify(context.Background(), reviewer.DefaultProviderID, func(ai.Credential) (ai.Credential, error) {
-		return &ai.OAuthCredential{Refresh: preflightSecret, Access: preflightSecret, Expires: 0}, nil
-	}); err != nil {
-		t.Fatalf("seeding credential store: %v", err)
-	}
-
-	auth := ai.ProviderAuth{OAuth: &ai.OAuthAuth{
-		Name: "Faux OAuth",
-		Refresh: func(context.Context, *ai.OAuthCredential) (*ai.OAuthCredential, error) {
-			return nil, errors.New("refresh token rejected")
-		},
-		ToAuth: func(context.Context, *ai.OAuthCredential) (ai.ModelAuth, error) {
-			return ai.ModelAuth{APIKey: preflightSecret}, nil
-		},
-	}}
-	return auth, store
-}
-
 // runReview invokes a syntactically valid review against models, returning
 // the exit code and both streams.
 func runReview(t *testing.T, models ai.Models) (int, string, string) {
 	t.Helper()
-	defer cli.SetModelsForTest(models)()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunForTest([]string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
 	return code, stdout.String(), stderr.String()
 }
 
@@ -158,7 +64,7 @@ func runReview(t *testing.T, models ai.Models) (int, string, string) {
 // reaches it, so the run continues into the round trip and terminates
 // normally with the reviewer's answer on stdout.
 func TestRun_ResolvableCredentialedModel_ProceedsPastPreflight(t *testing.T) {
-	code, stdout, stderr := runReview(t, registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+	code, stdout, stderr := runReview(t, registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 0 {
 		t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr)
@@ -184,7 +90,10 @@ func TestRun_ResolvableCredentialedModel_ProceedsPastPreflight(t *testing.T) {
 // TestRun_NotReached_ExitsOne covers both halves of SPECS' silent-fallback
 // case: a model that is not in the catalog, and a provider with no
 // credential configured. Neither is worth a line to the caller, but both
-// must still leave stdout empty and emit the done line.
+// must still leave stdout empty and emit the done line. The in/out=0
+// assertion is exit_test.go's former TestRun_NoReviewerReached_ExitsOne,
+// re-homed here now that this test drives the same exit-1 path for real
+// through resolution rather than through a stubbed reviewer.
 func TestRun_NotReached_ExitsOne(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -194,14 +103,14 @@ func TestRun_NotReached_ExitsOne(t *testing.T) {
 			name: "model absent from the catalog",
 			models: func(t *testing.T) ai.Models {
 				t.Helper()
-				return registry(t, credentialedAuth("OAuth"), nil, "some-other-model")
+				return registry(t, fauxtest.CredentialedAuth("OAuth"), nil, "some-other-model")
 			},
 		},
 		{
 			name: "provider unconfigured, GetAuth returns (nil, nil)",
 			models: func(t *testing.T) ai.Models {
 				t.Helper()
-				return registry(t, unconfiguredAuth(), nil, reviewer.DefaultModelID)
+				return registry(t, fauxtest.UnconfiguredAuth(), nil, reviewer.DefaultModelID)
 			},
 		},
 	}
@@ -216,8 +125,12 @@ func TestRun_NotReached_ExitsOne(t *testing.T) {
 			if stdout != "" {
 				t.Errorf("stdout = %q, want empty on a failure", stdout)
 			}
-			if fields := parseDoneLine(t, stderr); fields.stop != "no_reviewer" {
+			fields := parseDoneLine(t, stderr)
+			if fields.stop != "no_reviewer" {
 				t.Errorf("done stop = %q, want no_reviewer", fields.stop)
+			}
+			if fields.in != "0" || fields.out != "0" {
+				t.Errorf("done in/out = %q/%q, want 0/0 (a path that never reached a model)", fields.in, fields.out)
 			}
 		})
 	}
@@ -235,7 +148,7 @@ func TestRun_BrokenCredential_ExitsTwo(t *testing.T) {
 			name: "ModelsError code oauth",
 			models: func(t *testing.T) ai.Models {
 				t.Helper()
-				auth, credentials := expiredOAuthAuth(t)
+				auth, credentials := fauxtest.ExpiredOAuthAuth(t, reviewer.DefaultProviderID)
 				return registry(t, auth, credentials, reviewer.DefaultModelID)
 			},
 		},
@@ -243,7 +156,7 @@ func TestRun_BrokenCredential_ExitsTwo(t *testing.T) {
 			name: "ModelsError code auth",
 			models: func(t *testing.T) ai.Models {
 				t.Helper()
-				return registry(t, brokenAPIKeyAuth(), nil, reviewer.DefaultModelID)
+				return registry(t, fauxtest.BrokenAPIKeyAuth(), nil, reviewer.DefaultModelID)
 			},
 		},
 	}
@@ -274,25 +187,25 @@ func TestRun_BrokenCredential_ExitsTwo(t *testing.T) {
 // AuthResult.Source may travel — on every path, including the ones that fail
 // while holding a credential.
 func TestRun_NoCredentialValueReachesTheStreams(t *testing.T) {
-	oauthAuth, oauthCredentials := expiredOAuthAuth(t)
+	oauthAuth, oauthCredentials := fauxtest.ExpiredOAuthAuth(t, reviewer.DefaultProviderID)
 
 	tests := []struct {
 		name   string
 		models ai.Models
 	}{
-		{"resolved successfully", registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID)},
+		{"resolved successfully", registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID)},
 		{"broken oauth credential", registry(t, oauthAuth, oauthCredentials, reviewer.DefaultModelID)},
-		{"broken api key", registry(t, brokenAPIKeyAuth(), nil, reviewer.DefaultModelID)},
+		{"broken api key", registry(t, fauxtest.BrokenAPIKeyAuth(), nil, reviewer.DefaultModelID)},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			_, stdout, stderr := runReview(t, tc.models)
 
-			if strings.Contains(stdout, preflightSecret) {
+			if strings.Contains(stdout, fauxtest.Secret) {
 				t.Errorf("stdout leaked a credential value: %q", stdout)
 			}
-			if strings.Contains(stderr, preflightSecret) {
+			if strings.Contains(stderr, fauxtest.Secret) {
 				t.Errorf("stderr leaked a credential value: %q", stderr)
 			}
 		})

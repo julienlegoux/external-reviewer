@@ -9,116 +9,10 @@ import (
 
 	"github.com/julienlegoux/kern-link/ai"
 	"github.com/julienlegoux/kern-link/ai/catalog"
-	"github.com/julienlegoux/kern-link/ai/providers/faux"
 
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
-
-// secret is the credential value every scripted provider below hands back.
-// No assertion may ever find it outside kern-link: it stands in for the API
-// key or bearer token a real AuthResult carries, and the point of the
-// resolution seam is that only AuthResult.Source escapes it.
-// A planted fake credential is the point here — these tests exist to prove
-// this value never leaves kern-link.
-//
-//nolint:gosec // G101: deliberately credential-shaped test data.
-const secret = "sk-do-not-print-me-0123456789"
-
-// fauxRegistry builds an offline MutableModels holding one faux provider
-// under providerID serving exactly modelIDs, with its auth strategy replaced
-// by auth. Nothing here touches the network: faux is kern-link's in-process
-// provider, and every auth outcome is scripted.
-func fauxRegistry(t *testing.T, providerID string, auth ai.ProviderAuth, credentials ai.CredentialStore, modelIDs ...string) ai.MutableModels {
-	t.Helper()
-
-	definitions := make([]faux.ModelDefinition, 0, len(modelIDs))
-	for _, id := range modelIDs {
-		definitions = append(definitions, faux.ModelDefinition{ID: id})
-	}
-	handle := faux.New(&faux.Options{Provider: providerID, Models: definitions})
-
-	models := ai.CreateModels(&ai.CreateModelsOptions{Credentials: credentials})
-	models.SetProvider(authProvider{Provider: handle.Provider, auth: auth})
-	return models
-}
-
-// authProvider decorates a provider with a scripted auth strategy, leaving
-// its identity and model list alone. It is how a test drives GetAuth's four
-// documented outcomes — a credential, (nil, nil), a ModelsError with code
-// "oauth", one with code "auth" — without a provider that can reach anything.
-type authProvider struct {
-	ai.Provider
-	auth ai.ProviderAuth
-}
-
-func (p authProvider) Auth() ai.ProviderAuth { return p.auth }
-
-// credentialedAuth resolves successfully, carrying a secret in every field
-// an AuthResult can hide one in, and a Source label that is safe to print.
-func credentialedAuth(source string) ai.ProviderAuth {
-	return ai.ProviderAuth{APIKey: &ai.APIKeyAuth{
-		Name: "Faux API key",
-		Resolve: func(context.Context, ai.APIKeyResolveInput) (*ai.AuthResult, error) {
-			bearer := "Bearer " + secret
-			return &ai.AuthResult{
-				Auth: ai.ModelAuth{
-					APIKey:  secret,
-					Headers: ai.ProviderHeaders{"authorization": &bearer},
-				},
-				Env:    ai.ProviderEnv{"FAUX_API_KEY": secret},
-				Source: source,
-			}, nil
-		},
-	}}
-}
-
-// unconfiguredAuth is the provider-unconfigured case: kern-link documents
-// GetAuth as returning (nil, nil) when a provider is unknown or has no
-// credential, and a nil Resolve result is how a provider reports that.
-func unconfiguredAuth() ai.ProviderAuth {
-	return ai.ProviderAuth{APIKey: &ai.APIKeyAuth{
-		Name: "Faux API key",
-		Resolve: func(context.Context, ai.APIKeyResolveInput) (*ai.AuthResult, error) {
-			return nil, nil
-		},
-	}}
-}
-
-// brokenAPIKeyAuth fails api-key resolution, which kern-link reports as a
-// ModelsError with code "auth".
-func brokenAPIKeyAuth() ai.ProviderAuth {
-	return ai.ProviderAuth{APIKey: &ai.APIKeyAuth{
-		Name: "Faux API key",
-		Resolve: func(context.Context, ai.APIKeyResolveInput) (*ai.AuthResult, error) {
-			return nil, errors.New("credential store unreadable")
-		},
-	}}
-}
-
-// expiredOAuthAuth stores an already-expired OAuth credential whose refresh
-// fails, which kern-link reports as a ModelsError with code "oauth" — the
-// broken-credential case a human has to fix by logging in again.
-func expiredOAuthAuth(t *testing.T, providerID string) (ai.ProviderAuth, ai.CredentialStore) {
-	t.Helper()
-
-	store := ai.NewInMemoryCredentialStore()
-	if _, err := store.Modify(context.Background(), providerID, func(ai.Credential) (ai.Credential, error) {
-		return &ai.OAuthCredential{Refresh: secret, Access: secret, Expires: 0}, nil
-	}); err != nil {
-		t.Fatalf("seeding credential store: %v", err)
-	}
-
-	auth := ai.ProviderAuth{OAuth: &ai.OAuthAuth{
-		Name: "Faux OAuth",
-		Refresh: func(context.Context, *ai.OAuthCredential) (*ai.OAuthCredential, error) {
-			return nil, errors.New("refresh token rejected")
-		},
-		ToAuth: func(context.Context, *ai.OAuthCredential) (ai.ModelAuth, error) {
-			return ai.ModelAuth{APIKey: secret}, nil
-		},
-	}}
-	return auth, store
-}
 
 // recordingModels notes the order of the three catalog calls resolution
 // makes. It is a decorator rather than a fake so the calls still run against
@@ -176,7 +70,9 @@ func dynamicRegistry(providerID string, initial, refreshed []string, refreshErr 
 }
 
 func TestResolve_ReachableCredentialedModel_ResolvesWithItsAuthSource(t *testing.T) {
-	models := fauxRegistry(t, "openai-codex", credentialedAuth("OAuth"), nil, "gpt-5.5")
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "openai-codex", ModelIDs: []string{"gpt-5.5"}, Auth: fauxtest.CredentialedAuth("OAuth"),
+	})
 
 	resolution, err := reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}.Resolve(context.Background())
 	if err != nil {
@@ -199,19 +95,23 @@ func TestResolve_ReachableCredentialedModel_ResolvesWithItsAuthSource(t *testing
 // of the whole struct is the widest net a test can cast over "no credential
 // escaped".
 func TestResolve_ResolutionCarriesNoCredential(t *testing.T) {
-	models := fauxRegistry(t, "openai-codex", credentialedAuth("OAuth"), nil, "gpt-5.5")
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "openai-codex", ModelIDs: []string{"gpt-5.5"}, Auth: fauxtest.CredentialedAuth("OAuth"),
+	})
 
 	resolution, err := reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}.Resolve(context.Background())
 	if err != nil {
 		t.Fatalf("Resolve() error = %v, want nil", err)
 	}
-	if rendered := fmt.Sprintf("%+v", resolution); strings.Contains(rendered, secret) {
+	if rendered := fmt.Sprintf("%+v", resolution); strings.Contains(rendered, fauxtest.Secret) {
 		t.Errorf("Resolution renders a credential value: %s", rendered)
 	}
 }
 
 func TestResolve_ModelAbsentFromCatalog_IsNoReviewer(t *testing.T) {
-	models := fauxRegistry(t, "openai-codex", credentialedAuth("OAuth"), nil, "some-other-model")
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "openai-codex", ModelIDs: []string{"some-other-model"}, Auth: fauxtest.CredentialedAuth("OAuth"),
+	})
 
 	_, err := reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}.Resolve(context.Background())
 	if !errors.Is(err, reviewer.ErrNoReviewer) {
@@ -220,7 +120,9 @@ func TestResolve_ModelAbsentFromCatalog_IsNoReviewer(t *testing.T) {
 }
 
 func TestResolve_ProviderAbsentFromRegistry_IsNoReviewer(t *testing.T) {
-	models := fauxRegistry(t, "some-other-provider", credentialedAuth("OAuth"), nil, "gpt-5.5")
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "some-other-provider", ModelIDs: []string{"gpt-5.5"}, Auth: fauxtest.CredentialedAuth("OAuth"),
+	})
 
 	_, err := reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}.Resolve(context.Background())
 	if !errors.Is(err, reviewer.ErrNoReviewer) {
@@ -232,7 +134,9 @@ func TestResolve_ProviderAbsentFromRegistry_IsNoReviewer(t *testing.T) {
 // exit-code taxonomy: an *absent* credential is a reviewer that was never
 // reached, so it is ErrNoReviewer, not a failure.
 func TestResolve_UnconfiguredProvider_IsNoReviewer(t *testing.T) {
-	models := fauxRegistry(t, "openai-codex", unconfiguredAuth(), nil, "gpt-5.5")
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "openai-codex", ModelIDs: []string{"gpt-5.5"}, Auth: fauxtest.UnconfiguredAuth(),
+	})
 
 	_, err := reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}.Resolve(context.Background())
 	if !errors.Is(err, reviewer.ErrNoReviewer) {
@@ -253,14 +157,14 @@ func TestResolve_BrokenCredential_IsNotNoReviewer(t *testing.T) {
 			name: "expired oauth whose refresh fails",
 			auth: func(t *testing.T) (ai.ProviderAuth, ai.CredentialStore) {
 				t.Helper()
-				return expiredOAuthAuth(t, "openai-codex")
+				return fauxtest.ExpiredOAuthAuth(t, "openai-codex")
 			},
 			wantCode: ai.ModelsErrorOAuth,
 		},
 		{
 			name: "api key resolution failure",
 			auth: func(*testing.T) (ai.ProviderAuth, ai.CredentialStore) {
-				return brokenAPIKeyAuth(), nil
+				return fauxtest.BrokenAPIKeyAuth(), nil
 			},
 			wantCode: ai.ModelsErrorAuth,
 		},
@@ -269,7 +173,9 @@ func TestResolve_BrokenCredential_IsNotNoReviewer(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			auth, credentials := tc.auth(t)
-			models := fauxRegistry(t, "openai-codex", auth, credentials, "gpt-5.5")
+			models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+				ProviderID: "openai-codex", ModelIDs: []string{"gpt-5.5"}, Auth: auth, Credentials: credentials,
+			})
 
 			_, err := reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}.Resolve(context.Background())
 			if err == nil {
@@ -296,7 +202,7 @@ func TestResolve_BrokenCredential_IsNotNoReviewer(t *testing.T) {
 // "model not found" and falls back silently — the exact bug the order exists
 // to prevent.
 func TestResolve_DynamicProvider_RefreshesBeforeLookup(t *testing.T) {
-	models := dynamicRegistry("openrouter", nil, []string{"gpt-5.5"}, nil, credentialedAuth("OPENROUTER_API_KEY"))
+	models := dynamicRegistry("openrouter", nil, []string{"gpt-5.5"}, nil, fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
 
 	var calls []string
 	resolution, err := reviewer.Resolver{
@@ -321,7 +227,9 @@ func TestResolve_DynamicProvider_RefreshesBeforeLookup(t *testing.T) {
 // honest: refreshing unconditionally would also pass it. Static providers are
 // the overwhelming majority and a refresh on them is a wasted round trip.
 func TestResolve_StaticProvider_IsNotRefreshed(t *testing.T) {
-	models := fauxRegistry(t, "openai-codex", credentialedAuth("OAuth"), nil, "gpt-5.5")
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "openai-codex", ModelIDs: []string{"gpt-5.5"}, Auth: fauxtest.CredentialedAuth("OAuth"),
+	})
 
 	var calls []string
 	if _, err := (reviewer.Resolver{
@@ -344,7 +252,7 @@ func TestResolve_StaticProvider_IsNotRefreshed(t *testing.T) {
 // catalog outage must not end a run that can still be served. The failure is
 // worth a warn line, never a swallowed error.
 func TestResolve_RefreshFailure_WarnsAndUsesLastKnownModels(t *testing.T) {
-	models := dynamicRegistry("openrouter", []string{"gpt-5.5"}, nil, errors.New("catalog unreachable"), credentialedAuth("OPENROUTER_API_KEY"))
+	models := dynamicRegistry("openrouter", []string{"gpt-5.5"}, nil, errors.New("catalog unreachable"), fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
 
 	var warnings []string
 	resolution, err := reviewer.Resolver{
@@ -368,7 +276,7 @@ func TestResolve_RefreshFailure_WarnsAndUsesLastKnownModels(t *testing.T) {
 // outage on a provider that has nothing cached leaves no reviewer to reach,
 // which is exit 1 rather than a failure.
 func TestResolve_RefreshFailureWithNoLastKnownModels_IsNoReviewer(t *testing.T) {
-	models := dynamicRegistry("openrouter", nil, nil, errors.New("catalog unreachable"), credentialedAuth("OPENROUTER_API_KEY"))
+	models := dynamicRegistry("openrouter", nil, nil, errors.New("catalog unreachable"), fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
 
 	_, err := reviewer.Resolver{Models: models, ProviderID: "openrouter", ModelID: "gpt-5.5"}.Resolve(context.Background())
 	if !errors.Is(err, reviewer.ErrNoReviewer) {

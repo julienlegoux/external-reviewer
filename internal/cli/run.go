@@ -11,6 +11,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/julienlegoux/kern-link/ai"
+
 	"github.com/julienlegoux/external-reviewer/internal/diag"
 )
 
@@ -33,7 +35,7 @@ import (
 // SIGINT is not portable to the Windows CI runner, so this wiring is
 // exercised only by constructing Run itself; the cancellation behavior it
 // feeds into is exercised directly against the inner run, which takes the
-// context explicitly (see export_test.go's RunContextForTest).
+// context explicitly (see export_test.go's RunWithModelsForTest).
 //
 // Whether a context was already cancelled before argv was even parsed is
 // not decided here: help/empty-argv/an-unknown-command do no I/O that a
@@ -44,11 +46,24 @@ import (
 // handleSIGPIPE), because `external-reviewer review … | head -20` would
 // otherwise kill the process outright and skip the done line entirely.
 func Run(argv []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	return runProcess(argv, stdin, stdout, stderr, nil)
+}
+
+// runProcess is Run's body with the registry left as an argument, so that
+// export_test.go's RunForTest can drive the *same* process-level wiring
+// against an offline registry instead of keeping a second copy of it.
+//
+// The duplication that used to sit in RunForTest is the reason this exists:
+// a test-only replica of the entry point silently misses whatever the real
+// entry point gains next. It had already missed handleSIGPIPE, which would
+// have left the one test that exists to prove the process is not killed by
+// SIGPIPE running against a process that never registered for it.
+func runProcess(argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	defer handleSIGPIPE()()
 
-	code, _ := run(ctx, argv, stdin, stdout, stderr)
+	code, _ := run(ctx, argv, stdin, stdout, stderr, registry)
 	return code
 }
 
@@ -87,7 +102,13 @@ func handleSIGPIPE() func() {
 // regardless of how many branches this function grows: every return —
 // success, a usage error, a reviewer that was never reached, one that
 // failed, or a cancelled context — passes through it exactly once.
-func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.Writer) (int, error) {
+//
+// registry is the provider registry a review resolves against. nil — the
+// zero value every real invocation passes — means "build the real one,
+// lazily, on first use" (see ensureModels); a test passes its own offline
+// registry as an explicit argument instead of mutating a package-level
+// variable (see export_test.go's RunForTest and RunWithModelsForTest).
+func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) (int, error) {
 	state := diag.NewState()
 	defer func() { diag.WriteDone(stderr, state) }()
 
@@ -105,7 +126,7 @@ func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.
 		state.StopReason = "help"
 		return 0, nil
 	case "review":
-		err := runReviewCommand(ctx, rest, stdin, stdout, stderr, state)
+		err := runReviewCommand(ctx, rest, stdin, stdout, stderr, state, registry)
 		return classify(err), err
 	default:
 		diag.WriteError(stderr, fmt.Sprintf("unknown command %q", cmd))

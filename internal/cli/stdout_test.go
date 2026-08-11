@@ -70,11 +70,11 @@ func errorLines(stderr string) []string {
 // test can fail the report's one write.
 func runReviewInto(t *testing.T, stdout io.Writer, answer string) (int, string) {
 	t.Helper()
-	defer cli.SetModelsForTest(scripted(t, 0, faux.Step(faux.TextMessage(answer, nil))))()
+	models := scripted(t, 0, faux.Step(faux.TextMessage(answer, nil)))
 
 	var stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "review this", t.TempDir()},
-		strings.NewReader(""), stdout, &stderr)
+	code := cli.RunForTest([]string{"review", "--prompt", "review this", t.TempDir()},
+		strings.NewReader(""), stdout, &stderr, models)
 	return code, stderr.String()
 }
 
@@ -197,9 +197,10 @@ var brokenPipeReport = strings.Repeat("# Review\n\n- a finding that goes on and 
 
 // TestBrokenStdoutPipeChild is the child half of the closed-pipe test, not a
 // test of its own: without the environment variable it skips. Run as a child
-// it is a faithful external-reviewer process — real Run, real os.Stdout on
-// fd 1, an offline registry — that exits with the code Run returns, so the
-// parent can read the exit status a shell would have read.
+// it is a faithful external-reviewer process — Run's own body via
+// RunForTest, so the real signal wiring is in place, real os.Stdout on fd 1,
+// and only the registry swapped for an offline one — exiting with the code
+// Run returns, so the parent reads the exit status a shell would have read.
 func TestBrokenStdoutPipeChild(t *testing.T) {
 	if os.Getenv(brokenPipeChildEnv) == "" {
 		t.Skipf("%s is not set: this is the child half of the closed-pipe test", brokenPipeChildEnv)
@@ -210,9 +211,9 @@ func TestBrokenStdoutPipeChild(t *testing.T) {
 	// because --prompt is supplied.
 	_, _ = io.Copy(io.Discard, os.Stdin)
 
-	defer cli.SetModelsForTest(scripted(t, 0, faux.Step(faux.TextMessage(brokenPipeReport, nil))))()
-	code := cli.Run([]string{"review", "--prompt", "review this", t.TempDir()},
-		strings.NewReader(""), os.Stdout, os.Stderr)
+	models := scripted(t, 0, faux.Step(faux.TextMessage(brokenPipeReport, nil)))
+	code := cli.RunForTest([]string{"review", "--prompt", "review this", t.TempDir()},
+		strings.NewReader(""), os.Stdout, os.Stderr, models)
 	os.Exit(code)
 }
 

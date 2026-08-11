@@ -2,14 +2,13 @@ package cli_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
@@ -64,59 +63,21 @@ func assertOnlyKnownPrefixedLines(t *testing.T, stderr string) {
 	}
 }
 
-// TestRun_NoReviewerReached_ExitsOne exercises the exit-1 path — a review
-// that never reaches a model — through Run, with the wired reviewer stubbed
-// (via SetReviewerForTest) to return cli.ErrNoReviewer wrapped two levels
-// deep, since real model resolution arrives in a later issue. Classification
-// must still land on exit 1 through the wrapping, proving errors.Is is what
-// decides it rather than error text.
-func TestRun_NoReviewerReached_ExitsOne(t *testing.T) {
+// TestClassify_WrappedErrNoReviewer_IsExitOne is the one assertion that
+// survives uniquely from the retired performReview seam: a sentinel wrapped
+// two levels deep still resolves to exit 1, proving errors.Is is what
+// decides classification rather than error text (issue 03 of Epic 1's
+// explicit criterion). It is asserted against classify directly now that no
+// stubbed reviewer seam exists to drive it through Run — the behavioral half
+// of the exit-1 path (a real resolution that never reaches a model, landing
+// on exit 1 with stop=no_reviewer) lives in preflight_test.go's
+// TestRun_NotReached_ExitsOne, and the generic "reached and failed is exit 2"
+// half lives in preflight_test.go's TestRun_BrokenCredential_ExitsTwo and
+// roundtrip_test.go's TestRun_FailedTurn_ExitsTwo.
+func TestClassify_WrappedErrNoReviewer_IsExitOne(t *testing.T) {
 	wrapped := fmt.Errorf("resolving model: %w", fmt.Errorf("checking auth: %w", cli.ErrNoReviewer))
-	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer, io.Writer) error {
-		return wrapped
-	})
-	defer restore()
-
-	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
-
-	if code != 1 {
-		t.Errorf("exit code = %d, want 1 (stderr: %q)", code, stderr.String())
-	}
-	if stdout.Len() != 0 {
-		t.Errorf("stdout = %q, want empty", stdout.String())
-	}
-	fields := parseDoneLine(t, stderr.String())
-	if fields.in != "0" || fields.out != "0" {
-		t.Errorf("done in/out = %q/%q, want 0/0 (a path that never reached a model)", fields.in, fields.out)
-	}
-	if fields.stop != "no_reviewer" {
-		t.Errorf("done stop = %q, want no_reviewer", fields.stop)
-	}
-}
-
-// TestRun_ReachedAndFailed_ExitsTwo exercises the exit-2 "reached and
-// unusable" path for a failure that is not a usage error — e.g. a failed
-// turn — again through a stubbed reviewer, since issues 04/05 supply the
-// real failure modes.
-func TestRun_ReachedAndFailed_ExitsTwo(t *testing.T) {
-	restore := cli.SetReviewerForTest(func(context.Context, string, string, io.Writer, io.Writer) error {
-		return fmt.Errorf("turn failed: stop reason error")
-	})
-	defer restore()
-
-	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
-
-	if code != 2 {
-		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
-	}
-	if stdout.Len() != 0 {
-		t.Errorf("stdout = %q, want empty", stdout.String())
-	}
-	fields := parseDoneLine(t, stderr.String())
-	if fields.stop != "failed" {
-		t.Errorf("done stop = %q, want failed", fields.stop)
+	if code := cli.ClassifyForTest(wrapped); code != 1 {
+		t.Errorf("classify(wrapped ErrNoReviewer) = %d, want 1", code)
 	}
 }
 
@@ -124,10 +85,9 @@ func TestRun_ReachedAndFailed_ExitsTwo(t *testing.T) {
 // pre-flight resolution and a real streamed round trip against an offline
 // registry, terminating normally with the reviewer's answer on stdout.
 func TestRun_Success_ExitsZero(t *testing.T) {
-	defer cli.SetModelsForTest(registry(t, credentialedAuth("OAuth"), nil, reviewer.DefaultModelID))()
-
 	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr)
+	code := cli.RunForTest([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 0 {
 		t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
