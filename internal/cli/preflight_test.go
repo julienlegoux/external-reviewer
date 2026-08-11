@@ -76,8 +76,8 @@ func TestRun_ResolvableCredentialedModel_ProceedsPastPreflight(t *testing.T) {
 	// when no AssistantMessageOptions.StopReason is scripted (see
 	// roundtrip_test.go's TestRun_SuccessfulTurn_DoneLineRendersModelsOwnStopReason
 	// for the explicit no-translation-table proof).
-	if fields := parseDoneLine(t, stderr); fields.stop != "stop" {
-		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.stop)
+	if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop != "stop" {
+		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.Stop)
 	}
 	if !strings.Contains(stderr, reviewer.DefaultProviderID+"/"+reviewer.DefaultModelID) {
 		t.Errorf("stderr = %q, want it to name the resolved model", stderr)
@@ -125,12 +125,12 @@ func TestRun_NotReached_ExitsOne(t *testing.T) {
 			if stdout != "" {
 				t.Errorf("stdout = %q, want empty on a failure", stdout)
 			}
-			fields := parseDoneLine(t, stderr)
-			if fields.stop != "no_reviewer" {
-				t.Errorf("done stop = %q, want no_reviewer", fields.stop)
+			fields := fauxtest.ParseDoneLine(t, stderr)
+			if fields.Stop != "no_reviewer" {
+				t.Errorf("done stop = %q, want no_reviewer", fields.Stop)
 			}
-			if fields.in != "0" || fields.out != "0" {
-				t.Errorf("done in/out = %q/%q, want 0/0 (a path that never reached a model)", fields.in, fields.out)
+			if fields.In != "0" || fields.Out != "0" {
+				t.Errorf("done in/out = %q/%q, want 0/0 (a path that never reached a model)", fields.In, fields.Out)
 			}
 		})
 	}
@@ -171,8 +171,8 @@ func TestRun_BrokenCredential_ExitsTwo(t *testing.T) {
 			if stdout != "" {
 				t.Errorf("stdout = %q, want empty on a failure", stdout)
 			}
-			if fields := parseDoneLine(t, stderr); fields.stop != "failed" {
-				t.Errorf("done stop = %q, want failed", fields.stop)
+			if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop != "failed" {
+				t.Errorf("done stop = %q, want failed", fields.Stop)
 			}
 			if !strings.Contains(stderr, "error:") {
 				t.Errorf("stderr = %q, want the reason written to it", stderr)

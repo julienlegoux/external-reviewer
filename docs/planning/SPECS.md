@@ -368,8 +368,11 @@ and every implementer agent run, and `os.Root` behaviour and path separators are
 where that splits.
 
 **Observability is stderr and nothing else.** No logging library, no metrics, no tracing,
-no error reporting. `kern-link`'s non-fatal `AssistantMessageDiagnostic` values — already
-redacted — are printed as `warn` lines rather than discarded.
+no error reporting. `kern-link`'s non-fatal `AssistantMessageDiagnostic` values are printed
+as `warn` lines rather than discarded — no version of `kern-link` redacts them, so the
+`warn`/`error:` writers escape the message's control characters themselves before printing,
+which stops a diagnostic or a provider's error body from forging a line or reaching the
+terminal raw without claiming to redact anything it carries.
 
 **Performance targets, stated so nothing gets gold-plated**
 ([decision](/specs/15-performance-and-scale.md)): one review per process, one process at a

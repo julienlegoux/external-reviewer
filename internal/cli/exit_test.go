@@ -3,7 +3,6 @@ package cli_test
 import (
 	"bytes"
 	"fmt"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -11,28 +10,6 @@ import (
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
-
-// doneLineRE parses the "done" line's key=value fields out of a run's stderr
-// rather than matching it verbatim — elapsed time is real. Shared by every
-// test in this package that asserts on a termination's done line.
-var doneLineRE = regexp.MustCompile(
-	`(?m)^done\s+turns=(\d+)\s+in=(\d+) out=(\d+)\s+\$([0-9.]+)\s+(\S+)\s+stop=(\S+)\s*$`)
-
-// doneFields holds a parsed done line's key=value fields for assertions.
-type doneFields struct {
-	turns, in, out, cost, elapsed, stop string
-}
-
-// parseDoneLine finds and parses the done line in stderr, failing the test
-// if none is present — every termination path must emit exactly one.
-func parseDoneLine(t *testing.T, stderr string) doneFields {
-	t.Helper()
-	m := doneLineRE.FindStringSubmatch(stderr)
-	if m == nil {
-		t.Fatalf("stderr = %q, want a done line matching %s", stderr, doneLineRE)
-	}
-	return doneFields{turns: m[1], in: m[2], out: m[3], cost: m[4], elapsed: m[5], stop: m[6]}
-}
 
 // knownDiagPrefixes are the leading words internal/diag's Write* functions
 // ever put on a line — the vocabulary assertOnlyKnownPrefixedLines checks
@@ -95,13 +72,13 @@ func TestRun_Success_ExitsZero(t *testing.T) {
 	if stdout.String() != scriptedAnswer {
 		t.Errorf("stdout = %q, want the reviewer's answer %q", stdout.String(), scriptedAnswer)
 	}
-	fields := parseDoneLine(t, stderr.String())
+	fields := fauxtest.ParseDoneLine(t, stderr.String())
 	// "stop" is kern-link's own StopReasonStop — faux.TextMessage's default
 	// when no AssistantMessageOptions.StopReason is scripted. The done line's
 	// success path renders the model's own reason verbatim, not a CLI word:
 	// see TestRun_SuccessfulTurn_DoneLineRendersModelsOwnStopReason for the
 	// no-translation-table proof.
-	if fields.stop != "stop" {
-		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.stop)
+	if fields.Stop != "stop" {
+		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.Stop)
 	}
 }

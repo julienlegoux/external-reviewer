@@ -56,8 +56,8 @@ func TestRun_Review_StdinCancelledMidRead_ExitsInterrupted(t *testing.T) {
 	if stdout.Len() != 0 {
 		t.Errorf("stdout = %q, want empty", stdout.String())
 	}
-	if fields := parseDoneLine(t, stderr.String()); fields.stop != "interrupted" {
-		t.Errorf("done stop = %q, want interrupted", fields.stop)
+	if fields := fauxtest.ParseDoneLine(t, stderr.String()); fields.Stop != "interrupted" {
+		t.Errorf("done stop = %q, want interrupted", fields.Stop)
 	}
 	if n := strings.Count(stderr.String(), "error:  "); n != 1 {
 		t.Errorf("stderr = %q, want exactly one error: line", stderr.String())
