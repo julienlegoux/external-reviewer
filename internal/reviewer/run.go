@@ -50,9 +50,14 @@ const DefaultStreamTimeout = 10 * time.Minute
 // flip — a ready result wins every time — and gives an adapter that is still
 // unwinding a moment to push the in-band aborted event it owes, which is what
 // turns a mid-stream Ctrl-C into an aborted message rather than a bare
-// context error. A quarter of a second is imperceptible after a Ctrl-C and
-// far longer than the handful of channel operations it is waiting on.
-const resultGrace = 250 * time.Millisecond
+// context error.
+//
+// A result that is already there is returned immediately, so this is only
+// ever spent on a turn that has failed anyway. That is what buys the margin:
+// half a second is orders of magnitude more than the goroutine hop it waits
+// on needs, even on a CI runner under -race, and the whole cost of being
+// generous is half a second added to a run that is ending badly regardless.
+const resultGrace = 500 * time.Millisecond
 
 // Turn is one completed round trip. It is returned even when the turn
 // failed, because a run that died after spending tokens is exactly the run
