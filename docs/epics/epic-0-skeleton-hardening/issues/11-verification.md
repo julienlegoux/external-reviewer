@@ -56,6 +56,29 @@ core.autocrlf=false`) after `golangci-lint cache clean`, because this machine's
 absolute-path cache has reported a stale clean run before: `gofmt -l .` printed
 nothing and `golangci-lint run` printed `0 issues.`
 
+## After merging `origin/develop` (issue 06 / PR #43, issue 10 / PR #42)
+
+Issue 06 landed `internal/reviewer/run_test.go` in the same package as this
+issue's `turn_test.go`. The two files share no top-level name — `reviewerModel`
+against `scriptedTurn`, `terminalStream`, `pricedMessage` — so they coexist
+unchanged, and issue 06's hand-rolled `cacheAwareModels` provider is kept: `faux`
+only reports non-zero `CacheRead`/`CacheWrite` through `SessionID` reuse, which
+`Conversation.Next` never sets, so `fauxtest`'s scripted-stream seam does not
+replace it.
+
+Two of issue 06's mutants live in the function this issue restructured, so both
+were re-applied by hand after the merge to confirm the restructure did not
+silently take a sibling's coverage with it:
+
+| Mutation | Result |
+| --- | --- |
+| `c.messages = append(c.messages, message)` deleted | `TestConversation_Next_AccumulatesMessagesInOrder` fails — `the second turn's request carried 1 messages, want 2 (user, assistant)` |
+| `+ turn.Usage.CacheRead + turn.Usage.CacheWrite` deleted from `recordTurn` | `TestRun_CacheTokens_IncludedInInAccounting` fails — `done in = "120", want "205"` |
+| this issue's own `endedBecause` branch deleted from the stop-reason check (re-confirmed) | `TestNext_AbortedMessageUnderCancelledContextIsInterrupted` and `TestNext_AbortingProviderStillReportsTheStreamTimeout` fail; `TestRun_CancelledMidStream_ExitsTwo` fails 3 runs of 3 with `done stop = "failed", want interrupted` |
+
+Post-merge green: `internal/reviewer` 29 tests and subtests, `internal/cli` 66,
+`internal/diag` 9, five consecutive repeats each, no failures.
+
 ## Argued rather than observed
 
 * Behaviour under `-race`, on either OS.
