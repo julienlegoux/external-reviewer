@@ -3,12 +3,22 @@ package cli_test
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/julienlegoux/kern-link/ai"
+
 	"github.com/julienlegoux/external-reviewer/internal/cli"
+	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
+	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
+// TestRun_EmptyArgv_UsageError asserts the empty-argv path's error: line
+// text directly — not stderr.Len() != 0, which the leftover usage text this
+// path used to print would have satisfied on its own even with no reason
+// line at all.
 func TestRun_EmptyArgv_UsageError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 
@@ -20,9 +30,10 @@ func TestRun_EmptyArgv_UsageError(t *testing.T) {
 	if stdout.Len() != 0 {
 		t.Errorf("stdout = %q, want empty", stdout.String())
 	}
-	if stderr.Len() == 0 {
-		t.Error("stderr is empty, want a non-empty usage message")
+	if !strings.Contains(stderr.String(), "error:  no command given\n") {
+		t.Errorf("stderr = %q, want an error:  no command given line", stderr.String())
 	}
+	assertOnlyKnownPrefixedLines(t, stderr.String())
 	fields := parseDoneLine(t, stderr.String())
 	if fields.stop != "usage" {
 		t.Errorf("done stop = %q, want usage", fields.stop)
@@ -63,12 +74,22 @@ func TestRun_Help_DoneLineStopIsHelp(t *testing.T) {
 // pre-cancelled context, since delivering a real SIGINT is not portable to
 // the Windows CI runner — Run's signal.NotifyContext wiring itself is
 // exercised only by constructing Run in the other tests in this package.
+//
+// "Was this interrupted?" is decided once, in runReview's interruptedError
+// check — not by a shortcut at the top of run() that used to fire before
+// argv was even parsed. registry is a real offline faux registry (never the
+// machine's credential store): auth resolves synchronously regardless of
+// ctx, so the pre-cancelled context is first observed where kern-link's own
+// stream.Result(ctx) returns ctx.Err() — the same path
+// TestRun_CancelledMidStream_ExitsTwo exercises mid-flight, here hit before
+// a single byte streams.
 func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunWithModelsForTest(ctx, []string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, nil)
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -79,11 +100,53 @@ func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 	if !strings.Contains(strings.ToLower(stderr.String()), "interrupt") {
 		t.Errorf("stderr = %q, want an interruption reason", stderr.String())
 	}
+	assertOnlyKnownPrefixedLines(t, stderr.String())
 	fields := parseDoneLine(t, stderr.String())
 	if fields.stop != "interrupted" {
 		t.Errorf("done stop = %q, want interrupted", fields.stop)
 	}
 	if fields.in != "0" || fields.out != "0" {
 		t.Errorf("done in/out = %q/%q, want 0/0 (a path that never reached a model)", fields.in, fields.out)
+	}
+}
+
+// TestRunReview_InterruptionDecidedOnce is the acceptance criterion's proof
+// that "was this interrupted?" is decided in exactly one place: runReview's
+// interruptedError check classifies every shape a cancelled run's terminal
+// error can take, including a *ai.ModelsError — the type Resolver.Resolve
+// returns for a broken credential — wrapping context.Canceled rather than a
+// bare wrapped error. Before this issue, a second check lived in
+// internal/reviewer (Conversation.Next) as a belt-and-braces fallback for
+// exactly this shape; deleting it changes no observable behaviour because
+// kern-link v0.1.1 already preserves the cancellation cause through every
+// path this binary reaches (the gap the belt-and-braces check existed for is
+// real only against a newer kern-link API this project does not build
+// against — see DRIFT.md #04).
+//
+// This asserts interruptedError directly (via cli.InterruptedErrorForTest)
+// rather than driving the classification through a full Run: reaching a
+// *ai.ModelsError wrapping context.Canceled for real would require scripting
+// kern-link's own auth-resolution internals rather than this package's
+// seam, and runReview has exactly one call site for this question — the
+// same one exercised end to end by TestRunContext_CancelledContext_ExitsTwo
+// and TestRun_CancelledMidStream_ExitsTwo (roundtrip_test.go).
+func TestRunReview_InterruptionDecidedOnce(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"a bare error wrapping context.Canceled", fmt.Errorf("streaming: %w", context.Canceled), true},
+		{"a bare error wrapping context.DeadlineExceeded", fmt.Errorf("streaming: %w", context.DeadlineExceeded), true},
+		{"a *ai.ModelsError wrapping context.Canceled", ai.NewModelsError(ai.ModelsErrorAuth, "resolving credentials", context.Canceled), true},
+		{"an unrelated failure", errors.New("turn failed: stop reason error"), false},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := cli.InterruptedErrorForTest(tc.err); got != tc.want {
+				t.Errorf("InterruptedErrorForTest(%v) = %v, want %v", tc.err, got, tc.want)
+			}
+		})
 	}
 }

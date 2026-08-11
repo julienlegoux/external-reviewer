@@ -37,3 +37,11 @@ func RunWithModelsForTest(ctx context.Context, argv []string, stdin io.Reader, s
 // through Run: a sentinel wrapped at any depth still resolves to the same
 // exit code (issue 03 of Epic 1's explicit criterion).
 func ClassifyForTest(err error) int { return classify(err) }
+
+// InterruptedErrorForTest exposes interruptedError directly, for the
+// classification-shape test that proves "was this interrupted?" is decided
+// in exactly one place: every shape a cancelled run's terminal error can
+// take — including a *ai.ModelsError from Resolve wrapping
+// context.Canceled — must answer the same way, without going through a real
+// (or stubbed) review execution to construct it.
+func InterruptedErrorForTest(err error) bool { return interruptedError(err) }

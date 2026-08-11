@@ -3,7 +3,7 @@ type: Issue
 title: "Enforce gofmt in CI, normalise line endings, and lint on both OSes"
 description: "Add the golangci-lint v2 formatters block, .gitattributes for LF normalisation, and put the lint job on the two-OS matrix, so nothing unformatted can land after this."
 tags: [epic-0]
-timestamp: 2026-08-11T06:30:00Z
+timestamp: 2026-08-11T07:00:00Z
 epic: 0
 issue: 04
 slug: ci-formatting-gate

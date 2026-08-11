@@ -61,10 +61,9 @@ func NewConversation(models ai.Models, model *ai.Model, task string) *Conversati
 //
 // The error it returns is a *failing turn*, which ends a run (exit 2): the
 // stream failing outright, or a StopReason of "error" or "aborted". A
-// cancelled context is reported as an error wrapping ctx.Err() whichever way
-// the cancellation surfaced — kern-link's Result observing it, or the
-// provider aborting the request first, a race by construction that callers
-// must not have to distinguish.
+// cancelled context surfaces through stream.Result's own error, which wraps
+// ctx.Err(); internal/cli's runReview is where that is turned into
+// stop=interrupted rather than stop=failed.
 func (c *Conversation) Next(ctx context.Context) (Turn, error) {
 	start := time.Now()
 
@@ -90,14 +89,17 @@ func (c *Conversation) Next(ctx context.Context) (Turn, error) {
 	ai.CalculateCost(c.model, &usage)
 	turn := Turn{Message: message, Usage: usage, Elapsed: time.Since(start), Tools: toolCalls(message), StopReason: message.StopReason}
 
-	// A cancelled context outranks whatever the message says. kern-link's
-	// Result observes the cancellation first almost every time, so this is
-	// belt to that braces: when the provider's own aborted message wins the
-	// race instead, an interrupted run must still be reported as interrupted
-	// rather than as a turn that failed on its own.
-	if err := ctx.Err(); err != nil {
-		return turn, fmt.Errorf("the reviewer's turn was interrupted: %w", err)
-	}
+	// "Was this interrupted?" is decided in exactly one place: internal/cli's
+	// runReview, from whatever error reaches it (errors.Is against
+	// context.Canceled / context.DeadlineExceeded at any wrap depth). This
+	// package used to carry its own belt-and-braces ctx.Err() check here in
+	// case the provider's own aborted message won the race against
+	// stream.Result observing the cancellation, but kern-link v0.1.1 (the
+	// pinned version — DRIFT.md #04) preserves the cancellation cause through
+	// stream.Result on every path this package reaches, so the check never
+	// fired — deleting it changes no observable behaviour, confirmed by
+	// running the full suite, including TestRun_CancelledMidStream_ExitsTwo,
+	// with it removed.
 	if message.StopReason == ai.StopReasonError || message.StopReason == ai.StopReasonAborted {
 		return turn, fmt.Errorf("the reviewer's turn stopped with reason %q: %s", message.StopReason, message.ErrorMessage)
 	}

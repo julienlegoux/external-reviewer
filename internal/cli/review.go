@@ -108,6 +108,11 @@ func recordTurn(stderr io.Writer, state *diag.State, turn reviewer.Turn) {
 // never render with nothing after it (SPECS § Interfaces).
 const stopReasonUnspecified = "unspecified"
 
+// usageStopReason is the CLI word every malformed invocation's done line
+// carries — a named constant rather than the literal repeated at every usage
+// call site in this file and run.go.
+const usageStopReason = "usage"
+
 // modelStopReason renders a turn's own StopReason for the done line's
 // success path, spelled exactly as kern-link spells it — no translation
 // table between the model's vocabulary and the CLI's.
@@ -155,43 +160,55 @@ func ensureModels(registry ai.Models) (ai.Models, error) {
 // stdin, and validates both before anything talks to a model. It returns
 // the error classify uses to pick the process exit code: nil is exit 0,
 // ErrNoReviewer is exit 1, anything else — including every usage error
-// below — is exit 2. Every usage error also writes its reason to stderr
-// here; a reached-and-failed error is written to stderr too, but a
-// not-reached one (ErrNoReviewer) is not, since SPECS calls that path the
-// silent-fallback case the caller needs no line about.
+// below — is exit 2. Every usage error writes exactly one diag.WriteError
+// line to stderr and nothing else; a reached-and-failed error gets one too,
+// but a not-reached one (ErrNoReviewer) does not, since SPECS calls that
+// path the silent-fallback case the caller needs no line about.
+//
+// fs.SetOutput(io.Discard) suppresses flag's own error-and-usage write —
+// its default behaviour would otherwise put an unprefixed "Usage of
+// review:" block on stderr ahead of the diag.WriteError line below, which
+// is exactly the second, unprefixed line the acceptance criteria forbid.
 func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models) error {
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
-	fs.SetOutput(stderr)
+	fs.SetOutput(io.Discard)
 	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
 
 	if err := fs.Parse(args); err != nil {
-		// fs already wrote the reason and usage to stderr (SetOutput above).
-		state.StopReason = "usage"
+		if errors.Is(err, flag.ErrHelp) {
+			// review --help / review -h are not a failure path: usage on
+			// stdout, exit 0, matching top-level help (run.go).
+			printUsage(stdout)
+			state.StopReason = "help"
+			return nil
+		}
+		diag.WriteError(stderr, err.Error())
+		state.StopReason = usageStopReason
 		return fmt.Errorf("parsing review flags: %w", err)
 	}
 
 	positional := fs.Args()
 	if len(positional) == 0 {
-		_, _ = fmt.Fprintln(stderr, "error: review requires a repository path")
-		state.StopReason = "usage"
+		diag.WriteError(stderr, "review requires a repository path")
+		state.StopReason = usageStopReason
 		return errors.New("review requires a repository path")
 	}
 	if len(positional) > 1 {
-		_, _ = fmt.Fprintf(stderr, "error: unexpected extra arguments: %s\n", strings.Join(positional[1:], " "))
-		state.StopReason = "usage"
+		diag.WriteError(stderr, fmt.Sprintf("unexpected extra arguments: %s", strings.Join(positional[1:], " ")))
+		state.StopReason = usageStopReason
 		return fmt.Errorf("unexpected extra arguments: %s", strings.Join(positional[1:], " "))
 	}
 	repoPath := positional[0]
 
 	info, err := os.Stat(repoPath)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "error: repository path %q: %v\n", repoPath, err)
-		state.StopReason = "usage"
+		diag.WriteError(stderr, fmt.Sprintf("repository path %q: %v", repoPath, err))
+		state.StopReason = usageStopReason
 		return fmt.Errorf("checking repository path %q: %w", repoPath, err)
 	}
 	if !info.IsDir() {
-		_, _ = fmt.Fprintf(stderr, "error: repository path %q is not a directory\n", repoPath)
-		state.StopReason = "usage"
+		diag.WriteError(stderr, fmt.Sprintf("repository path %q is not a directory", repoPath))
+		state.StopReason = usageStopReason
 		return fmt.Errorf("repository path %q is not a directory", repoPath)
 	}
 
@@ -208,15 +225,15 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 	} else {
 		data, err := io.ReadAll(stdin)
 		if err != nil {
-			_, _ = fmt.Fprintf(stderr, "error: reading task prompt from stdin: %v\n", err)
-			state.StopReason = "usage"
+			diag.WriteError(stderr, fmt.Sprintf("reading task prompt from stdin: %v", err))
+			state.StopReason = usageStopReason
 			return fmt.Errorf("reading task prompt from stdin: %w", err)
 		}
 		task = string(data)
 	}
 	if task == "" {
-		_, _ = fmt.Fprintln(stderr, "error: empty task prompt: pass --prompt or provide one on stdin")
-		state.StopReason = "usage"
+		diag.WriteError(stderr, "empty task prompt: pass --prompt or provide one on stdin")
+		state.StopReason = usageStopReason
 		return errors.New("empty task prompt")
 	}
 
@@ -224,9 +241,10 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 }
 
 // runReview calls the review seam and folds its outcome into state's stop
-// reason. Cancellation is checked before the generic failure case: a run a
-// human interrupted is not a run that failed, and the transcript has to say
-// which of the two happened. Both are exit 2 all the same.
+// reason. Cancellation (interruptedError) is checked before the generic
+// failure case: a run a human interrupted is not a run that failed, and the
+// transcript has to say which of the two happened. Both are exit 2 all the
+// same.
 func runReview(ctx context.Context, registry ai.Models, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
 	err := resolveAndReview(ctx, registry, req, stdout, stderr, state)
 	switch {
@@ -236,12 +254,26 @@ func runReview(ctx context.Context, registry ai.Models, req reviewRequest, stdou
 		// not a CLI word (SPECS § Interfaces).
 	case errors.Is(err, ErrNoReviewer):
 		state.StopReason = "no_reviewer"
-	case errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded):
+	case interruptedError(err):
 		state.StopReason = "interrupted"
-		_, _ = fmt.Fprintln(stderr, "error: run interrupted")
+		diag.WriteError(stderr, "run interrupted")
 	default:
 		state.StopReason = "failed"
-		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
+		diag.WriteError(stderr, err.Error())
 	}
 	return err
+}
+
+// interruptedError reports whether err represents a run a human (or a
+// deadline) interrupted rather than one that failed on its own — the same
+// question at any wrap depth, whatever shape the terminal error takes:
+// context.Canceled/context.DeadlineExceeded directly, or wrapped inside a
+// *ai.ModelsError from Resolve, whose Unwrap exposes exactly that when the
+// pre-flight call itself was cancelled. This is the one place "was this
+// interrupted?" is decided: internal/cli/run.go and internal/reviewer/run.go
+// used to carry their own copies of this question; both were deletable
+// without changing observable behaviour, because this check already covers
+// what they covered (verified by running the full suite with each removed).
+func interruptedError(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
 }

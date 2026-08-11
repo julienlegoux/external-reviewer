@@ -146,3 +146,18 @@ func TestWriteWarn_RendersMessage(t *testing.T) {
 		t.Errorf("WriteWarn wrote %q, want %q", got, want)
 	}
 }
+
+// TestWriteError_RendersMessage pins the "error:" prefix at the same
+// 8-column width every other diag.Write* uses — "error:" is 6 characters,
+// so it is followed by 2 spaces rather than WriteWarn's 4.
+func TestWriteError_RendersMessage(t *testing.T) {
+	var buf bytes.Buffer
+
+	diag.WriteError(&buf, "review requires a repository path")
+
+	got := buf.String()
+	want := "error:  review requires a repository path\n"
+	if got != want {
+		t.Errorf("WriteError wrote %q, want %q", got, want)
+	}
+}

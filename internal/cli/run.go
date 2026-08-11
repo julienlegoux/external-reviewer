@@ -23,8 +23,10 @@ import (
 //
 // No arguments, an unrecognised subcommand, an unrecognised flag, or a
 // malformed `review` invocation are all usage errors: exit 2, stdout empty,
-// the reason on stderr. help/--help/-h are not a failure path and exit 0
-// with usage text on stdout.
+// one prefixed error: line on stderr (via diag.WriteError) and no usage
+// text alongside it. help/--help/-h are not a failure path and exit 0 with
+// usage text on stdout — review --help and review -h match them
+// (runReviewCommand splits flag.ErrHelp from a genuine parse error).
 //
 // Run wires SIGINT to context cancellation with signal.NotifyContext, so an
 // interrupted run terminates through the same path a failed one does: exit
@@ -33,6 +35,11 @@ import (
 // exercised only by constructing Run itself; the cancellation behavior it
 // feeds into is exercised directly against the inner run, which takes the
 // context explicitly (see export_test.go's RunWithModelsForTest).
+//
+// Whether a context was already cancelled before argv was even parsed is
+// not decided here: help/empty-argv/an-unknown-command do no I/O that a
+// cancelled context could interrupt, and runReview is the one place that
+// decides "was this interrupted?" for the one command that does.
 func Run(argv []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -56,16 +63,9 @@ func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.
 	state := diag.NewState()
 	defer func() { diag.WriteDone(stderr, state) }()
 
-	if err := ctx.Err(); err != nil {
-		state.StopReason = "interrupted"
-		_, _ = fmt.Fprintln(stderr, "error: run interrupted")
-		wrapped := fmt.Errorf("run interrupted: %w", err)
-		return classify(wrapped), wrapped
-	}
-
 	if len(argv) == 0 {
-		printUsage(stderr)
-		state.StopReason = "usage"
+		diag.WriteError(stderr, "no command given")
+		state.StopReason = usageStopReason
 		err := errors.New("no command given")
 		return classify(err), err
 	}
@@ -80,9 +80,8 @@ func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.
 		err := runReviewCommand(ctx, rest, stdin, stdout, stderr, state, registry)
 		return classify(err), err
 	default:
-		_, _ = fmt.Fprintf(stderr, "error: unknown command %q\n", cmd)
-		printUsage(stderr)
-		state.StopReason = "usage"
+		diag.WriteError(stderr, fmt.Sprintf("unknown command %q", cmd))
+		state.StopReason = usageStopReason
 		err := fmt.Errorf("unknown command %q", cmd)
 		return classify(err), err
 	}
