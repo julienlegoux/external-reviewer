@@ -2,10 +2,58 @@
 
 ## 2026-08-11
 
+* **Merged**: [08 handle the repository path as an OS path and emit wire
+  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  (#30) — [PR #41](https://github.com/julienlegoux/external-reviewer/pull/41)
+  merged into `develop`.
+
+* **PR opened**: [08 handle the repository path as an OS path and emit wire
+  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  (#30) — [PR #41](https://github.com/julienlegoux/external-reviewer/pull/41)
+  against `develop`. `runReviewCommand` now runs the positional repository
+  path through `filepath.Clean` before `os.Stat`, and every diagnostic that
+  reaches stderr converts it to a `filepath.ToSlash` wire form with the OS's
+  own error sentence dropped entirely — the message states only what was
+  attempted, lowercase and unpunctuated; classification stays on the wrapped
+  error via `errors.Is`/`errors.As`. `TestRun_Review_PathDiagnostics_AreWireForm`
+  is table-driven over the nonexistent-path and not-a-directory cases and
+  builds its expectation from `filepath.ToSlash` of the same native path,
+  with no `runtime.GOOS` branch; run against the pre-fix source it
+  reproduced the exact reported bug (double-escaped backslashes, the OS's
+  capitalised sentence) on this Windows dev machine. 84 changed lines (22
+  production, 62 test) against a ~200 M target.
+
+* **Started**: [08 handle the repository path as an OS path and emit wire
+  paths on stderr](/epic-0-skeleton-hardening/issues/08-os-and-wire-paths.md)
+  (#30) — branch `issue-08-path-boundary`.
+
 * **Merged**: [07 write one prefixed error: line from diag on every exit-2
   path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
   [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) merged into
   `develop`.
+
+* **Fix**: [05 extract one importable faux harness and retire the mutable
+  package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
+  (#27) — [PR #40](https://github.com/julienlegoux/external-reviewer/pull/40).
+  A windows-latest `go test ./... -race` run caught
+  `TestRun_CancelledMidStream_ExitsTwo` classifying a mid-stream cancellation
+  as `stop=failed` instead of `interrupted` — the identical commit had passed
+  the same job moments earlier, so this was a genuine race rather than a bad
+  assertion: kern-link's `Stream.Result(ctx)` selects between its result
+  channel and `ctx.Done()`, and when the provider's own goroutine wins with a
+  `StopReasonAborted` message before `Result`'s select runs, the resulting
+  error carries no wrapped cancellation cause for `errors.Is` to find.
+  `asInterrupted` (`internal/cli/review.go`) wraps a failing turn's error
+  with `ctx.Err()` whenever `ctx` has actually ended, regardless of which
+  race produced the error's exact shape; a nil `turnErr` — a complete,
+  successful message — is never touched. Pinned by
+  `TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded`
+  (`run_test.go`), which constructs both of the helper's inputs by hand
+  rather than racing a real stream. The full cancellation-*precedence*
+  restructuring — preferring a complete message over a late `ctx.Err()`,
+  making the guard reachable from `internal/reviewer`'s own suite — is left
+  to [issue 11](/epic-0-skeleton-hardening/issues/11-turn-hardening.md),
+  which owns it; this fix stays at the classification seam only.
 
 * **PR opened**: [05 extract one importable faux harness and retire the mutable
   package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)
@@ -25,11 +73,12 @@
   assertion still exists, in the same or a more direct form. 325 insertions /
   374 deletions across 11 files (~700 changed lines, including this run's
   issue-04 reconcile and issue-05 bookkeeping) against a ~500-line M target.
-  Merged `origin/develop` (issue 07's PR #39) into this branch afterward to
-  resolve a real conflict in `internal/cli/run.go`/`review.go`: both issues
-  touched the same seams, and the resolution keeps issue 07's
-  `diag.WriteError` routing and its interruption-check deletions alongside
-  issue 05's explicit registry threading.
+  Merged `origin/develop` twice more since — issue 07's PR #39, then issue
+  08's PR #41 — resolving real conflicts in `internal/cli`'s `run.go`,
+  `review.go` and their tests each time: the resolution keeps issue 07's
+  `diag.WriteError` routing and interruption-check deletions, issue 08's
+  OS-path/wire-path boundary in `runReviewCommand`, and issue 05's explicit
+  registry threading and `asInterrupted` fix all alongside each other.
 
 * **Started**: [05 extract one importable faux harness and retire the mutable
   package-level seams](/epic-0-skeleton-hardening/issues/05-shared-faux-harness.md)

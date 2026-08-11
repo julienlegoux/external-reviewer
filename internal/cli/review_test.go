@@ -3,6 +3,7 @@ package cli_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -240,6 +241,67 @@ func TestRun_NoReviewerReached_WritesNoErrorLine(t *testing.T) {
 	}
 	if fields := parseDoneLine(t, stderr.String()); fields.stop != "no_reviewer" {
 		t.Errorf("done stop = %q, want no_reviewer", fields.stop)
+	}
+}
+
+// TestRun_Review_PathDiagnostics_AreWireForm proves the OS-path/wire-path
+// boundary CONVENTIONS § Paths and platforms names is actually implemented:
+// the repository path reaches stderr /-separated, with no OS separator and
+// no OS-authored sentence, and the wording carries no trailing full stop.
+// The expectation is built from filepath.ToSlash of the same native path Run
+// is given, so this passes unchanged on ubuntu-latest and windows-latest —
+// no runtime.GOOS branch and no //go:build divergence.
+func TestRun_Review_PathDiagnostics_AreWireForm(t *testing.T) {
+	tests := []struct {
+		name       string
+		buildPath  func(t *testing.T) string
+		wantSuffix string
+	}{
+		{
+			name: "nonexistent repository path",
+			buildPath: func(t *testing.T) string {
+				return filepath.Join(t.TempDir(), "does-not-exist")
+			},
+			wantSuffix: "could not be accessed",
+		},
+		{
+			name: "repository path is a regular file",
+			buildPath: func(t *testing.T) string {
+				dir := t.TempDir()
+				file := filepath.Join(dir, "not-a-directory.txt")
+				if err := os.WriteFile(file, []byte("x"), 0o600); err != nil {
+					t.Fatalf("WriteFile fixture: %v", err)
+				}
+				return file
+			},
+			wantSuffix: "is not a directory",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			nativePath := tc.buildPath(t)
+			wirePath := filepath.ToSlash(filepath.Clean(nativePath))
+
+			var stdout, stderr bytes.Buffer
+			code := cli.Run([]string{"review", "--prompt", "x", nativePath}, strings.NewReader(""), &stdout, &stderr)
+
+			if code != 2 {
+				t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
+			}
+			if stdout.Len() != 0 {
+				t.Errorf("stdout = %q, want empty", stdout.String())
+			}
+
+			want := fmt.Sprintf("error:  repository path %q %s\n", wirePath, tc.wantSuffix)
+			if !strings.Contains(stderr.String(), want) {
+				t.Errorf("stderr = %q, want a line %q", stderr.String(), want)
+			}
+			if strings.Contains(stderr.String(), `\`) {
+				t.Errorf("stderr = %q contains a backslash: the path must reach stderr in wire form", stderr.String())
+			}
+			assertOnlyKnownPrefixedLines(t, stderr.String())
+		})
 	}
 }
 
