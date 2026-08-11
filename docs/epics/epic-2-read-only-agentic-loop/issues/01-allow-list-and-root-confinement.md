@@ -3,7 +3,7 @@ type: Issue
 title: "Confine the run with --allow and os.OpenRoot"
 description: "Add the required repeatable --allow flag and the single *os.Root every later read goes through, with allow-list membership, the sensitive-file floor and refusals that name the rule that refused."
 tags: [epic-2]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-11T03:38:33Z
 epic: 2
 issue: 01
 slug: allow-list-and-root-confinement
@@ -41,6 +41,15 @@ cannot bypass.
   failure to work around, and making `--allow` optional to satisfy both is the wrong fix.
 - `os.OpenRoot(repoPath)` once, at startup, closed on every termination path. The
   `*os.Root` and the resolved allow-list travel together as one value the tools take.
+- **This confinement does not build on Epic 1's existing path check.** Before any
+  `--allow` flag is parsed, `internal/cli/review.go:171` already runs `os.Stat(repoPath)`
+  to confirm the positional argument exists and is a directory. That `Stat` follows
+  symlinks — a symlink to a directory passes `info.IsDir()` — and is a classic TOCTOU gap
+  between the check and any later read; it is inert today only because `req.RepoPath` is
+  never read again after it. `os.OpenRoot` must not treat that earlier `Stat` as having
+  established anything safe about the path: the root is opened fresh from `repoPath`, and
+  every read runs the escape/allow-list/floor resolution below on its own merits, not on
+  the strength of a check performed before the root existed.
 - A resolution helper — the only way a wire path becomes a readable file — that in order:
   rejects the path if it escapes the root (delegated to `*os.Root`, not re-implemented),
   rejects it if it is not inside the union of allowed subtrees, rejects it if it matches
