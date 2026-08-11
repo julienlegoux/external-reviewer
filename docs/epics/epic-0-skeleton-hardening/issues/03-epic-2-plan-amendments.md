@@ -3,12 +3,12 @@ type: Issue
 title: "Carry Epic 1's structural warnings into Epic 2's issues"
 description: "Amend Epic 2's loop and confinement issues so they state where the bounds seam's accumulated state must live, how diag.WriteTool is reached from the loop, and that os.Root confinement does not build on the symlink-following os.Stat."
 tags: [epic-0]
-timestamp: 2026-08-11T03:44:09Z
+timestamp: 2026-08-11T03:47:00Z
 epic: 0
 issue: 03
 slug: epic-2-plan-amendments
 size: S
-status: pr-open
+status: done
 gh_issue: 25
 gh_pr: 35
 resource: https://github.com/julienlegoux/external-reviewer/issues/25

@@ -2,6 +2,11 @@
 
 ## 2026-08-11
 
+* **Merged**: [11 bound the turn and fix its cost and cancellation
+  precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
+  [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45) merged into
+  `develop`.
+
 * **Merged**: [09 read the task prompt under a context, a byte bound and real
   validation](/epic-0-skeleton-hardening/issues/09-bounded-validated-prompt.md)
   (#31) — [PR #46](https://github.com/julienlegoux/external-reviewer/pull/46)
@@ -260,11 +265,6 @@
   verified no-op against the LF-only index, and the `lint` job joined onto the
   `[ubuntu-latest, windows-latest]` matrix. 7 files changed, 23 insertions / 7
   deletions (~30 changed lines) against a ~40-line target.
-
-* **Merged**: [04 enforce gofmt in CI, normalise line endings, and lint on both
-  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
-  [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) merged into
-  `develop`.
 
 * **Started**: [04 enforce gofmt in CI, normalise line endings, and lint on both
   OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
