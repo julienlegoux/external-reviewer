@@ -3,7 +3,7 @@ type: Conventions
 title: "External Reviewer — Conventions"
 description: "The personal conventions baseline filtered to Go, with eight project deviations covering enforcement of the read-only guarantee, cross-platform paths, the branch model and a frozen dependency set."
 tags: [planning, conventions]
-timestamp: 2026-08-09T04:08:38Z
+timestamp: 2026-08-11T03:38:28Z
 status: final
 baseline_version: 2026-07-20T13:00:00Z
 ---
@@ -29,10 +29,15 @@ travels with the issue is its acceptance criteria and nothing else
 - **The write half of the filesystem API is forbidden, and CI enforces it**
   ([decision](/conventions/01-write-api-guard.md)). A `forbidigo` block rejects
   `os.Create`, `os.OpenFile`, `os.WriteFile`, `os.Remove*`, `os.Mkdir*`, `os.Rename`,
-  `os.Symlink` and the corresponding `*os.Root` methods, plus `exec.Command` /
+  `os.Symlink`, `os.Chmod`, `os.Chtimes`, `os.Truncate`, `os.Link`, the corresponding
+  `*os.Root` methods (including `os.Root.Chmod` and `os.Root.Link`), and
+  `(*os.File).Write`, `(*os.File).WriteString` and `(*os.File).Truncate` — the write
+  methods reachable from a handle Epic 2's read-only tools open — plus `exec.Command` /
   `exec.CommandContext` outside the `git_read` implementation. `_test.go` files are
   exempt — fixtures are built with `t.TempDir()` and `git init`. An exception requires a
-  `//nolint:forbidigo` carrying its reason.
+  `//nolint:forbidigo` carrying its reason. **This list is the source of truth;
+  `.golangci.yml`'s `forbidigo.forbid` block mirrors it exactly, one pattern per
+  operation — amend both together.**
 
   This is the one lint rule that is not about style. SPECS states the product's central
   guarantee as a property of the source — *"it cannot write to the repository because the

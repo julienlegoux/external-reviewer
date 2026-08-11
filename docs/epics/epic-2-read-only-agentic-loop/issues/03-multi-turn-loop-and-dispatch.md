@@ -3,7 +3,7 @@ type: Issue
 title: "Drive the multi-turn loop with tool dispatch and the bounds seam"
 description: "Turn the single round trip into an accumulating multi-turn loop that declares tools, dispatches tool calls, feeds results back, and terminates on bound then cancellation then stop reason."
 tags: [epic-2]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-11T03:38:33Z
 epic: 2
 issue: 03
 slug: multi-turn-loop-and-dispatch
@@ -43,6 +43,26 @@ restructuring the loop.
 - `bounds.check(state)` at the top of every turn, watching turns, accumulated cost and
   elapsed wall clock, **with its values unset** so nothing bounds a run in this epic. An
   exceeded bound stops the loop and returns what the run has, rather than failing.
+- **Where the accumulated state lives, and which side wins.** Today the turn count,
+  accumulated tokens and cost `bounds.check(state)` needs at the top of each turn live in
+  `internal/cli` — `recordTurn` (`internal/cli/review.go:88-105`) folds each
+  `reviewer.Turn` into `*diag.State` one call frame above `Conversation.Next`
+  (`internal/reviewer/run.go:61-98`), only after `Next` has already returned. This PR's
+  loop lands in `internal/reviewer`, where the totals do not yet exist at the point
+  `bounds.check` needs to read them. **`internal/reviewer` wins**: `recordTurn`'s
+  accumulation logic moves into the loop itself, which takes the same `*diag.State` and
+  `io.Writer` (stderr) that `cli.recordTurn` takes today and updates `State` in place
+  after every `Next`, so `bounds.check(state)` reads the running totals in-process instead
+  of a value threaded back up to `cli` and down again on every turn. `internal/cli` keeps
+  creating the `*diag.State` via `diag.NewState` before the loop starts and rendering the
+  final `done` line from it once the loop returns — that half of Epic 1's contract does
+  not move.
+- **How the `tool` line reaches stderr from inside the loop.** `diag.WriteTool`
+  (`internal/diag/diag.go:40-43`) has exactly one caller today — its own test — because
+  nothing in `internal/reviewer` imports `internal/diag` yet. This PR adds that import
+  (one-directional: `internal/diag` imports nothing from `internal/reviewer`, so no
+  cycle) and calls `diag.WriteTool` directly from the loop for the `tool` line described
+  below, the same way the moved accumulation above calls `diag.WriteTurn`.
 - The two failure levels kept distinct, which is the single place CONVENTIONS' "never
   swallow an error" rule inverts:
   - a failing **tool** is a turn — returned as `ToolResultMessage{IsError: true}` with

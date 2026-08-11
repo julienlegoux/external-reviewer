@@ -2,6 +2,56 @@
 
 ## 2026-08-11
 
+* **PR opened**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) against `develop`.
+  CONVENTIONS' enumeration and `.golangci.yml`'s `forbidigo.forbid` list both gain
+  `os.Chmod`, `os.Chtimes`, `os.Truncate`, `os.Link`, `os.Root.Chmod`,
+  `(*os.File).Write`, `(*os.File).WriteString` and `(*os.File).Truncate`, plus
+  `os.Root.Link` named in CONVENTIONS for the first time; a probe file
+  (`testdata/probe/probe.go`, skipped by `golangci-lint`'s default `./...`
+  expansion) verifies all nine now fire and the repository itself still reports zero
+  findings. 53 insertions / 6 deletions across 5 files (~59 changed lines) against a
+  ~60-line target.
+
+* **Started**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  branch `issue-24-write-api-guard-coverage`.
+
+* **Merged**: [03 carry Epic 1's structural warnings into Epic 2's
+  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  [PR #35](https://github.com/julienlegoux/external-reviewer/pull/35) merged into
+  `develop`.
+
+* **Amended**: [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) issue
+  [03 — multi-turn loop and dispatch](/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md)
+  (#11) and issue
+  [01 — allow-list and root confinement](/epic-2-read-only-agentic-loop/issues/01-allow-list-and-root-confinement.md)
+  (#9), carrying two structural warnings Epic 1's review turned up
+  ([report 2](../REPORT_2.md) § "Accounting lives on the wrong side of the seam
+  Epic 2's loop needs" and its `os.Stat` row) into the issues that walk into them.
+  Issue 03 now states that the accumulated turn/cost totals `bounds.check(state)`
+  needs live in `internal/cli` (`recordTurn`, `review.go:88-105`) while the loop
+  lands in `internal/reviewer` (`Conversation.Next`, `run.go:61-98`), and that
+  `internal/reviewer` wins — the accumulation and `diag.WriteTool`
+  (`diag.go:40-43`) both move into the loop. Issue 01 now states that its
+  `os.OpenRoot` confinement must not build on the existing symlink-following,
+  TOCTOU-prone `os.Stat` at `review.go:171`. Both GitHub issue bodies re-synced;
+  neither issue's size, status or `gh_issue` changed. Both of DRIFT's Epic 1
+  entries naming this confinement work as their revisit trigger stay open —
+  amending the issues is not discharging them, only Epic 2's own PR can do that.
+
+* **PR opened**: [03 carry Epic 1's structural warnings into Epic 2's
+  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  [PR #35](https://github.com/julienlegoux/external-reviewer/pull/35) against
+  `develop`. 56 changed lines against an S-sized ~500 target, all under
+  `docs/epics/`: two new Scope bullets on Epic 2 issue 03, one on issue 01, both
+  GitHub bodies re-synced.
+
+* **Started**: [03 carry Epic 1's structural warnings into Epic 2's
+  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  branch `issue-25-epic-2-plan-amendments`.
+
 * **Creation**: Cut [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) into
   **12 issues** on milestone 4, all linked as native sub-issues of
   [#22](https://github.com/julienlegoux/external-reviewer/issues/22) — none sized `L`.
