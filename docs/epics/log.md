@@ -2,6 +2,19 @@
 
 ## 2026-08-11
 
+* **PR opened**: [04 enforce gofmt in CI, normalise line endings, and lint on both
+  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) against
+  `develop`. A top-level `formatters:` block (`gofmt`) in `.golangci.yml`,
+  `.gitattributes` (`* text=auto eol=lf`) with `git add --renormalize .` a
+  verified no-op against the LF-only index, and the `lint` job joined onto the
+  `[ubuntu-latest, windows-latest]` matrix. 7 files changed, 23 insertions / 7
+  deletions (~30 changed lines) against a ~40-line target.
+
+* **Started**: [04 enforce gofmt in CI, normalise line endings, and lint on both
+  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  branch `issue-26-ci-formatting-gate`.
+
 * **Merged**: [02 widen the write-API guard to every write operation CONVENTIONS
   names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
   [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) merged into
