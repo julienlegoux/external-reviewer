@@ -166,8 +166,12 @@ func TestRun_ResolvableCredentialedModel_ProceedsPastPreflight(t *testing.T) {
 	if stdout != scriptedAnswer {
 		t.Errorf("stdout = %q, want the reviewer's answer %q", stdout, scriptedAnswer)
 	}
-	if fields := parseDoneLine(t, stderr); fields.stop != "ok" {
-		t.Errorf("done stop = %q, want ok", fields.stop)
+	// "stop" is kern-link's own StopReasonStop — faux.TextMessage's default
+	// when no AssistantMessageOptions.StopReason is scripted (see
+	// roundtrip_test.go's TestRun_SuccessfulTurn_DoneLineRendersModelsOwnStopReason
+	// for the explicit no-translation-table proof).
+	if fields := parseDoneLine(t, stderr); fields.stop != "stop" {
+		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.stop)
 	}
 	if !strings.Contains(stderr, reviewer.DefaultProviderID+"/"+reviewer.DefaultModelID) {
 		t.Errorf("stderr = %q, want it to name the resolved model", stderr)
