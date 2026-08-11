@@ -35,6 +35,35 @@ func parseDoneLine(t *testing.T, stderr string) doneFields {
 	return doneFields{turns: m[1], in: m[2], out: m[3], cost: m[4], elapsed: m[5], stop: m[6]}
 }
 
+// knownDiagPrefixes are the leading words internal/diag's Write* functions
+// ever put on a line — the vocabulary assertOnlyKnownPrefixedLines checks
+// every stderr line against.
+var knownDiagPrefixes = map[string]bool{
+	"turn":   true,
+	"tool":   true,
+	"model":  true,
+	"warn":   true,
+	"error:": true,
+	"done":   true,
+}
+
+// assertOnlyKnownPrefixedLines fails the test if any non-blank line in
+// stderr does not open with one of diag's known prefixes — the guard
+// against a stray unprefixed line (flag's own usage dump, printUsage
+// leaking onto stderr) reaching the transcript ahead of the done line.
+func assertOnlyKnownPrefixedLines(t *testing.T, stderr string) {
+	t.Helper()
+	for _, line := range strings.Split(stderr, "\n") {
+		if line == "" {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) == 0 || !knownDiagPrefixes[fields[0]] {
+			t.Errorf("stderr contains an unprefixed line: %q (full stderr: %q)", line, stderr)
+		}
+	}
+}
+
 // TestRun_NoReviewerReached_ExitsOne exercises the exit-1 path — a review
 // that never reaches a model — through Run, with the wired reviewer stubbed
 // (via SetReviewerForTest) to return cli.ErrNoReviewer wrapped two levels
