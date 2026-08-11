@@ -22,6 +22,13 @@ type Turn struct {
 	// Tools counts the tool calls the assistant asked for. Epic 1 declares no
 	// tools, so it is 0 until the loop and the tool set arrive.
 	Tools int
+	// StopReason is Message.StopReason surfaced onto Turn itself, verbatim as
+	// kern-link spells it, so a caller never has to nil-check Message to read
+	// why the model stopped. It is the zero value when Message is nil (the
+	// stream failed outright). SPECS § Interfaces renders it on the done
+	// line's success path with no translation table between the two
+	// vocabularies.
+	StopReason ai.StopReason
 }
 
 // Conversation is the accumulating []ai.Message a review is made of, plus the
@@ -81,7 +88,7 @@ func (c *Conversation) Next(ctx context.Context) (Turn, error) {
 	c.messages = append(c.messages, message)
 	usage := message.Usage
 	ai.CalculateCost(c.model, &usage)
-	turn := Turn{Message: message, Usage: usage, Elapsed: time.Since(start), Tools: toolCalls(message)}
+	turn := Turn{Message: message, Usage: usage, Elapsed: time.Since(start), Tools: toolCalls(message), StopReason: message.StopReason}
 
 	// A cancelled context outranks whatever the message says. kern-link's
 	// Result observes the cancellation first almost every time, so this is

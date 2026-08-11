@@ -70,8 +70,12 @@ func TestRun_SuccessfulTurn_WritesFinalTextVerbatim(t *testing.T) {
 	}
 
 	fields := parseDoneLine(t, stderr)
-	if fields.stop != "ok" {
-		t.Errorf("done stop = %q, want ok", fields.stop)
+	// "stop" is kern-link's own StopReasonStop — faux.TextMessage's default
+	// when no AssistantMessageOptions.StopReason is scripted. See
+	// TestRun_SuccessfulTurn_DoneLineRendersModelsOwnStopReason below for the
+	// explicit no-translation-table proof.
+	if fields.stop != "stop" {
+		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.stop)
 	}
 	if fields.turns != "1" {
 		t.Errorf("done turns = %q, want 1", fields.turns)
@@ -99,6 +103,52 @@ func TestRun_SuccessfulTurn_WritesFinalTextVerbatim(t *testing.T) {
 	}
 	if strings.Contains(stderr, "# Review") {
 		t.Errorf("stderr = %q, want the reviewer's prose kept off the transcript", stderr)
+	}
+}
+
+// TestRun_SuccessfulTurn_DoneLineRendersModelsOwnStopReason is the
+// no-translation-table proof SPECS § Interfaces requires: the scripted
+// message's StopReason is a value no CLI word matches, and it must still
+// reach the done line byte for byte — not "ok", not any hand-written
+// vocabulary.
+func TestRun_SuccessfulTurn_DoneLineRendersModelsOwnStopReason(t *testing.T) {
+	models := scripted(t, 0, faux.Step(faux.TextMessage(markdownAnswer, &faux.AssistantMessageOptions{
+		StopReason: "end_turn",
+	})))
+
+	code, stdout, stderr := runReviewOver(t, models, t.TempDir())
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr)
+	}
+	if stdout != markdownAnswer {
+		t.Fatalf("stdout = %q, want the reviewer's answer", stdout)
+	}
+	if fields := parseDoneLine(t, stderr); fields.stop != "end_turn" {
+		t.Errorf("done stop = %q, want end_turn (the scripted message's own reason, spelled verbatim)", fields.stop)
+	}
+}
+
+// TestRun_SuccessfulTurn_EmptyStopReasonRendersNamedFallback pins the named
+// fallback SPECS § Interfaces requires so stop= can never render with
+// nothing after it: a scripted response built directly (bypassing
+// faux.TextMessage's non-empty default) carries no StopReason at all.
+func TestRun_SuccessfulTurn_EmptyStopReasonRendersNamedFallback(t *testing.T) {
+	noStopReason := faux.StepFunc(func(context.Context, ai.Context, *ai.StreamOptions, *faux.State, *ai.Model) (*ai.AssistantMessage, error) {
+		return &ai.AssistantMessage{Content: []ai.AssistantContentPart{faux.Text(markdownAnswer)}}, nil
+	})
+	models := scripted(t, 0, noStopReason)
+
+	code, stdout, stderr := runReviewOver(t, models, t.TempDir())
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr)
+	}
+	if stdout != markdownAnswer {
+		t.Fatalf("stdout = %q, want the reviewer's answer", stdout)
+	}
+	if fields := parseDoneLine(t, stderr); fields.stop != "unspecified" {
+		t.Errorf("done stop = %q, want the named fallback \"unspecified\"", fields.stop)
 	}
 }
 

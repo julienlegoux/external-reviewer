@@ -29,6 +29,35 @@ func TestRun_EmptyArgv_UsageError(t *testing.T) {
 	}
 }
 
+// TestRun_Help_DoneLineStopIsHelp pins the CLI word for the one termination
+// the model never even gets a chance to run for: help/--help/-h all exit 0
+// with a done line whose stop= reads "help", not the model's vocabulary
+// (there was no turn to have one).
+func TestRun_Help_DoneLineStopIsHelp(t *testing.T) {
+	tests := []struct {
+		name string
+		argv []string
+	}{
+		{"help", []string{"help"}},
+		{"--help", []string{"--help"}},
+		{"-h", []string{"-h"}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := cli.Run(tc.argv, strings.NewReader(""), &stdout, &stderr)
+
+			if code != 0 {
+				t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
+			}
+			if fields := parseDoneLine(t, stderr.String()); fields.stop != "help" {
+				t.Errorf("done stop = %q, want help", fields.stop)
+			}
+		})
+	}
+}
+
 // TestRunContext_CancelledContext_ExitsTwo drives the interruption path
 // directly against the inner run seam (RunContextForTest) with a
 // pre-cancelled context, since delivering a real SIGINT is not portable to

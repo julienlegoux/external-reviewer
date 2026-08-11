@@ -209,11 +209,17 @@ is `kern-link`'s credential store under `~/.pi/agent/`, which the dependency own
 ([drift](/DRIFT.md)). stderr carries prefixed human-readable lines:
 
 ```
+model   openai-codex/gpt-5.5  auth=OAuth
 turn 3  tools=2  in=48210 out=1104  $0.0231  42.8s
 tool    read_file docs/epics/epic-2/EPIC_2.md:1-2000
 warn    config: unrecognised key "models" in [tiers.standard]
 done    turns=7  in=182430 out=9106  $0.0918  2m14s  stop=end_turn
 ```
+
+The `model` line is written once, by pre-flight, as soon as a reviewer is resolved:
+`provider/id` verbatim from `kern-link`'s own catalog, and `auth=<source>` — the only
+credential-adjacent value that ever reaches stderr (`AuthResult.Source`, e.g. `OAuth` or
+`ANTHROPIC_API_KEY`; never the credential itself).
 
 The `done` line is emitted on **every** termination path, including failure and
 interruption. Its load-bearing fields are turns, tokens and elapsed time — the token
@@ -222,6 +228,24 @@ never has to sum the `turn` lines; on a path that never reached a model they are
 absent. The `$` figure is
 notional on the current credentials and becomes real only if a tier names an API-key
 provider. No colour, no spinner — the caller is a script.
+
+**The `stop=` field is a closed set that carries two vocabularies**, because it answers two
+different questions and a usage error can never carry a model's own reason:
+
+- **On the success path**, it is the model's own `StopReason` from `kern-link`'s
+  `ai.AssistantMessage`, spelled exactly as `kern-link` spells it — no translation table
+  between the two. `unspecified` is the named fallback for the rare successful message
+  whose `StopReason` is itself empty, so `stop=` can never render with nothing after it.
+- **On every termination the model never reaches**, it is one of five fixed CLI words:
+  `usage` (a malformed invocation — bad flags, a missing or non-directory repository path,
+  an empty prompt), `help` (`help`/`--help`/`-h`), `no_reviewer` (exit `1`: no reviewer was
+  ever reachable), `interrupted` (`SIGINT` or a cancelled context), `failed` (reached and
+  then unusable for any other reason — a failed turn, a broken credential, an empty final
+  message).
+
+This is a union that only grows: a later epic adds a value no code can produce yet rather
+than repurposing one of the above. Epic 2 adds at least `bounds`, for a run that ends at
+its own turn/cost/elapsed ceiling rather than at the model's own stop reason.
 
 **Exit codes turn on whether a reviewer was ever reachable**
 ([decision](/specs/13-error-handling-and-failure-classification.md)). Not reached → `1`,
