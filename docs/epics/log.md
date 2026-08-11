@@ -2,6 +2,15 @@
 
 ## 2026-08-11
 
+* **Started**: [10 survive a failing or closed stdout without escaping the done-line
+  seam](/epic-0-skeleton-hardening/issues/10-stdout-write-failures.md) (#32) —
+  branch `issue-32-stdout-write-failures`.
+
+* **Merged**: [07 write one prefixed error: line from diag on every exit-2
+  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) merged into
+  `develop`.
+
 * **PR opened**: [07 write one prefixed error: line from diag on every exit-2
   path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
   [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) against
