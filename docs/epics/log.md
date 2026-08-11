@@ -20,6 +20,13 @@
   entries naming this confinement work as their revisit trigger stay open —
   amending the issues is not discharging them, only Epic 2's own PR can do that.
 
+* **PR opened**: [03 carry Epic 1's structural warnings into Epic 2's
+  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  [PR #35](https://github.com/julienlegoux/external-reviewer/pull/35) against
+  `develop`. 56 changed lines against an S-sized ~500 target, all under
+  `docs/epics/`: two new Scope bullets on Epic 2 issue 03, one on issue 01, both
+  GitHub bodies re-synced.
+
 * **Started**: [03 carry Epic 1's structural warnings into Epic 2's
   issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
   branch `issue-25-epic-2-plan-amendments`.
