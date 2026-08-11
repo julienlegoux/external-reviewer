@@ -9,7 +9,7 @@ against — then the CI gate that protects every PR after it, then the code.
 * [Enforce gofmt in CI, normalise line endings, and lint on both OSes](./04-ci-formatting-gate.md) - S, open, [#26](https://github.com/julienlegoux/external-reviewer/issues/26)
 * [Extract one importable faux harness and retire the mutable package-level seams](./05-shared-faux-harness.md) - M, open, [#27](https://github.com/julienlegoux/external-reviewer/issues/27)
 * [Kill the four surviving mutants on the request side of the round trip](./06-request-side-mutants.md) - M, open, [#28](https://github.com/julienlegoux/external-reviewer/issues/28)
-* [Write one prefixed error: line from diag on every exit-2 path](./07-single-error-line.md) - M, in-progress, [#29](https://github.com/julienlegoux/external-reviewer/issues/29)
+* [Write one prefixed error: line from diag on every exit-2 path](./07-single-error-line.md) - M, pr-open, [#29](https://github.com/julienlegoux/external-reviewer/issues/29), [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39)
 * [Handle the repository path as an OS path and emit wire paths on stderr](./08-os-and-wire-paths.md) - M, open, [#30](https://github.com/julienlegoux/external-reviewer/issues/30)
 * [Read the task prompt under a context, a byte bound and real validation](./09-bounded-validated-prompt.md) - M, open, [#31](https://github.com/julienlegoux/external-reviewer/issues/31)
 * [Survive a failing or closed stdout without escaping the done-line seam](./10-stdout-write-failures.md) - M, open, [#32](https://github.com/julienlegoux/external-reviewer/issues/32)

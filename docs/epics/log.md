@@ -2,6 +2,24 @@
 
 ## 2026-08-11
 
+* **PR opened**: [07 write one prefixed error: line from diag on every exit-2
+  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  [PR #39](https://github.com/julienlegoux/external-reviewer/pull/39) against
+  `develop`. `diag.WriteError` becomes the one writer every hand-rolled
+  `fmt.Fprint*` in `internal/cli` routed through, including the previously
+  silent empty-argv path; `fs.SetOutput(io.Discard)` and a `flag.ErrHelp`
+  split stop `review --help`/`review -h` from exiting 2 and stop flag's own
+  usage dump from reaching stderr; the three "was this interrupted?" checks
+  collapse to the one in `runReview`, deleting the top-of-`run()`
+  short-circuit and `reviewer.Conversation.Next`'s belt-and-braces check
+  (both confirmed redundant against the kern-link v0.1.1 pin by running the
+  full suite with each removed). 294 insertions / 55 deletions (~349 changed
+  lines) against a ~350 M target.
+
+* **Started**: [07 write one prefixed error: line from diag on every exit-2
+  path](/epic-0-skeleton-hardening/issues/07-single-error-line.md) (#29) —
+  branch `issue-07-error-line-seam`.
+
 * **Merged**: [01 settle the done line's stop-reason vocabulary and document it in
   SPECS](/epic-0-skeleton-hardening/issues/01-stop-reason-vocabulary.md) (#23) —
   [PR #37](https://github.com/julienlegoux/external-reviewer/pull/37) merged into
