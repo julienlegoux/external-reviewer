@@ -216,8 +216,8 @@ func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
 		t.Errorf("stderr = %q, want an error: line naming the stdin failure", stderr.String())
 	}
 	assertOnlyKnownPrefixedLines(t, stderr.String())
-	if fields := parseDoneLine(t, stderr.String()); fields.stop != "usage" {
-		t.Errorf("done stop = %q, want usage", fields.stop)
+	if fields := fauxtest.ParseDoneLine(t, stderr.String()); fields.Stop != "usage" {
+		t.Errorf("done stop = %q, want usage", fields.Stop)
 	}
 }
 
@@ -239,8 +239,8 @@ func TestRun_NoReviewerReached_WritesNoErrorLine(t *testing.T) {
 	if strings.Contains(stderr.String(), "error:") {
 		t.Errorf("stderr = %q, want no error: line on the silent-fallback exit-1 path", stderr.String())
 	}
-	if fields := parseDoneLine(t, stderr.String()); fields.stop != "no_reviewer" {
-		t.Errorf("done stop = %q, want no_reviewer", fields.stop)
+	if fields := fauxtest.ParseDoneLine(t, stderr.String()); fields.Stop != "no_reviewer" {
+		t.Errorf("done stop = %q, want no_reviewer", fields.Stop)
 	}
 }
 

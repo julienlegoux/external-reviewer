@@ -125,9 +125,16 @@ func modelStopReason(reason ai.StopReason) string {
 }
 
 // diagnosticMessage renders one AssistantMessageDiagnostic as a warn line's
-// text. kern-link redacts these upstream, and nothing here re-formats or
-// re-derives anything from the underlying error, which is what keeps a
-// credential from being reintroduced by a diagnostic (SPECS § Security).
+// text. No version of kern-link redacts diagnostic.Error.Message — `grep -rni
+// redact` over the module finds only Anthropic's unrelated thinking-block
+// redaction — and nothing here re-formats or re-derives anything from the
+// underlying error either, so no credential is reconstructed from it here.
+// What keeps the message from breaking the transcript is diag.WriteWarn's
+// own control-character escaping (issue 12): that stops a newline or an
+// ANSI/OSC sequence from forging a line or reaching the terminal raw, but it
+// is not a redaction and does not hide a credential the message might carry
+// (SPECS § Security — this binary formats no credential in the first
+// place).
 func diagnosticMessage(diagnostic ai.AssistantMessageDiagnostic) string {
 	kind := diagnostic.Type
 	if kind == "" {
