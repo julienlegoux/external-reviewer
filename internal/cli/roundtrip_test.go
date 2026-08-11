@@ -217,9 +217,16 @@ func TestRun_FailedTurn_ExitsTwo(t *testing.T) {
 // TestRun_CancelledMidStream_ExitsTwo is the one termination a human at the
 // keyboard controls, and the only brake on an unbounded run: the response is
 // throttled to a crawl and the context is cancelled while deltas are still
-// arriving. Whether the cancellation is observed by kern-link's stream or by
-// the provider first is a race by construction, so both must land on the same
-// outcome — exit 2, an empty stdout, and an interruption on the transcript.
+// arriving. Whether the cancellation is observed by kern-link's
+// stream.Result(ctx) or by the provider's own StopReasonAborted message
+// first is a race by construction, so both must land on the same outcome —
+// exit 2, an empty stdout, and an interruption on the transcript. It is not
+// always the same outcome by accident: asInterrupted (review.go) is what
+// makes the second race path also classify as interrupted, added after a
+// windows-latest `go test -race` run caught the outcome diverging (see
+// TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded in run_test.go
+// for that race pinned deterministically, without depending on this test's
+// own timing).
 func TestRun_CancelledMidStream_ExitsTwo(t *testing.T) {
 	models := scripted(t, 1, faux.Step(faux.TextMessage(strings.Repeat("a long answer that is still streaming. ", 20), nil)))
 

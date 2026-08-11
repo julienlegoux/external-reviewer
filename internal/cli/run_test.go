@@ -117,11 +117,13 @@ func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 // returns for a broken credential — wrapping context.Canceled rather than a
 // bare wrapped error. Before this issue, a second check lived in
 // internal/reviewer (Conversation.Next) as a belt-and-braces fallback for
-// exactly this shape; deleting it changes no observable behaviour because
-// kern-link v0.1.1 already preserves the cancellation cause through every
-// path this binary reaches (the gap the belt-and-braces check existed for is
-// real only against a newer kern-link API this project does not build
-// against — see DRIFT.md #04).
+// exactly this shape; deleting it was believed to change no observable
+// behaviour, on the premise that kern-link v0.1.1 always preserves the
+// cancellation cause through stream.Result(ctx)'s own error. That premise is
+// only half true — see TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded
+// below for the race that disproved it and asInterrupted, the narrow fix
+// that keeps this still being the one place the question is decided (a
+// second wrap, not a second decision point).
 //
 // This asserts interruptedError directly (via cli.InterruptedErrorForTest)
 // rather than driving the classification through a full Run: reaching a
@@ -149,4 +151,56 @@ func TestRunReview_InterruptionDecidedOnce(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded pins the fix for
+// a real windows-latest `go test -race` failure on this issue's own PR (CI
+// run 31459008705): the identical commit passed the same job moments
+// earlier (run 31459006569), so this was never a bad assertion — it was a
+// genuine race in kern-link's Stream.Result(ctx), which selects between its
+// result channel and ctx.Done(). When a cancellation lands mid-stream,
+// either can win: if ctx.Done() wins, Result returns ctx.Err() directly and
+// Conversation.Next's error already wraps it — the path
+// TestRunContext_CancelledContext_ExitsTwo and (usually)
+// TestRun_CancelledMidStream_ExitsTwo exercise. But if the provider's own
+// goroutine notices the cancellation first and finishes with a
+// StopReasonAborted message before Result's select runs, Result returns
+// that message with a nil error, and Conversation.Next's returned error —
+// "the reviewer's turn stopped with reason %q: %s" — wraps nothing that
+// errors.Is(_, context.Canceled) can find. That is exactly the failure CI
+// hit: stop=failed instead of stop=interrupted.
+//
+// Rather than trying to force that exact goroutine interleaving from a
+// black-box test — inherently non-deterministic, and the reason the bug
+// shipped in the first place — this constructs both of asInterrupted's
+// inputs directly, so the fix is pinned regardless of which race outcome
+// the runtime happens to hit on any given run or platform.
+func TestAsInterrupted_ReclassifiesFailingTurnWhenContextEnded(t *testing.T) {
+	turnErr := fmt.Errorf("the reviewer's turn stopped with reason %q: %s", ai.StopReasonAborted, "Request was aborted")
+
+	t.Run("context still live: turnErr passes through, not classified as interrupted", func(t *testing.T) {
+		got := cli.AsInterruptedForTest(context.Background(), turnErr)
+		if cli.InterruptedErrorForTest(got) {
+			t.Errorf("AsInterruptedForTest(live ctx, %v) = %v, want it not classified as interrupted", turnErr, got)
+		}
+	})
+
+	t.Run("context already ended: turnErr is reclassified as interrupted", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		got := cli.AsInterruptedForTest(ctx, turnErr)
+		if !cli.InterruptedErrorForTest(got) {
+			t.Errorf("AsInterruptedForTest(cancelled ctx, %v) = %v, want it classified as interrupted", turnErr, got)
+		}
+	})
+
+	t.Run("nil turnErr: a complete message is never touched, cancelled context or not", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		if got := cli.AsInterruptedForTest(ctx, nil); got != nil {
+			t.Errorf("AsInterruptedForTest(cancelled ctx, nil) = %v, want nil", got)
+		}
+	})
 }
