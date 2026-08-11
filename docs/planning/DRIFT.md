@@ -3,7 +3,7 @@ type: Drift
 title: "External Reviewer — Drift"
 description: "Standards this codebase has drifted from, and why"
 tags: [planning, drift]
-timestamp: 2026-08-10T14:05:13Z
+timestamp: 2026-08-11T18:42:03Z
 ---
 
 # Drift
@@ -15,6 +15,40 @@ plus its live drift is what the code actually looks like.
 
 Append-only, newest epic first. An entry that stops being true becomes
 `resolved (<date>)` rather than disappearing.
+
+## Epic 0: Skeleton hardening
+
+### 09, 10, 11 — the decided test command does not run on the development machine
+
+- **Decided**: [CONVENTIONS § Testing](/CONVENTIONS.md) names the command without
+  qualification — *"`go test ./... -race` is the command"* — resting on
+  [specs 16](/specs/16-testing-infrastructure.md)'s standard-library-only testing
+  stack. Strict red-green in the same section assumes the author can watch a test go
+  red and green locally.
+- **Actual**: the suite is cross-built `GOOS=linux GOARCH=amd64` on the Windows host
+  and run under `wsl -d docker-desktop`, **without** `-race`, and CI is treated as the
+  authority for both `-race` and `windows-latest`. Two acceptance criteria that need a
+  real signal — issue 09's `SIGINT`, issue 10's `SIGPIPE` — were verified by hand the
+  same way, against a Linux binary driven through a fifo, rather than by the suite.
+- **Because**: two independent blockers, both verified during Epic 0. `go test` cannot
+  execute its own temp binaries natively — a local Windows Application Control policy
+  blocks them — and `-race` cannot be built at all, because it requires cgo and neither
+  the Windows toolchain nor the ~136 MB `docker-desktop` distro has a C compiler. The
+  cost is visible: issue 11 records four findings as *"argued rather than observed"*,
+  among them all behaviour under `-race` and on `windows-latest`.
+- **Disposition**: fix-now ([#48](https://github.com/julienlegoux/external-reviewer/issues/48))
+  — a C toolchain on the host with the policy exempted, or a full WSL distro with
+  `build-essential`. Epic 2 lands the multi-turn loop, which is the concurrency the
+  race detector exists for; finding a data race in CI on an OS the author cannot
+  reproduce on is the expensive version of this.
+- **Revisit when**: [#48](https://github.com/julienlegoux/external-reviewer/issues/48)
+  closes — `go test ./... -race` completing locally is what discharges this entry.
+  CONVENTIONS § Testing is then amended to say where the command runs, and this entry
+  becomes `resolved`.
+- **Evidence**:
+  [issue 11's verification log](../epics/epic-0-skeleton-hardening/issues/11-verification.md),
+  [issue 09's hand-run SIGINT verification](../epics/epic-0-skeleton-hardening/verification/09-sigint-hand-verification.md),
+  PRs #45, #46, #42.
 
 ## Epic 1: Walking skeleton
 

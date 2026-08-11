@@ -3,11 +3,11 @@ type: Epic
 title: "Skeleton hardening"
 description: "Close the holes Epic 1's implementation review found — four surviving criterion-bearing mutants, two terminations that escape the done-line seam, and three contracts Epic 2 must extend but that are written nowhere."
 tags: [epic, remediation]
-timestamp: 2026-08-10T14:22:00Z
+timestamp: 2026-08-11T18:42:03Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/22
 epic: 0
 slug: skeleton-hardening
-status: open
+status: done
 gh_issue: 22
 milestone: 4
 source: docs/REPORT_2.md
@@ -194,8 +194,9 @@ own plan.
   with the evidence and the mutation results behind each.
 - [Technical specs](../../planning/SPECS.md) — § Interfaces is amended by the first group.
 - [Conventions](../../planning/CONVENTIONS.md) — § Code style is amended by the second.
-- [Drift](../../planning/DRIFT.md) — three entries; the two Epic 1 entries were excluded
-  from report 2 by construction and are not re-litigated here.
+- [Drift](../../planning/DRIFT.md) — three entries when this epic was cut; the two Epic 1
+  entries were excluded from report 2 by construction and are not re-litigated here. A
+  fourth was promoted at this epic's close, from its own run.
 
 ## Notes
 

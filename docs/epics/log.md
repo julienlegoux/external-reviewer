@@ -2,6 +2,34 @@
 
 ## 2026-08-11
 
+* **Closed**: [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) (#22) —
+  all **12 issues** `done` on 12 merged PRs (#35–#46, plus reconcile PR #47), milestone 4
+  closed, tracking issue #22 closed. Every issue's bookkeeping was already reconciled by
+  PR #47; the close verified it against GitHub rather than trusting it, and found no
+  divergence.
+
+  **Drift promoted**: one entry, swept from the run's log and verification files rather
+  than from drift records — this epic's implementers wrote none. The decided test command
+  (`go test ./... -race`) does not run on the development machine: a Windows Application
+  Control policy blocks `go test`'s temp binaries, and `-race` needs a cgo C compiler that
+  neither the Windows toolchain nor the `docker-desktop` WSL distro has, so the suite is
+  cross-built and run under WSL and CI is the sole authority for `-race` and
+  `windows-latest`. Triaged **`fix-now`** →
+  [#48](https://github.com/julienlegoux/external-reviewer/issues/48), which should land
+  before Epic 2's loop, that being the concurrency the race detector exists for. Recorded
+  in [DRIFT](../planning/DRIFT.md).
+
+  Three PR size overruns (#40, #44, #45 — up to 871 changed lines against a ~250-line `M`
+  estimate, all under the `L` ceiling) were considered and deliberately **not** promoted:
+  estimation calibration for test-heavy hardening issues, not the code contradicting a
+  decided standard. They stay recorded per-PR below.
+
+  **Environment cleaned**: 13 agent worktrees removed, and 13 issue/reconcile branches
+  deleted locally and on `origin` — every one verified clean, fully pushed, and backed by
+  a MERGED PR — plus 13 local `worktree-agent-*` scaffolding refs. `develop` is checked
+  out, clean and pushed. [Epic 2](/epic-2-read-only-agentic-loop/EPIC_2.md) is unblocked:
+  its issues already carry the two structural warnings issue 03 amended into them.
+
 * **Merged**: [11 bound the turn and fix its cost and cancellation
   precedence](/epic-0-skeleton-hardening/issues/11-turn-hardening.md) (#33) —
   [PR #45](https://github.com/julienlegoux/external-reviewer/pull/45) merged into

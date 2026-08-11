@@ -1,5 +1,26 @@
 # Log
 
+## 2026-08-11
+
+* **Update**: appended a fourth [DRIFT](/DRIFT.md) entry at the close of
+  [Epic 0](../epics/epic-0-skeleton-hardening/EPIC_0.md). The epic's implementers wrote
+  no drift records, so the entry was swept out of the run's own log and verification
+  files: [CONVENTIONS § Testing](/CONVENTIONS.md) decides `go test ./... -race`, and
+  that command does not run on the development machine at all — a Windows Application
+  Control policy blocks `go test`'s temp binaries, and `-race` needs a cgo C compiler
+  that neither the Windows toolchain nor the `docker-desktop` WSL distro has. The suite
+  is cross-built and run under WSL instead, leaving `-race` and `windows-latest` to CI.
+  Triaged **`fix-now`** rather than `accepted`, so CONVENTIONS is deliberately left
+  saying the right thing while
+  [#48](https://github.com/julienlegoux/external-reviewer/issues/48) makes the machine
+  match it; the entry is discharged when that issue closes, not by rewording the
+  standard.
+
+  Not promoted: three PRs overran their `M` size estimates (#40, #44, #45 — up to 871
+  lines against ~250, all under the `L` ceiling). Estimation calibration for
+  test-heavy hardening issues, not the code contradicting a decided standard, and
+  already recorded per-PR in [the epics log](../epics/log.md).
+
 ## 2026-08-10
 
 * **Update**: appended a third [DRIFT](/DRIFT.md) entry and corrected the criterion it
