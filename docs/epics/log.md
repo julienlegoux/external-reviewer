@@ -2,6 +2,22 @@
 
 ## 2026-08-11
 
+* **PR opened**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  [PR #36](https://github.com/julienlegoux/external-reviewer/pull/36) against `develop`.
+  CONVENTIONS' enumeration and `.golangci.yml`'s `forbidigo.forbid` list both gain
+  `os.Chmod`, `os.Chtimes`, `os.Truncate`, `os.Link`, `os.Root.Chmod`,
+  `(*os.File).Write`, `(*os.File).WriteString` and `(*os.File).Truncate`, plus
+  `os.Root.Link` named in CONVENTIONS for the first time; a probe file
+  (`testdata/probe/probe.go`, skipped by `golangci-lint`'s default `./...`
+  expansion) verifies all nine now fire and the repository itself still reports zero
+  findings. 53 insertions / 6 deletions across 5 files (~59 changed lines) against a
+  ~60-line target.
+
+* **Started**: [02 widen the write-API guard to every write operation CONVENTIONS
+  names](/epic-0-skeleton-hardening/issues/02-write-api-guard-coverage.md) (#24) —
+  branch `issue-24-write-api-guard-coverage`.
+
 * **Creation**: Cut [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) into
   **12 issues** on milestone 4, all linked as native sub-issues of
   [#22](https://github.com/julienlegoux/external-reviewer/issues/22) — none sized `L`.
