@@ -2,6 +2,11 @@
 
 ## 2026-08-11
 
+* **Merged**: [04 enforce gofmt in CI, normalise line endings, and lint on both
+  OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
+  [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) merged into
+  `develop`.
+
 * **PR opened**: [04 enforce gofmt in CI, normalise line endings, and lint on both
   OSes](/epic-0-skeleton-hardening/issues/04-ci-formatting-gate.md) (#26) —
   [PR #38](https://github.com/julienlegoux/external-reviewer/pull/38) against
