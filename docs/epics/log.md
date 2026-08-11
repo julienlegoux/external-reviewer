@@ -2,6 +2,10 @@
 
 ## 2026-08-11
 
+* **Started**: [03 carry Epic 1's structural warnings into Epic 2's
+  issues](/epic-0-skeleton-hardening/issues/03-epic-2-plan-amendments.md) (#25) —
+  branch `issue-25-epic-2-plan-amendments`.
+
 * **Creation**: Cut [Epic 0: Skeleton hardening](/epic-0-skeleton-hardening/EPIC_0.md) into
   **12 issues** on milestone 4, all linked as native sub-issues of
   [#22](https://github.com/julienlegoux/external-reviewer/issues/22) — none sized `L`.
