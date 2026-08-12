@@ -2,6 +2,30 @@
 
 ## 2026-08-12
 
+* **Merge**: `origin/develop` merged into Epic 2 issue 04's branch to pick up issue
+  05's concurrently-merged [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53).
+  Resolved `internal/tools/run.go` as a union — `ReadFile(deps.Scope)` and
+  `Search(deps.Scope, deps.Files)` both registered in `tools.NewRunRegistry`, issue
+  06's placeholder comment left intact — and this file and `issues/index.md` likewise,
+  reconciling issue 05 to `done` in the same pass issue 04's own run already gave
+  issue 03.
+
+* **PR open**: Epic 2 issue 04 — [Add the batched read_file tool](https://github.com/julienlegoux/external-reviewer/issues/12) (#12),
+  [PR #54](https://github.com/julienlegoux/external-reviewer/pull/54). `read_file`
+  takes a list of repo-relative paths plus `offset`/`limit`, every path resolved
+  through issue 01's `confine.Scope`; a refusal, a missing path, a directory or
+  non-UTF-8 content each render as an inline message under that path's own header
+  while the rest of the batch still returns, and only a malformed call (a bad
+  `paths`/`offset`/`limit` shape) is a tool error. Content is streamed line-by-line
+  via `bufio.Scanner` rather than read whole and trimmed, with the scan still
+  counting every line so the truncation marker's total is always real. Registers as
+  the one line issue 03's frozen seam reserved for it in `tools.NewRunRegistry`. 689
+  changed lines against a ~400-line M target (~700 split line) — under the split,
+  driven by test volume like every issue before it in this epic. No drift recorded;
+  the native `go test ./...` flake on `internal/confine` observed during this run
+  matches the machine's already-drift-recorded Application Control behavior under
+  concurrent sibling load, not a new finding.
+
 * **PR open**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13),
   [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53). In-process RE2 over
   the same enumeration `list` reads from, streamed line by line through the `Scope`: a
