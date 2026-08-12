@@ -31,7 +31,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "prompt flag and repo path parses and reaches the run path",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--prompt", "review this", t.TempDir()}
+				return []string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()}
 			},
 			wantExit:        0,
 			wantStdoutEmpty: false,
@@ -39,7 +39,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "prompt from stdin parses identically",
 			argv: func(t *testing.T) []string {
-				return []string{"review", t.TempDir()}
+				return []string{"review", "--allow", ".", t.TempDir()}
 			},
 			stdin:           "review this",
 			wantExit:        0,
@@ -48,7 +48,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "missing repository path is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--prompt", "x"}
+				return []string{"review", "--allow", ".", "--prompt", "x"}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -57,7 +57,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "extra positional arguments are a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--prompt", "x", t.TempDir(), "extra"}
+				return []string{"review", "--allow", ".", "--prompt", "x", t.TempDir(), "extra"}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -66,7 +66,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "nonexistent repository path is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--prompt", "x", filepath.Join(t.TempDir(), "does-not-exist")}
+				return []string{"review", "--allow", ".", "--prompt", "x", filepath.Join(t.TempDir(), "does-not-exist")}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -80,7 +80,7 @@ func TestRun_Review(t *testing.T) {
 				if err := os.WriteFile(file, []byte("x"), 0o600); err != nil {
 					t.Fatalf("WriteFile fixture: %v", err)
 				}
-				return []string{"review", "--prompt", "x", file}
+				return []string{"review", "--allow", ".", "--prompt", "x", file}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -89,7 +89,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "empty stdin with no prompt flag is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", t.TempDir()}
+				return []string{"review", "--allow", ".", t.TempDir()}
 			},
 			stdin:            "",
 			wantExit:         2,
@@ -102,7 +102,7 @@ func TestRun_Review(t *testing.T) {
 			// old `task == ""` check did not.
 			name: "whitespace-only stdin (echo with no arguments) is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", t.TempDir()}
+				return []string{"review", "--allow", ".", t.TempDir()}
 			},
 			stdin:            "\n",
 			wantExit:         2,
@@ -112,7 +112,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "whitespace-only --prompt is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--prompt", " ", t.TempDir()}
+				return []string{"review", "--allow", ".", "--prompt", " ", t.TempDir()}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -214,6 +214,102 @@ func TestRun_Review(t *testing.T) {
 	}
 }
 
+// TestRun_Review_WithoutAllow_IsUsageError is the epic's confinement made
+// non-optional at the grammar: a review that granted nothing reads nothing,
+// and saying so is a usage error rather than an implicit run over the whole
+// tree. `--allow .` grants everything and has to be said.
+func TestRun_Review_WithoutAllow_IsUsageError(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	code := cli.RunForTest([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Errorf("stdout = %q, want empty", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "--allow") {
+		t.Errorf("stderr = %q, want an error: line naming --allow as missing", stderr.String())
+	}
+	if n := strings.Count(stderr.String(), "error:  "); n != 1 {
+		t.Errorf("stderr = %q, want exactly one error: line", stderr.String())
+	}
+	assertOnlyKnownPrefixedLines(t, stderr.String())
+	if fields := fauxtest.ParseDoneLine(t, stderr.String()); fields.Stop != "usage" {
+		t.Errorf("done stop = %q, want usage", fields.Stop)
+	}
+}
+
+// TestRun_Review_RepeatedAllow_ParsesEveryValue: --allow is repeatable, and a
+// run that grants two subtrees reaches exactly the point a run with one does —
+// the same success path Epic 1 issue 02's parsing tests assert, now with the
+// grant this epic requires.
+func TestRun_Review_RepeatedAllow_ParsesEveryValue(t *testing.T) {
+	repo := t.TempDir()
+	writeFixture(t, repo, filepath.Join("docs", "notes.md"), "notes\n")
+	writeFixture(t, repo, filepath.Join("internal", "cli", "run.go"), "package cli\n")
+
+	var stdout, stderr bytes.Buffer
+	code := cli.RunForTest(
+		[]string{"review", "--allow", "docs", "--allow", "internal", "--prompt", "review this", repo},
+		strings.NewReader(""), &stdout, &stderr,
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
+	}
+	if stdout.Len() == 0 {
+		t.Error("stdout is empty, want the reviewer's answer: both --allow values must parse")
+	}
+	assertOnlyKnownPrefixedLines(t, stderr.String())
+}
+
+// TestRun_Review_AllowValueThatIsNotASubtree_IsUsageError: a grant names an
+// existing directory. A regular file and a path that is not there are both
+// refused at exit 2, naming the offending value, and — asserted by the absence
+// of the model line pre-flight writes as soon as a reviewer resolves — before
+// anything talks to a model.
+func TestRun_Review_AllowValueThatIsNotASubtree_IsUsageError(t *testing.T) {
+	tests := []struct {
+		name  string
+		allow string
+	}{
+		{name: "a regular file", allow: "README.md"},
+		{name: "a path that does not exist", allow: "nowhere"},
+		{name: "traversal out of the repository", allow: "../outside"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := t.TempDir()
+			writeFixture(t, repo, "README.md", "# fixture\n")
+
+			var stdout, stderr bytes.Buffer
+			code := cli.RunForTest([]string{"review", "--allow", tc.allow, "--prompt", "x", repo},
+				strings.NewReader(""), &stdout, &stderr,
+				registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+
+			if code != 2 {
+				t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
+			}
+			if stdout.Len() != 0 {
+				t.Errorf("stdout = %q, want empty", stdout.String())
+			}
+			if !strings.Contains(stderr.String(), fmt.Sprintf("%q", tc.allow)) {
+				t.Errorf("stderr = %q, want it to name the offending value %q", stderr.String(), tc.allow)
+			}
+			if strings.Contains(stderr.String(), "model   ") {
+				t.Errorf("stderr = %q carries a model line: the grant must be rejected before any model request", stderr.String())
+			}
+			if n := strings.Count(stderr.String(), "error:  "); n != 1 {
+				t.Errorf("stderr = %q, want exactly one error: line", stderr.String())
+			}
+			assertOnlyKnownPrefixedLines(t, stderr.String())
+		})
+	}
+}
+
 // errStdin is an io.Reader that always fails, used to exercise the "stdin
 // read failure" exit-2 path — the one exit-2 reason the existing table
 // cannot reach with a plain strings.Reader.
@@ -226,7 +322,7 @@ func (errStdin) Read([]byte) (int, error) { return 0, errors.New("device error")
 // itself errors, rather than merely returning nothing.
 func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.Run([]string{"review", t.TempDir()}, errStdin{}, &stdout, &stderr)
+	code := cli.Run([]string{"review", "--allow", ".", t.TempDir()}, errStdin{}, &stdout, &stderr)
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -252,7 +348,7 @@ func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
 // exit-2 sibling.
 func TestRun_NoReviewerReached_WritesNoErrorLine(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
 		registry(t, fauxtest.UnconfiguredAuth(), nil, reviewer.DefaultModelID))
 
 	if code != 1 {
@@ -306,7 +402,7 @@ func TestRun_Review_PathDiagnostics_AreWireForm(t *testing.T) {
 			wirePath := filepath.ToSlash(filepath.Clean(nativePath))
 
 			var stdout, stderr bytes.Buffer
-			code := cli.Run([]string{"review", "--prompt", "x", nativePath}, strings.NewReader(""), &stdout, &stderr)
+			code := cli.Run([]string{"review", "--allow", ".", "--prompt", "x", nativePath}, strings.NewReader(""), &stdout, &stderr)
 
 			if code != 2 {
 				t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -349,7 +445,7 @@ func TestRun_Review_NoTestCausesProcessExit(t *testing.T) {
 // turns it red, as recorded in this issue's PR body.
 func TestRun_Review_PromptFlagEmptyString_IsUsageError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--prompt", "", t.TempDir()}, strings.NewReader("review this"), &stdout, &stderr,
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "", t.TempDir()}, strings.NewReader("review this"), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 2 {

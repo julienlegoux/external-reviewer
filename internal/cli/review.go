@@ -12,17 +12,46 @@ import (
 
 	"github.com/julienlegoux/kern-link/ai"
 
+	"github.com/julienlegoux/external-reviewer/internal/confine"
 	"github.com/julienlegoux/external-reviewer/internal/diag"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // reviewRequest is the parsed, validated form of a `review` invocation: a
-// repository to look at and the task to perform on it. Confinement
-// (--allow) and everything past parsing (model resolution, the loop itself)
-// arrive in later issues — this struct is the seam they build on.
+// repository to look at, the task to perform on it, and the confinement every
+// read goes through. Everything past parsing (the loop itself, the tools)
+// arrives in later issues — this struct is the seam they build on.
+//
+// Scope is the *os.Root and the allow-list travelling as one value: a tool
+// takes the Scope, and there is no other way for it to reach a file.
 type reviewRequest struct {
 	RepoPath string
 	Task     string
+	Scope    *confine.Scope
+}
+
+// allowList is the repeatable --allow flag's value: repo-relative wire paths,
+// accumulated in the order they were given. flag.Value rather than a
+// comma-separated string, because a path may legitimately contain a comma and
+// a subtree grant is not a place to invent an escaping rule.
+type allowList []string
+
+// String renders the flag's current value for flag's own diagnostics. The
+// zero value is the empty list, which is the state that makes a review a
+// usage error.
+func (a *allowList) String() string {
+	if a == nil {
+		return ""
+	}
+	return strings.Join(*a, " ")
+}
+
+// Set appends one --allow occurrence. Validation — that the value names an
+// existing directory inside the root — belongs to confine.OpenScope, which is
+// the only thing holding the root it has to be resolved against.
+func (a *allowList) Set(value string) error {
+	*a = append(*a, value)
+	return nil
 }
 
 // resolveAndReview runs the pre-flight that can end a run before a single
@@ -286,6 +315,8 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
+	var allow allowList
+	fs.Var(&allow, "allow", "a repo-relative subtree the reviewer may read; repeatable, required")
 
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -336,6 +367,28 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return fmt.Errorf("repository path %q is not a directory", wireRepoPath)
 	}
 
+	// Confinement is opened before the task prompt is resolved, so a run that
+	// granted nothing — or granted something that is not a subtree — ends
+	// without blocking on stdin and without reaching a model. The stat above
+	// established nothing this depends on: OpenScope opens its own root from
+	// repoPath and every read resolves through that handle on its own merits
+	// (see internal/confine).
+	if len(allow) == 0 {
+		diag.WriteError(stderr, "review requires at least one --allow <path>: use --allow . to grant the whole repository")
+		state.StopReason = usageStopReason
+		return errors.New("review requires at least one --allow <path>")
+	}
+	scope, err := confine.OpenScope(repoPath, allow)
+	if err != nil {
+		diag.WriteError(stderr, err.Error())
+		state.StopReason = usageStopReason
+		return err
+	}
+	// One root for the run, released on every termination path this function
+	// can take from here on — the success path included, since runReview is
+	// called inside it rather than after it.
+	defer func() { _ = scope.Close() }()
+
 	promptSet := false
 	fs.Visit(func(f *flag.Flag) {
 		if f.Name == "prompt" {
@@ -383,7 +436,7 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return errors.New("empty task prompt")
 	}
 
-	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task}, stdout, stderr, state)
+	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task, Scope: scope}, stdout, stderr, state)
 }
 
 // runReview calls the review seam and folds its outcome into state's stop

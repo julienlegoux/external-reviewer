@@ -3,13 +3,14 @@ type: Issue
 title: "Confine the run with --allow and os.OpenRoot"
 description: "Add the required repeatable --allow flag and the single *os.Root every later read goes through, with allow-list membership, the sensitive-file floor and refusals that name the rule that refused."
 tags: [epic-2]
-timestamp: 2026-08-11T03:38:33Z
+timestamp: 2026-08-12T00:00:00Z
 epic: 2
 issue: 01
 slug: allow-list-and-root-confinement
 size: L
-status: open
+status: pr-open
 gh_issue: 9
+gh_pr: 50
 resource: https://github.com/julienlegoux/external-reviewer/issues/9
 depends_on: []
 ---

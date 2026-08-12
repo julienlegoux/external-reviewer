@@ -5,16 +5,20 @@ import (
 	"io"
 )
 
-// usageText documents the epic-1 subset of the CLI grammar: SPECS fixes a
-// larger surface (--allow, --tier/--model, models/tiers/version) that the
-// later epics add. Only what this binary accepts today is listed here, so
-// the message never promises a flag that would itself be a usage error.
+// usageText documents the subset of the CLI grammar this binary accepts
+// today: SPECS fixes a larger surface (--tier/--model, models/tiers/version)
+// that the later epics add. Only what is accepted is listed here, so the
+// message never promises a flag that would itself be a usage error.
 const usageText = `usage: external-reviewer <command> [flags] [args]
 
 commands:
-  review [--prompt <text>] <repo-path>
+  review --allow <path> [--allow <path> ...] [--prompt <text>] <repo-path>
       Review the repository at <repo-path>. The task prompt comes from
       --prompt, or from stdin when --prompt is not given.
+
+      --allow grants one repo-relative subtree the reviewer may read, and is
+      repeatable. At least one is required: nothing outside the granted
+      subtrees is readable. Use --allow . to grant the whole repository.
 
   help | --help | -h
       Print this message.

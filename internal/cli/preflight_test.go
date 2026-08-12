@@ -55,7 +55,7 @@ func runReview(t *testing.T, models ai.Models) (int, string, string) {
 	t.Helper()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
 	return code, stdout.String(), stderr.String()
 }
 

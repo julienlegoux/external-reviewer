@@ -47,7 +47,7 @@ func TestRun_Review_StdinCancelledMidRead_ExitsInterrupted(t *testing.T) {
 	defer cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunWithModelsForTest(ctx, []string{"review", t.TempDir()}, newBlockingReader(), &stdout, &stderr,
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", t.TempDir()}, newBlockingReader(), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 2 {
@@ -86,7 +86,7 @@ func (b repeatingReader) Read(p []byte) (int, error) {
 // example) could be fully read into memory.
 func TestRun_Review_StdinOverTheBound_NamedError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", t.TempDir()}, repeatingReader('a'), &stdout, &stderr,
+	code := cli.RunForTest([]string{"review", "--allow", ".", t.TempDir()}, repeatingReader('a'), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 2 {
@@ -126,7 +126,7 @@ func TestRun_Review_PromptWhitespaceReachesModelVerbatim(t *testing.T) {
 	models := scripted(t, 0, capture)
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", t.TempDir()}, strings.NewReader(raw), &stdout, &stderr, models)
+	code := cli.RunForTest([]string{"review", "--allow", ".", t.TempDir()}, strings.NewReader(raw), &stdout, &stderr, models)
 
 	if code != 0 {
 		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())

@@ -1,5 +1,22 @@
 # Log
 
+## 2026-08-12
+
+* **PR open**: Epic 2 issue 01 — [Confine the run with --allow and os.OpenRoot](https://github.com/julienlegoux/external-reviewer/issues/9) (#9),
+  [PR #50](https://github.com/julienlegoux/external-reviewer/pull/50). Adds
+  `internal/confine` — one `*os.Root` and the allow-list travelling as one `*Scope`, the
+  three refusal rules and the non-configurable sensitive-file floor — plus the required
+  repeatable `--allow` flag, and amends Epic 1 issue 02's success-case tests, whose
+  grammar this issue deliberately tightens. **Oversize**: 1360 changed lines against a
+  ~700-line `L` estimate, entirely tests and doc comments; the workable split line was the
+  allow-list validation half, not the floor the issue nominated.
+
+  **Drift recorded**: one entry — wire-path spellings are validated syntactically before
+  `os.Root` sees them, which SPECS delegates wholly to `os.Root` and warns against
+  hand-rolling. Layered before rather than in place of it, because the allow-list test,
+  the two-OS absolute-path criterion and issue 06's no-I/O validation each need a cleaned
+  relative path `os.Root` cannot supply.
+
 ## 2026-08-11
 
 * **Retirement**: Epic 0 (Skeleton hardening) retired - 12 issues, milestone 4 closed.

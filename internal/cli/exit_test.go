@@ -63,7 +63,7 @@ func TestClassify_WrappedErrNoReviewer_IsExitOne(t *testing.T) {
 // registry, terminating normally with the reviewer's answer on stdout.
 func TestRun_Success_ExitsZero(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
 
 	if code != 0 {
