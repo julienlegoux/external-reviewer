@@ -226,7 +226,7 @@ is `kern-link`'s credential store under `~/.pi/agent/`, which the dependency own
 ```
 model   openai-codex/gpt-5.5  auth=OAuth
 turn 3  tools=2  in=48210 out=1104  $0.0231  42.8s
-tool    read_file docs/epics/epic-2/EPIC_2.md:1-2000
+tool    list pattern="**/*.go"
 warn    config: unrecognised key "models" in [tiers.standard]
 done    turns=7  in=182430 out=9106  $0.0918  2m14s  stop=end_turn
 ```
@@ -235,6 +235,12 @@ The `model` line is written once, by pre-flight, as soon as a reviewer is resolv
 `provider/id` verbatim from `kern-link`'s own catalog, and `auth=<source>` — the only
 credential-adjacent value that ever reaches stderr (`AuthResult.Source`, e.g. `OAuth` or
 `ANTHROPIC_API_KEY`; never the credential itself).
+
+The `tool` line is written once per dispatch and names the call **generically** — the
+tool's name, then its arguments as `name=value` in a stable (sorted) order — because the
+loop renders it and cannot know which of any one tool's fields are the interesting ones.
+String values are converted to wire form before they are quoted, so a `/`-separated path
+is what reaches the transcript on either platform.
 
 The `done` line is emitted on **every** termination path, including failure and
 interruption. Its load-bearing fields are turns, tokens and elapsed time — the token

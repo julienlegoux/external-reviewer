@@ -100,7 +100,13 @@ restructuring the loop.
       `0`.
 - [ ] A scripted tool call whose path is outside the allow-list yields a tool error whose
       text names the rule that refused (issue 01), the run continues, and the model's
-      next turn is dispatched.
+      next turn is dispatched. **Asserted at the `internal/reviewer` boundary rather than
+      through `Run`**: `list` takes a pattern, not a path, so this epic has no path-taking
+      tool to drive it through the CLI — the tools that do are issues 04–06. The
+      assertion uses a real `confine.Scope` over a real repository and the real
+      `tools.Registry`, with a three-line tool that only calls `Scope.Resolve`, so the
+      refusal text is `confine`'s own rather than a hand-written message
+      (`TestLoop_Run_AllowListRefusalReachesTheModelAsAToolError`).
 - [ ] A scripted turn failure mid-loop ends the run at exit `2` with an empty stdout and
       a reason on stderr.
 - [ ] Termination order is asserted: with a bound artificially set in a test **and** a
