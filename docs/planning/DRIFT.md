@@ -49,29 +49,44 @@ Append-only, newest epic first. An entry that stops being true becomes
   observed firing — a deliberately racy probe test reported `WARNING: DATA RACE` and
   exit `1` — rather than assumed live. [CONVENTIONS § Testing](/CONVENTIONS.md) now says
   where the command runs.
-- **Then the Windows half fell too, the same day, and without administrator rights.**
-  The policy was never exempted; it turned out not to need exempting. `go test` builds its
-  temporary binaries under `GOTMPDIR`, and pointing that at `C:\dev\gotmp` instead of the
-  default `%LOCALAPPDATA%\Temp` is enough — `go test ./...` now completes natively on the
-  Windows host, exit `0`, with no Code Integrity block logged. That, not the remote, is
-  the fast red-green loop; the remote is what `-race` needs.
-- **Residual, verified rather than assumed**: `-race` still cannot run natively on
-  Windows. It needs cgo, and the policy refuses the unsigned DLLs a Windows C toolchain
-  loads at startup — WinLibs `gcc.exe` was installed and blocked on `libiconv-2.dll`,
-  under `%LOCALAPPDATA%` and again after being copied to `C:\dev`, with Mark-of-the-Web
-  cleared. The rule is about loading unsigned *modules*, not about paths, which is why a
-  Go test binary passes (one static executable, no DLLs) and `gcc` does not. Closing this
-  means disabling Smart App Control, which Windows does not let you re-enable without a
-  reinstall — a bad trade for one narrow class of bug. So a race that only surfaces under
-  the Windows scheduler is caught by CI; everything else about `windows-latest` is
-  reproducible locally, and `-race` itself runs on the remote.
-- **Revisit when**: a statically linked Windows C toolchain is on hand — `zig cc` as `CC`
-  is the candidate, untried — or the machine's policy changes for unrelated reasons.
+- **Then the Windows half fell too, the same day, and without administrator rights** —
+  but *not* for the reason recorded at the time. The 2026-08-11 conclusion was that
+  pointing `GOTMPDIR` at `C:\dev\gotmp` instead of `%LOCALAPPDATA%\Temp` was enough.
+  It was not: the suite passing that day was coincidence, and the setting has since been
+  shown to make no difference at all. See the correction below.
+- **Corrected 2026-08-12, by experiment rather than by inference.** Smart App Control's
+  verdict is keyed to the test binary's **exact SHA-256, and nothing else**. Measured on
+  `internal/confine`: the `go test -c` output (`04773FBE…`) was blocked; a byte-identical
+  copy under a different name *and* directory was blocked; a deterministic rebuild of
+  unchanged source was blocked; the same source built with `-ldflags=-s` (`E4DB25FC…`)
+  ran. Not the package, not the path, not the filename, not `-race`, and not the size —
+  `internal/diag`'s 10.8 MB race binary ran while `confine`'s 7.5 MB one was refused.
+  - This is why the symptom read differently to different observers: **sticky** when Go's
+    build cache returns the same binary run after run (`confine` failed 5/5 that way),
+    **random, a different subset each run** when the source changes between runs so every
+    hash is new. One rule, two workflows.
+  - `GOTMPDIR` is irrelevant — the same package draws the same verdict under
+    `C:\dev\gotmp` and under the default.
+  - **cgo is not blocked either.** WinLibs MinGW-W64 UCRT `gcc` 16.1.0 compiles, and its
+    unsigned output executes. The earlier `libiconv-2.dll` refusal was a different,
+    older toolchain, and the conclusion drawn from it — that `-race` can never run
+    natively here — no longer holds.
+  - **Consequence**: `go test -race -ldflags=-s ./... -count=1` passes natively on
+    Windows, every package. The fast red-green loop includes `-race`, and
+    `scripts/test-remote.sh` drops to a fallback for Linux-specific reproduction.
+- **Revisit when**: a package starts failing again after a source change — that is a new
+  hash drawing a block, so re-roll with build flags rather than debugging the code. Or
+  when the machine's policy changes for unrelated reasons.
 - **Evidence**: PR #45 (issue 11's verification log — the constraint stated in full, and
   the four findings it left argued rather than observed), PR #46 (issue 09's hand-run
   SIGINT verification, the WSL cross-build in practice), PR #42 (issue 10's SIGPIPE
   criterion, verified the same way). Epic 0's folder was retired at its close, so these
-  cite the PRs the evidence merged in rather than the files.
+  cite the PRs the evidence merged in rather than the files. For the 2026-08-12
+  correction: the hash experiment and the full green `-race` suite are recorded on
+  [#48](https://github.com/julienlegoux/external-reviewer/issues/48#issuecomment-5265250369),
+  and Epic 2's
+  [drift record 03](../epics/epic-2-read-only-agentic-loop/drift/03-native-go-test-blocked-again.md)
+  carries the observations that prompted it.
 
 ## Epic 1: Walking skeleton
 
