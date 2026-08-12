@@ -2,6 +2,23 @@
 
 ## 2026-08-12
 
+* **PR open**: Epic 2 issue 02 — [Enumerate the repository through git ls-files and add the list tool](https://github.com/julienlegoux/external-reviewer/issues/10) (#10),
+  [PR #51](https://github.com/julienlegoux/external-reviewer/pull/51). Adds
+  `internal/repo` — `git ls-files -z` enumeration with a walk as its fallback, and the
+  one `exec` in this codebase, argv-only with the machine's git configuration
+  neutralised — plus `internal/tools` with the registry and `list`. **Oversize**: 1654
+  changed lines against a ~700-line `L` estimate; the implementation is 645 and the
+  overrun is tests, split cleanly along the line the issue itself nominated.
+
+  **Drift recorded**: one entry — enumeration goes through the `Scope`'s own `ReadDir`
+  and `Stat`, not `Root.FS()` as SPECS names it, because an `fs.FS` over the root
+  carries neither the allow-list nor the floor and `fs.WalkDir` cannot start at `"."`
+  when a single subtree is granted. This settles the seam issue 01 left open.
+
+* **Done**: Epic 2 issue 01 — [Confine the run with --allow and os.OpenRoot](https://github.com/julienlegoux/external-reviewer/issues/9) (#9)
+  merged into `develop` as [PR #50](https://github.com/julienlegoux/external-reviewer/pull/50);
+  issue closed. `internal/confine` is now the boundary every later tool reads through.
+
 * **PR open**: Epic 2 issue 01 — [Confine the run with --allow and os.OpenRoot](https://github.com/julienlegoux/external-reviewer/issues/9) (#9),
   [PR #50](https://github.com/julienlegoux/external-reviewer/pull/50). Adds
   `internal/confine` — one `*os.Root` and the allow-list travelling as one `*Scope`, the
