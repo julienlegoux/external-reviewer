@@ -2,6 +2,21 @@
 
 ## 2026-08-12
 
+* **New document**: [Epic 2 — Hand-run measurements](/epic-2-read-only-agentic-loop/MEASUREMENTS.md),
+  the epic's second deliverable and Epic 3's only input for the loop caps. Four hand runs
+  on `openai-codex/gpt-5.5` against this repository — a documentation directory, `docs/`
+  plus `internal/`, and this epic's own merged diff — of which three completed on the
+  model's own stop reason and one died on a transient provider error. Turns 4/6/12, wall
+  clock 1m57s/2m12s/3m59s, peak single-turn prompt 99,163 tokens, $3.27 total at catalog
+  prices on a subscription credential that bills none of it. **Context overflow was not
+  hit**: the per-answer tool caps bind first, one capped `git_read` answer costing ~31k
+  tokens. All four tools were exercised by a real model, and two designed behaviours were
+  observed rather than argued — a failing turn ends the run with its `done` line intact,
+  and a refused tool call is only a turn the model re-plans around. The runs also exposed
+  one gap of their own: a path-scoped `diff` is unreachable through `git_read`, since the
+  model may not write `--` and a bare pathspec is parsed as a revision ahead of the
+  appended one.
+
 * **Done**: Epic 2 issue 06 — [Add the confined git_read tool](https://github.com/julienlegoux/external-reviewer/issues/14) (#14)
   merged into `develop` as [PR #55](https://github.com/julienlegoux/external-reviewer/pull/55);
   issue closed. Reconciled the bundle's own bookkeeping — `issues/06-git-read-tool.md`
