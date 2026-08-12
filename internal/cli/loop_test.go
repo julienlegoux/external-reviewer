@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"github.com/julienlegoux/kern-link/ai"
 	"github.com/julienlegoux/kern-link/ai/providers/faux"
 
+	"github.com/julienlegoux/external-reviewer/internal/cli"
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
@@ -315,6 +317,69 @@ func TestRun_ToolLine_NamesTheToolAndItsArgumentsInWireForm(t *testing.T) {
 	}
 	if strings.Contains(lines[0][1], `\`) {
 		t.Errorf("tool line arguments = %q, want /-separated wire paths", lines[0][1])
+	}
+}
+
+// TestRun_ExceededBound_ReturnsWhatTheRunHasAtExitZero drives the bounds seam
+// end to end, with the number a test puts there and no invocation does yet:
+// the run stops at its ceiling, the text it had reaches stdout, the exit code
+// is 0 because nothing failed, and the done line names the new stop reason.
+func TestRun_ExceededBound_ReturnsWhatTheRunHasAtExitZero(t *testing.T) {
+	const partial = "# Review\n\nstill reading\n"
+	models := scripted(t, 0,
+		faux.Step(faux.AssistantMessage(
+			[]ai.AssistantContentPart{faux.Text(partial), faux.ToolCall("list", nil, nil)},
+			&faux.AssistantMessageOptions{StopReason: ai.StopReasonToolUse},
+		)),
+		faux.Step(faux.TextMessage(markdownAnswer, nil)),
+	)
+
+	var stdout, stderr bytes.Buffer
+	code := cli.RunWithBoundsForTest(
+		context.Background(),
+		[]string{"review", "--allow", ".", "--prompt", "review this", repoWith(t, "main.go")},
+		strings.NewReader(""), &stdout, &stderr, models,
+		reviewer.Bounds{MaxTurns: 1},
+	)
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 — an exceeded bound is not a failure (stderr: %q)", code, stderr.String())
+	}
+	if stdout.String() != partial {
+		t.Errorf("stdout = %q, want the last assistant text the run had: %q", stdout.String(), partial)
+	}
+	fields := fauxtest.ParseDoneLine(t, stderr.String())
+	if fields.Stop != "bounds" {
+		t.Errorf("done stop = %q, want bounds", fields.Stop)
+	}
+	if fields.Turns != "1" {
+		t.Errorf("done turns = %q, want 1 — the second turn is never taken", fields.Turns)
+	}
+	if !strings.Contains(stderr.String(), "turn bound") {
+		t.Errorf("stderr = %q, want it to say which bound stopped the run", stderr.String())
+	}
+}
+
+// TestRun_UnsetBounds_AreWhatAnOrdinaryInvocationGets pins what this epic
+// actually ships: no invocation can set a bound, so nothing bounds a run. The
+// same conversation that stops at one turn above runs to its end here.
+func TestRun_UnsetBounds_AreWhatAnOrdinaryInvocationGets(t *testing.T) {
+	models := scripted(t, 0,
+		listCall("**/*"),
+		listCall("**/*.go"),
+		faux.Step(faux.TextMessage(markdownAnswer, nil)),
+	)
+
+	code, stdout, stderr := runReviewOver(t, models, repoWith(t, "main.go"))
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr)
+	}
+	if stdout != markdownAnswer {
+		t.Errorf("stdout = %q, want the run to have reached its own end", stdout)
+	}
+	if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop == "bounds" {
+		t.Errorf("done stop = bounds, want the model's own reason — this epic ships no values")
 	}
 }
 

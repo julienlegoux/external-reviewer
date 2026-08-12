@@ -30,6 +30,11 @@ type reviewRequest struct {
 	RepoPath string
 	Task     string
 	Scope    *confine.Scope
+	// Bounds is the run ceiling the loop consults at the top of every turn.
+	// It arrives here unset on every real invocation — no flag sets one yet
+	// (see run.go) — and travels on the request rather than as a package
+	// value so Epic 3 fills it in at the one place the request is built.
+	Bounds reviewer.Bounds
 }
 
 // allowList is the repeatable --allow flag's value: repo-relative wire paths,
@@ -114,11 +119,12 @@ func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest
 			Files:    repo.NewEnumerator(req.Scope, req.RepoPath, warn),
 			Warn:     warn,
 		}),
-		// Bounds ships unset, and that is the decision rather than an
-		// omission: SCOPE defers the turn, cost and wall-clock ceilings until
-		// issue 07 has measured a real review, so Epic 3 sets numbers here
-		// instead of restructuring the loop (specs 07, reviewer.Bounds).
-		Bounds: reviewer.Bounds{},
+		// Unset on every real invocation, and that is the decision rather
+		// than an omission: SCOPE defers the turn, cost and wall-clock
+		// ceilings until issue 07 has measured a real review, so Epic 3 sets
+		// numbers on the way in instead of restructuring the loop (specs 07,
+		// reviewer.Bounds).
+		Bounds: req.Bounds,
 		State:  state,
 		Stderr: stderr,
 	}
@@ -264,7 +270,7 @@ func readPromptFromStdin(ctx context.Context, stdin io.Reader) (string, error) {
 // its default behaviour would otherwise put an unprefixed "Usage of
 // review:" block on stderr ahead of the diag.WriteError line below, which
 // is exactly the second, unprefixed line the acceptance criteria forbid.
-func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models) error {
+func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models, bounds reviewer.Bounds) error {
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
@@ -389,7 +395,7 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return errors.New("empty task prompt")
 	}
 
-	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task, Scope: scope}, stdout, stderr, state)
+	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task, Scope: scope, Bounds: bounds}, stdout, stderr, state)
 }
 
 // runReview calls the review seam and folds its outcome into state's stop

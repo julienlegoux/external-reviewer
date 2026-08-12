@@ -256,11 +256,15 @@ different questions and a usage error can never carry a model's own reason:
   an empty prompt), `help` (`help`/`--help`/`-h`), `no_reviewer` (exit `1`: no reviewer was
   ever reachable), `interrupted` (`SIGINT` or a cancelled context), `failed` (reached and
   then unusable for any other reason — a failed turn, a broken credential, an empty final
-  message, a report that could not be written to stdout).
+  message, a report that could not be written to stdout), and `bounds` (the run reached its
+  own turn, cost or elapsed ceiling — exit `0` with the report the run had, since a bounded
+  run neither failed nor was interrupted; a `warn` line names which of the three bit).
 
 This is a union that only grows: a later epic adds a value no code can produce yet rather
-than repurposing one of the above. Epic 2 adds at least `bounds`, for a run that ends at
-its own turn/cost/elapsed ceiling rather than at the model's own stop reason.
+than repurposing one of the above. `bounds` was added by Epic 2's loop
+([issue 03](../epics/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md)),
+which ships the ceiling as a seam with **no values set** — so no invocation can produce
+the word yet, and Epic 3 sets the numbers that make it reachable.
 
 **Exit codes turn on whether a reviewer was ever reachable**
 ([decision](/specs/13-error-handling-and-failure-classification.md)). Not reached → `1`,

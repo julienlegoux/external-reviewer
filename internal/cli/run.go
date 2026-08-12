@@ -14,6 +14,7 @@ import (
 	"github.com/julienlegoux/kern-link/ai"
 
 	"github.com/julienlegoux/external-reviewer/internal/diag"
+	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // Run is the entire behavior of the external-reviewer binary. It takes argv
@@ -46,7 +47,11 @@ import (
 // handleSIGPIPE), because `external-reviewer review … | head -20` would
 // otherwise kill the process outright and skip the done line entirely.
 func Run(argv []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	return runProcess(argv, stdin, stdout, stderr, nil)
+	// The zero Bounds is the shipped run ceiling: unset, so nothing bounds a
+	// review. No flag sets one yet — SCOPE defers the numbers until issue 07
+	// has measured a real run, and Epic 3 adds the surface that fills this in
+	// (specs 02, reviewer.Bounds).
+	return runProcess(argv, stdin, stdout, stderr, nil, reviewer.Bounds{})
 }
 
 // runProcess is Run's body with the registry left as an argument, so that
@@ -58,12 +63,12 @@ func Run(argv []string, stdin io.Reader, stdout, stderr io.Writer) int {
 // entry point gains next. It had already missed handleSIGPIPE, which would
 // have left the one test that exists to prove the process is not killed by
 // SIGPIPE running against a process that never registered for it.
-func runProcess(argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) int {
+func runProcess(argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models, bounds reviewer.Bounds) int {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	defer handleSIGPIPE()()
 
-	code, _ := run(ctx, argv, stdin, stdout, stderr, registry)
+	code, _ := run(ctx, argv, stdin, stdout, stderr, registry, bounds)
 	return code
 }
 
@@ -108,7 +113,7 @@ func handleSIGPIPE() func() {
 // lazily, on first use" (see ensureModels); a test passes its own offline
 // registry as an explicit argument instead of mutating a package-level
 // variable (see export_test.go's RunForTest and RunWithModelsForTest).
-func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) (int, error) {
+func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models, bounds reviewer.Bounds) (int, error) {
 	state := diag.NewState()
 	defer func() { diag.WriteDone(stderr, state) }()
 
@@ -126,7 +131,7 @@ func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.
 		state.StopReason = "help"
 		return 0, nil
 	case "review":
-		err := runReviewCommand(ctx, rest, stdin, stdout, stderr, state, registry)
+		err := runReviewCommand(ctx, rest, stdin, stdout, stderr, state, registry, bounds)
 		return classify(err), err
 	default:
 		diag.WriteError(stderr, fmt.Sprintf("unknown command %q", cmd))
