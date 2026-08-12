@@ -39,7 +39,7 @@ func NewRunRegistry(deps Deps) *Registry {
 	return NewRegistry(
 		List(deps.Files),
 		// read_file — issue 04 registers it here.
-		// search — issue 05 registers it here.
+		Search(deps.Scope, deps.Files),
 		// git_read — issue 06 registers it here.
 	)
 }
