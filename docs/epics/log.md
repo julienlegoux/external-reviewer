@@ -2,6 +2,15 @@
 
 ## 2026-08-12
 
+* **Started**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11) —
+  branch `issue-03-multi-turn-loop-and-dispatch`.
+
+* **Done**: Epic 2 issue 02 — [Enumerate the repository through git ls-files and add the list tool](https://github.com/julienlegoux/external-reviewer/issues/10) (#10)
+  merged into `develop` as [PR #51](https://github.com/julienlegoux/external-reviewer/pull/51);
+  issue closed. Reconciled by issue 03's run — the issue file still read `pr-open` though
+  GitHub issue #10 was already closed. `internal/repo` and `internal/tools` exist but have
+  no `internal/cli` caller yet; wiring them in is issue 03's job.
+
 * **PR open**: Epic 2 issue 02 — [Enumerate the repository through git ls-files and add the list tool](https://github.com/julienlegoux/external-reviewer/issues/10) (#10),
   [PR #51](https://github.com/julienlegoux/external-reviewer/pull/51). Adds
   `internal/repo` — `git ls-files -z` enumeration with a walk as its fallback, and the
