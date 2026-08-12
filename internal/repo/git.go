@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -20,21 +19,55 @@ var gitConfigEnvironment = []string{
 	"GIT_CONFIG_SYSTEM=" + os.DevNull,
 }
 
-// runGit runs one git subcommand against repoPath and returns its stdout.
+// Output is what one git invocation produced: its standard output, and its
+// standard error for the one caller that has to explain a failure to the model
+// rather than to a human (internal/tools' git_read — a non-zero git exit is a
+// tool error carrying git's own sentence, since the reviewer is the only one
+// who can act on it).
+type Output struct {
+	Stdout []byte
+	Stderr []byte
+}
+
+// Git runs one git subcommand against repoPath and returns both its streams.
+// It is exported for git_read, which is the only other place in this binary
+// allowed to run git, so that there is one exec in the codebase rather than
+// two: the argv discipline, the `-C` form and the environment neutralisation
+// below are properties of *every* git this process runs, not of enumeration.
 //
-// This is the codebase's only process execution, and every constraint on it is
-// here rather than at its call sites: git is named as a bare program resolved
-// from PATH, its arguments are an argv slice that no shell ever parses, and
-// its environment carries no GIT_* variable from this process. `-C repoPath`
-// rather than cmd.Dir because it is git's own way of saying which repository
-// it is being asked about, and it survives a repoPath the process's working
-// directory could not.
+// The error is returned unwrapped, because its two shapes are the caller's to
+// tell apart: exec.ErrNotFound (git is not installed) and *exec.ExitError (git
+// ran and refused).
+func Git(ctx context.Context, repoPath string, args ...string) (Output, error) {
+	return runGitStreams(ctx, repoPath, args...)
+}
+
+// runGit runs one git subcommand against repoPath and returns its stdout,
+// discarding git's own stderr — which is what enumeration wants: git's
+// sentences are capitalised, full-stopped and platform-spelled, and this run
+// states its own diagnostics (CONVENTIONS § Error handling).
+func runGit(ctx context.Context, repoPath string, args ...string) ([]byte, error) {
+	output, err := runGitStreams(ctx, repoPath, args...)
+	if err != nil {
+		return nil, fmt.Errorf("running git %s: %w", strings.Join(args, " "), err)
+	}
+	return output.Stdout, nil
+}
+
+// runGitStreams is the codebase's only process execution, and every constraint
+// on it is here rather than at its call sites: git is named as a bare program
+// resolved from PATH, its arguments are an argv slice that no shell ever
+// parses, and its environment carries no GIT_* variable from this process.
+// `-C repoPath` rather than cmd.Dir because it is git's own way of saying which
+// repository it is being asked about, and it survives a repoPath the process's
+// working directory could not.
 //
 // The subprocess reads the filesystem on its own authority, outside the
 // *os.Root — which is exactly why nothing it reports is trusted: every path it
 // names is re-resolved through the Scope before it is used (see enumerate.go),
-// and its stdout is the only thing that leaves this function.
-func runGit(ctx context.Context, repoPath string, args ...string) ([]byte, error) {
+// and every path a caller *sends* is resolved through the Scope before the
+// command is built (see internal/tools/git_read.go).
+func runGitStreams(ctx context.Context, repoPath string, args ...string) (Output, error) {
 	// The single exec in this binary. exec.Command* is forbidden everywhere
 	// else because a subprocess reads on its own authority, outside the root
 	// handle (CONVENTIONS § Code style & formatting; ripgrep was rejected on
@@ -46,22 +79,23 @@ func runGit(ctx context.Context, repoPath string, args ...string) ([]byte, error
 	// literal "git", the arguments are an argv slice no shell ever sees, and
 	// on the platform where argument splitting is a CommandLineToArgvW problem
 	// that is the whole defence (specs 11). No caller passes model-supplied
-	// text through here: this issue's arguments are literals, and issue 06's
-	// git_read allowlists its subcommand before the command is built.
+	// text through here unexamined: enumeration's arguments are literals, and
+	// git_read allowlists its subcommand and resolves every path it was given
+	// through the Scope before the command is built.
 	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", repoPath}, args...)...) //nolint:forbidigo,gosec // the one allowed exec: argv-only, no shell, see above
 	cmd.Env = gitEnvironment()
 
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
-	// git's own stderr is discarded rather than forwarded: it is the OS's and
+	// git's own stderr is captured rather than forwarded: it is the OS's and
 	// git's sentences, capitalised and platform-spelled, and this run states
-	// its own diagnostics (CONVENTIONS § Error handling).
-	cmd.Stderr = io.Discard
+	// its own diagnostics (CONVENTIONS § Error handling). The one caller that
+	// surfaces it hands it to the model, which is the only reader that can act
+	// on "fatal: invalid object name".
+	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("running git %s: %w", strings.Join(args, " "), err)
-	}
-	return stdout.Bytes(), nil
+	err := cmd.Run()
+	return Output{Stdout: stdout.Bytes(), Stderr: stderr.Bytes()}, err
 }
 
 // gitEnvironment is the process environment with every GIT_* variable dropped

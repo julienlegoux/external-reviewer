@@ -2,6 +2,45 @@
 
 ## 2026-08-12
 
+* **Merge**: `origin/develop` merged into Epic 2 issue 06's branch, twice — for issue
+  05's [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53) and then for
+  issue 04's [PR #54](https://github.com/julienlegoux/external-reviewer/pull/54), the two
+  siblings that landed while #55 was open. `internal/tools/run.go` is now the union of all
+  four registrations — `List`, `ReadFile`, `Search`, `GitRead` — with no placeholder
+  comments left, and `issues/index.md`, this file and `drift/index.md` keep every issue's
+  and every record's own line. Issue 04's rename of `intArgument` to `wholeNumberArgument`
+  is why a package-level identifier check ran on the merged tree rather than trusting a
+  clean text merge: `go build ./...` and `go vet ./...` (which type-checks `_test.go` too)
+  are both clean, so `git_read.go` collides with neither sibling.
+
+* **Done**: Epic 2 issue 04 — [Add the batched read_file tool](https://github.com/julienlegoux/external-reviewer/issues/12) (#12)
+  merged into `develop` as [PR #54](https://github.com/julienlegoux/external-reviewer/pull/54);
+  issue closed. Reconciled by issue 06's run during that second merge — the bundle still
+  read `pr-open`. All four of the epic's tools now exist, and their tests run together for
+  the first time on issue 06's branch.
+
+* **PR open**: Epic 2 issue 06 — [Add the confined git_read tool](https://github.com/julienlegoux/external-reviewer/issues/14) (#14),
+  [PR #55](https://github.com/julienlegoux/external-reviewer/pull/55). History is the one
+  surface `*os.Root` cannot guard, so `git_read` makes its confinement in argument space
+  before the command exists: the subcommand against the fixed `log`/`diff`/`show`/`status`
+  allowlist, every `<rev>:<path>` object — including the index forms `:<path>` and
+  `:<stage>:<path>`, in every subcommand's arguments — through `confine.Scope.Resolve`,
+  and the granted subtrees appended as pathspecs a literal `--` may not reach past.
+  `repo.Git` exports issue 02's exec helper rather than adding a second exec, now
+  capturing git's stderr so a non-zero exit is a tool error the model can act on.
+  **Oversize**: ~1008 changed lines against a ~700-line `L` estimate; implementation ~385
+  and on target, the overrun is 578 lines of git-fixture tests — the fourth `L` in this
+  epic to overrun on tests alone.
+
+  **Drift recorded**:
+  [04 — git_read scopes status too, and validates `<rev>:<path>` in every subcommand](/epic-2-read-only-agentic-loop/drift/04-git-read-scopes-status-and-every-object-argument.md).
+  specs 10 says "`status` is unaffected" and confines only `show`'s object form; measured
+  against real git, an unscoped `status` names every path in the repository and
+  `git diff <blob> <blob>` prints two files' contents.
+
+* **Started**: Epic 2 issue 06 — [Add the confined git_read tool](https://github.com/julienlegoux/external-reviewer/issues/14) (#14) —
+  branch `issue-06-git-read-tool`.
+
 * **Merge**: `origin/develop` merged into Epic 2 issue 04's branch to pick up issue
   05's concurrently-merged [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53).
   Resolved `internal/tools/run.go` as a union — `ReadFile(deps.Scope)` and
@@ -25,6 +64,11 @@
   the native `go test ./...` flake on `internal/confine` observed during this run
   matches the machine's already-drift-recorded Application Control behavior under
   concurrent sibling load, not a new finding.
+
+* **Done**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13)
+  merged into `develop` as [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53);
+  issue closed. Reconciled by issue 06's run, while merging `develop` into its branch —
+  the bundle still read `pr-open`.
 
 * **PR open**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13),
   [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53). In-process RE2 over
