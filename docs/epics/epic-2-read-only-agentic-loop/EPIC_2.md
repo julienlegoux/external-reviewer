@@ -115,7 +115,15 @@ output contract and the exit codes this epic runs inside.
   first on Windows.
 - **Risk 3 (context overflow on large surfaces) is not mitigated by this epic** — an
   epic's merged diff is the heaviest read in the pipeline and nobody has measured it.
-  This epic makes it *observable*; the mitigation is deferred.
+  This epic makes it *observable*; the mitigation is deferred. It has now been
+  *observed*: [Hand-run measurements](/epic-2-read-only-agentic-loop/MEASUREMENTS.md)
+  records a review of this epic's own merged diff peaking at 98k prompt tokens without
+  overflowing, because the per-answer tool caps bind before the context does.
+- **The measurements are written down**:
+  [Hand-run measurements](/epic-2-read-only-agentic-loop/MEASUREMENTS.md) — four hand
+  runs on `openai-codex/gpt-5.5`, their turns, tokens, context, cost and wall clock, and
+  what they suggest (not decide) about Epic 3's caps. Epic 3 reads that document rather
+  than a memory of this conversation.
 - **Risk 5 (a runaway run during hand-run measurement) is accepted deliberately.**
   Through this epic the author launches by hand and can interrupt; the only mitigations
   are live stderr diagnostics and a human at the keyboard. On the current subscription

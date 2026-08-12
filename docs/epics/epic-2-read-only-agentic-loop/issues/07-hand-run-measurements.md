@@ -3,13 +3,14 @@ type: Issue
 title: "Run a real review by hand and record the measurements"
 description: "Run the completed loop against a real repository on a real provider and record turns, tokens, cost and wall clock — the epic's second deliverable and the input Epic 3's caps are sized from."
 tags: [epic-2]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-12T18:25:00Z
 epic: 2
 issue: 07
 slug: hand-run-measurements
 size: S
-status: open
+status: pr-open
 gh_issue: 15
+gh_pr: 59
 resource: https://github.com/julienlegoux/external-reviewer/issues/15
 depends_on: [4, 5, 6]
 ---
