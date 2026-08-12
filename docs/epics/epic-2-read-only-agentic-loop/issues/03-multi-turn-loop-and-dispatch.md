@@ -3,12 +3,12 @@ type: Issue
 title: "Drive the multi-turn loop with tool dispatch and the bounds seam"
 description: "Turn the single round trip into an accumulating multi-turn loop that declares tools, dispatches tool calls, feeds results back, and terminates on bound then cancellation then stop reason."
 tags: [epic-2]
-timestamp: 2026-08-12T06:05:00Z
+timestamp: 2026-08-12T07:00:00Z
 epic: 2
 issue: 03
 slug: multi-turn-loop-and-dispatch
 size: L
-status: pr-open
+status: done
 gh_issue: 11
 gh_pr: 52
 resource: https://github.com/julienlegoux/external-reviewer/issues/11
