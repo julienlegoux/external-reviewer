@@ -3,12 +3,12 @@ type: Issue
 title: "Add the confined git_read tool"
 description: "Add git_read over the fixed log/diff/show/status allowlist with args as an array, allowed subtrees passed as pathspecs and show's <rev>:<path> form validated before the command is built."
 tags: [epic-2]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-12T08:15:00Z
 epic: 2
 issue: 06
 slug: git-read-tool
 size: L
-status: open
+status: in-progress
 gh_issue: 14
 resource: https://github.com/julienlegoux/external-reviewer/issues/14
 depends_on: [3]

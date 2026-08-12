@@ -2,6 +2,9 @@
 
 ## 2026-08-12
 
+* **Started**: Epic 2 issue 06 — [Add the confined git_read tool](https://github.com/julienlegoux/external-reviewer/issues/14) (#14) —
+  branch `issue-06-git-read-tool`.
+
 * **Done**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11)
   merged into `develop` as [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52);
   issue already closed by the supervisor. Reconciled by issue 06's run — the issue file
