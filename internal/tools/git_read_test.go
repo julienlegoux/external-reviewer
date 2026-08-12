@@ -179,6 +179,11 @@ func TestGitRead_RefusesAnObjectOutsideTheAllowedSubtrees(t *testing.T) {
 	if strings.Contains(result.Text, "floor") {
 		t.Errorf("the allow-list refusal is spelled as the floor refusal:\n%s", result.Text)
 	}
+
+	// `HEAD:` is the root tree — a listing of every top-level name, which is
+	// exactly what a run granted one subtree must not have.
+	root := tool.Handler(t.Context(), map[string]any{"command": "show", "args": []any{"HEAD:"}})
+	mentions(t, root, "--allow")
 }
 
 // TestGitRead_RefusesABlobPairOnTheFloor closes the same hole in its second
