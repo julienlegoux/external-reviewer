@@ -122,9 +122,24 @@ Enforcement is `os.OpenRoot(repoPath)` at startup, and **every** read goes throu
 root are refused, symlinks may not point outside it and may not be absolute, and on Windows
 reserved device names are rejected — the list a hand-rolled `filepath.Clean` + prefix check
 would have to reproduce, and where it would fail first on the platform SCOPE names as the
-development machine. `Root.FS()` backs `list` and `search`, so one confinement mechanism
-serves all three file tools. Only the read half of the API appears anywhere in the
-codebase.
+development machine.
+
+Above that root, and never in place of it, sits a check on the wire-path *vocabulary*:
+`internal/confine.Scope.Resolve` refuses a spelling that is not a repo-relative,
+`/`-separated name before `os.Root` is asked anything. The allow-list test needs a
+canonical relative path to compare against; the two matrix OSes must agree about an
+absolute path that is a legal single-segment filename on one of them; and
+`git show <rev>:<path>` must be validated for paths that exist only in history, where
+there is no file for `os.Root` to open. Every kernel-visible escape — symlinks, device
+names, a directory swapped for a link mid-resolution — is still the root's own answer,
+reported under the same rule ([drift](/DRIFT.md)).
+
+`Scope`, meaning that root plus the allow-list and the sensitive-file floor, is the one
+handle the file tools hold: `Scope.ReadDir` and `Scope.Stat` back `list` and `search`, so
+one confinement mechanism serves all three file tools. `Root.FS()` is deliberately **not**
+exported — an `fs.FS` over the root reads on the root's authority alone, with neither the
+allow-list nor the floor in its way ([drift](/DRIFT.md)). Only the read half of the API
+appears anywhere in the codebase.
 
 **Four tools** ([decision](/specs/09-read-only-tool-contract.md)), all scoped by the
 allow-list, all returning plain text with repo-relative `/`-separated paths in both

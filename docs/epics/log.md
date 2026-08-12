@@ -2,6 +2,21 @@
 
 ## 2026-08-12
 
+* **Epic closed**: [Epic 2: Read-only agentic loop](/epic-2-read-only-agentic-loop/EPIC_2.md)
+  (#2) — all seven issues `done`, milestone 2 closed with fifteen closed issues, tracking
+  issue closed. Issue 07 was still recorded `pr-open` though [PR #59](https://github.com/julienlegoux/external-reviewer/pull/59)
+  had merged, so `issues/07-hand-run-measurements.md` and `issues/index.md` were
+  reconciled to `done` here. The epic shipped both its deliverables: the multi-turn loop
+  with `list`, `read_file`, `search` and `git_read` all confined by one `*os.Root` plus
+  the allow-list and the sensitive-file floor, and
+  [MEASUREMENTS](/epic-2-read-only-agentic-loop/MEASUREMENTS.md), which Epic 3 reads to
+  size its caps. Its four drift records were promoted into
+  [DRIFT](../planning/DRIFT.md) as three entries, all triaged `accepted` — the fourth
+  (issue 05's) was already `resolved` in its own record and folded into the Epic 0 entry
+  it corrects. The one defect the hand runs exposed and this document could not fix is
+  now [#60](https://github.com/julienlegoux/external-reviewer/issues/60) on Epic 3's
+  milestone.
+
 * **PR open**: Epic 2 issue 07 — [Run a real review by hand and record the measurements](https://github.com/julienlegoux/external-reviewer/issues/15) (#15),
   [PR #59](https://github.com/julienlegoux/external-reviewer/pull/59). The epic's last
   issue, and the only one whose deliverable is a document rather than code: no `.go` file

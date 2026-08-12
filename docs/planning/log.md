@@ -1,5 +1,34 @@
 # Log
 
+## 2026-08-12
+
+* **Update**: promoted [Epic 2](../epics/epic-2-read-only-agentic-loop/EPIC_2.md)'s drift
+  at its close. Four drift records, three [DRIFT](/DRIFT.md) entries — the fourth (issue
+  05's) was already `resolved` in its own record and only corrects the Epic 0 entry, which
+  already cites it. All three were triaged **accepted**, which means the decided standards
+  were the thing that was wrong, so they were amended in the same commit rather than left
+  contradicting the code:
+  * [SPECS § Reading the repository](/SPECS.md) and
+    [specs 10](/specs/10-repository-confinement.md) now separate the two confinement
+    layers. Delegation to `*os.Root` remains the rule for every escape the kernel can see;
+    the wire-path *vocabulary* is checked above it, because the allow-list needs a
+    canonical relative path to compare, the two matrix OSes must agree about
+    `C:\Windows\win.ini` (a legal filename on Linux), and `git show <rev>:<path>` must be
+    decidable for a path with no file behind it.
+  * [SPECS](/SPECS.md) and [specs 11](/specs/11-tool-implementation-strategy.md) drop
+    `Root.FS()` as the handle. An `fs.FS` over the root reads on the root's authority
+    alone — neither the allow-list nor the floor is in its way — and `fs.WalkDir(fsys, ".")`
+    cannot start when the grant is a subtree. `Scope.ReadDir`/`Scope.Stat` back `list` and
+    `search` instead; one confinement mechanism, as decided, but not that type.
+  * [specs 10](/specs/10-repository-confinement.md)'s `git show HEAD:.env` measures widen:
+    `status` takes the same pathspecs as `log` and `diff` (an unscoped
+    `git status --porcelain` names every path in the repository without opening a file),
+    and any `<rev>:<path>` argument is validated in every subcommand
+    (`git diff HEAD:.env HEAD:docs/notes.md` prints both blobs' contents).
+
+  Both amended specs decisions keep the original text with a dated amendment beside it, so
+  the ledger still shows what was decided and when it moved.
+
 ## 2026-08-11
 
 * **Update**: appended a fourth [DRIFT](/DRIFT.md) entry at the close of

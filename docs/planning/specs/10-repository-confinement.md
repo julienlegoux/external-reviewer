@@ -55,6 +55,19 @@ hand-rolled check would have to reproduce, maintained by the standard library in
 - `Root.FS()` yields an `fs.FS`, so `list` is `fs.Glob` and `search` is `fs.WalkDir` over
   the same confined filesystem — one confinement mechanism for all three tools rather
   than three.
+  - **Amended 2026-08-12 ([drift](/DRIFT.md)):** the mechanism is unchanged but the
+    *handle* is not an `fs.FS`. `Root.FS()` is never exported, because an `fs.FS` over
+    the root reads on the root's authority alone — neither the allow-list nor the floor
+    below is in its way — and `fs.WalkDir(fsys, ".")` cannot even start when the grant is
+    a subtree rather than `.`. `Scope.ReadDir` and `Scope.Stat` back `list` and `search`
+    instead, each resolving through all three rules.
+- **Amended 2026-08-12 ([drift](/DRIFT.md)):** delegation to `*os.Root` is the rule for
+  every escape the *kernel* can see, and nothing above re-implements that list. It is not
+  the rule for the wire-path *vocabulary*: `Scope.Resolve` refuses a name that is not
+  repo-relative and `/`-separated before the root is asked, because the allow-list has
+  nothing to compare against otherwise, because `C:\Windows\win.ini` is a legal filename
+  on Linux and the two matrix OSes must agree, and because `git show <rev>:<path>` must be
+  decidable for a path with no file behind it.
 - Only the read half of the API is ever called. `Create`, `OpenFile` with write flags,
   `Mkdir`, `Remove`, `Chmod` are absent from this codebase, which is what makes
   "never writes" a property of the code that exists.
@@ -109,11 +122,21 @@ git show HEAD:.env
 `git show <rev>:<path>` reads any file in the repository's *history*, through the one tool
 that never touches `*os.Root`. File-level confinement is worthless while that works. So:
 
-- `show`'s `<rev>:<path>` form has its path validated against the allow-list and the
-  floor below before the command is built; a refused path never reaches `git`.
-- `log` and `diff` get the allowed subtrees appended as pathspecs (`-- <paths>`), so
-  history is scoped the same way the working tree is.
-- `status` is unaffected.
+- Any `<rev>:<path>` argument has its path validated against the allow-list and the floor
+  below before the command is built; a refused path never reaches `git`. **Amended
+  2026-08-12 ([drift](/DRIFT.md))** from "`show`'s" — `git diff HEAD:.env HEAD:docs/notes.md`
+  prints both blobs' contents, so the object form reads files in `diff` as much as in
+  `show`, and it is validated in every subcommand's arguments, in all three of git's
+  spellings (`<rev>:<path>`, `:<path>`, `:<stage>:<path>`). Pathspecs are not an
+  alternative here: `git show HEAD:.env -- docs` still prints `.env`, and
+  `git diff <blob> <blob> -- docs` is a usage error.
+- `log`, `diff` and `status` get the allowed subtrees appended as pathspecs
+  (`-- <paths>`), so history is scoped the same way the working tree is. **Amended
+  2026-08-12 ([drift](/DRIFT.md))** from "`status` is unaffected" — an unscoped
+  `git status --porcelain` names every changed path in the repository, including the ones
+  the allow-list refuses and the ones the floor exists to hide. It is the one subcommand
+  that leaks path names without reading a file, so the standard this bullet sets was not
+  met while it was exempt.
 
 **The deny-list survives, demoted.** `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`,
 `*.pfx`, `.npmrc`, `.netrc`, `credentials*` and `.git/` remain refused *within* allowed

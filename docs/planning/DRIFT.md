@@ -3,7 +3,7 @@ type: Drift
 title: "External Reviewer — Drift"
 description: "Standards this codebase has drifted from, and why"
 tags: [planning, drift]
-timestamp: 2026-08-11T18:42:03Z
+timestamp: 2026-08-12T19:20:00Z
 ---
 
 # Drift
@@ -15,6 +15,126 @@ plus its live drift is what the code actually looks like.
 
 Append-only, newest epic first. An entry that stops being true becomes
 `resolved (<date>)` rather than disappearing.
+
+## Epic 2: Read-only agentic loop
+
+### 01 — wire-path spellings are validated before `os.Root` sees them, not only by it
+
+- **Decided**: [SPECS § Reading the repository](/SPECS.md) delegated the whole
+  requirement to the standard library — *"every read goes through that `*os.Root`"*, and
+  it names what not to build, *"the list a hand-rolled `filepath.Clean` + prefix check
+  would have to reproduce"*. [specs 10](/specs/10-repository-confinement.md) rejects
+  `filepath.Abs` + `EvalSymlinks` + prefix comparison in the same terms, and issue 01's
+  Scope made it an instruction for that PR: escapes are *"delegated to `*os.Root`, not
+  re-implemented"*.
+- **Actual**: `internal/confine.Scope.Resolve` runs `cleanWirePath` first, which refuses
+  five spellings on its own authority — the empty path, a backslash, a leading `/`, a
+  drive-letter second byte (`C:\Windows\win.ini`, `C:x`), and after `path.Clean` a `..`
+  or `../` prefix. That last one is the `Clean`-plus-prefix shape SPECS names. Everything
+  the kernel alone can see — symlinks out of the tree, absolute symlinks, Windows device
+  names, a directory swapped for a link mid-resolution — is still `os.Root`'s answer, and
+  is reported as the same `ErrOutsideRoot`.
+- **Because**: three requirements in issue 01 cannot be met by delegation alone.
+  `os.Root` answers *may this be opened*, never *which granted subtree is this in*, so
+  `Scope.allows` has nothing to compare against without a canonical relative path —
+  `docs/../../outside` passes a raw `HasPrefix(p, "docs/")`. Issue 01's criterion names
+  `/etc/passwd` **and** `C:\Windows\win.ini` refused on both matrix OSes; `os.Root`
+  refuses both on Windows (measured: `path escapes from parent`), but on Linux
+  `C:\Windows\win.ini` is a legal single-segment filename that `os.Root` refuses only as
+  a missing file. And `Resolve` must answer without I/O, because issue 06 validates
+  `git show <rev>:<path>` for paths that exist only in history.
+- **Disposition**: accepted — [SPECS § Reading the repository](/SPECS.md) and
+  [specs 10](/specs/10-repository-confinement.md) were amended on 2026-08-12 to separate
+  the two layers: the wire-path *vocabulary* is checked above the root, every
+  kernel-visible escape is still the root's.
+- **Revisit when**: `os.Root` exports a way to canonicalise a name against a root without
+  opening it (which removes the reason for the `Clean`-and-prefix test), or a sentinel
+  that distinguishes its escape refusal from other errors (which removes `openError`'s
+  default branch, today reporting every non-absence, non-permission refusal as
+  `ErrOutsideRoot` because Go exports nothing finer).
+- **Evidence**:
+  [drift record 01](../epics/epic-2-read-only-agentic-loop/drift/01-wire-path-validation-before-os-root.md),
+  PR #50. `internal/confine/allow.go`, `internal/confine/root.go`;
+  `TestScope_Resolve_RefusesPathsThatAreNotInsideTheRoot` covers the syntactic half,
+  `TestScope_Open_RefusesSymlinksThatLeaveTheRoot` and
+  `TestScope_Open_WindowsReservedDeviceNames` the delegated half.
+
+### 02 — enumeration walks `Scope.ReadDir`, not `Root.FS()`
+
+- **Decided**: [SPECS § Reading the repository](/SPECS.md) named the mechanism by its
+  type — *"`Root.FS()` backs `list` and `search`, so one confinement mechanism serves all
+  three file tools"* — and
+  [specs 11](/specs/11-tool-implementation-strategy.md) spelled the walk out as
+  `fs.WalkDir(root.FS(), ".")`, with the fallback as *"`fs.WalkDir` over the root with
+  `.git/` skipped"*.
+- **Actual**: `*os.Root` and any `fs.FS` over it never leave `internal/confine`. The walk
+  in `internal/repo` holds a `Scope` and calls `Scope.ReadDir`/`Scope.Stat`, starts at
+  `Scope.Allowed()` rather than at `"."`, and puts every child name back through
+  `Resolve`. The confinement mechanism is unchanged — still the one `*os.Root` — but the
+  handle is the root plus the allow-list and the floor, not the root alone.
+- **Because**: `fs.WalkDir(root.FS(), ".")` cannot start where the grant is not `.` —
+  `--allow docs` makes `"."` an `ErrOutsideAllowList`, and walking from `"."` anyway to
+  filter afterwards would read the names of every ungranted directory, which is the same
+  leak `git_read`'s pathspec confinement exists to prevent. An exported `fs.FS` also
+  reads on the root's authority alone: any holder could `fs.WalkDir` into `secrets/` and
+  `ReadFile` a `.env`, turning the boundary back into a convention every caller must
+  remember. Going through `Resolve` additionally deletes the `.git/` special case — the
+  floor already refuses it, so a `credentials/` directory is pruned by the same line.
+- **Disposition**: accepted — [SPECS](/SPECS.md) and
+  [specs 11](/specs/11-tool-implementation-strategy.md) were amended on 2026-08-12. The
+  claim they were protecting (one confinement mechanism for all three file tools) is
+  unchanged; only the type in the sentence was wrong.
+- **Revisit when**: `os.Root` grows a `ReadDir`, or an `fs.FS` implementation that accepts
+  a filter — either shrinks `Scope.ReadDir` to a call rather than an open-list-close. Also
+  when a tool wants a genuine `fs.FS` for something the standard library only offers over
+  one (`fs.Glob`, `fs.WalkDir` proper): the answer is then an `fs.FS` implemented *by*
+  `Scope`, gated on every `Open`, never the root's own.
+- **Evidence**:
+  [drift record 02](../epics/epic-2-read-only-agentic-loop/drift/02-enumeration-does-not-use-root-fs.md),
+  PR #51. `internal/confine/root.go`, `internal/repo/enumerate.go`;
+  `TestScope_ReadDir_RefusesDirectoriesTheThreeRulesRefuse`,
+  `TestFiles_TheFallbackWalkStaysInsideTheAllowedSubtrees`,
+  `TestFiles_OutsideAGitRepositoryWalksTheFilesystemInstead`.
+
+### 06 — `git_read` scopes `status` too, and validates `<rev>:<path>` in every subcommand
+
+- **Decided**: [specs 10](/specs/10-repository-confinement.md) closed the
+  `git show HEAD:.env` hole with three measures, the third of which was a statement that
+  one subcommand needs none: `show`'s `<rev>:<path>` validated, `log` and `diff`
+  pathspec-scoped, and *"`status` is unaffected"*.
+- **Actual**: `internal/tools/git_read.go` applies both measures wider. `status` gets the
+  same appended pathspecs as `log` and `diff`, and the `<rev>:<path>` form is validated in
+  every subcommand's arguments, in all three of git's spellings — `<rev>:<path>`,
+  `:<path>`, `:<stage>:<path>`.
+- **Because**: two behaviours measured against real git, not reasoned from the docs. An
+  unscoped `git status --porcelain` lists ` M secret/creds.txt` beside ` M docs/notes.md`
+  — it is the one subcommand that hands over every path name in the repository, and their
+  modification state, without opening a file. And `git diff HEAD:.env HEAD:docs/notes.md`
+  prints both blobs' contents, so the object form reads files in `diff` exactly as in
+  `show`; pathspecs cannot substitute, since `git show HEAD:.env -- docs` still prints
+  `.env` and `git diff <blob> <blob> -- docs` is a usage error (exit 129).
+- **Disposition**: accepted — [specs 10](/specs/10-repository-confinement.md)'s two
+  bullets were amended on 2026-08-12. Nothing in the decision's reasoning changes, only
+  the enumeration of where it applies, which was written before those two commands were
+  measured.
+- **Revisit when**: git changes how `--` and object arguments interact, or a subcommand is
+  added to `git_read`'s allowed set — the object-form validation is per-subcommand and a
+  new one inherits nothing.
+- **Evidence**:
+  [drift record 04](../epics/epic-2-read-only-agentic-loop/drift/04-git-read-scopes-status-and-every-object-argument.md),
+  PR #55. `internal/tools/git_read.go` (`gitReadArgv`, `objectPath`, `objectRefusal`);
+  `TestGitRead_ScopesStatusToTheGrantedSubtrees` and
+  `TestGitRead_RefusesABlobPairOnTheFloor`, both verified by mutation — removing the
+  appended pathspecs makes the scoping tests fail with the ungranted subtree's paths in
+  the output.
+
+Epic 2 also re-hit the Epic 0 entry below, and is what corrected it: issue 05 ran entirely
+on the remote host believing the native half had failed as a class, and the experiment that
+found the real rule — Smart App Control keys its verdict to the test binary's exact
+SHA-256 — was run the same day. No separate entry; the correction is folded into
+[Epic 0's entry](#09-10-11--the-decided-test-command-does-not-run-on-the-development-machine--resolved-2026-08-11),
+whose evidence cites
+[drift record 03](../epics/epic-2-read-only-agentic-loop/drift/03-native-go-test-blocked-again.md).
 
 ## Epic 0: Skeleton hardening
 

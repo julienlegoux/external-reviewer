@@ -50,7 +50,9 @@ nothing; git is definitionally present in the repository under review — a repo
 git is not a thing this tool is ever pointed at.
 
 `search`: `regexp.Compile` (RE2 — linear time, no catastrophic backtracking on a
-model-supplied pattern) over files enumerated by `fs.WalkDir(root.FS(), ".")`. Skipped by
+model-supplied pattern) over files enumerated by a walk over the confined root — spelled
+`fs.WalkDir(root.FS(), ".")` here, amended 2026-08-12 to `Scope.ReadDir` starting at the
+granted subtrees ([drift](/DRIFT.md)). Skipped by
 default: `.git/`, the sensitive-file deny-list, anything the deny-list of
 [decision 10](/specs/10-repository-confinement.md) covers, files over ~2 MB, and files
 that fail a binary sniff (a NUL byte in the first 8 KB). Matches are capped by
@@ -103,8 +105,13 @@ vendored code it will read and reason about. That is fixed without `rg`:
   backtracking on a model-supplied pattern) over content read through the confined root.
 - **Confinement** stays the one `*os.Root`. Every path git reports is re-resolved through
   it, so a file git lists but the root refuses is skipped rather than trusted.
-- Outside a git repository, enumeration falls back to `fs.WalkDir` over the root with
-  `.git/` skipped — degraded, not broken.
+- Outside a git repository, enumeration falls back to a walk over the root with `.git/`
+  skipped — degraded, not broken. **Amended 2026-08-12 ([drift](/DRIFT.md)):** the walk
+  goes through `Scope.ReadDir`/`Scope.Stat` rather than `fs.WalkDir` over an exported
+  `fs.FS`, and starts at the granted subtrees rather than at `"."`, which the allow-list
+  refuses outright when the grant is not `.`. `.git/` then needs no special case: it is
+  already on the sensitive-file floor, so the rule that refuses reading `.git/config`
+  refuses descending into `.git`.
 
 `list` uses the same enumeration, so what the reviewer can glob and what it can grep never
 disagree.

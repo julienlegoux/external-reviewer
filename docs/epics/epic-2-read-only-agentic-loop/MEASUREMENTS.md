@@ -178,7 +178,9 @@ So **a path-scoped diff is unreachable through `git_read`**, and the only diff a
 can obtain is the whole-repository one — which is exactly the read that hits the
 2,000-line cap. This inflated run C's turn count and forced it to reconstruct the diff
 file by file through `show`. It is out of scope here (this document changes no `.go`
-file) and belongs in its own issue.
+file) and belongs in its own issue — filed at Epic 2's close as
+[#60](https://github.com/julienlegoux/external-reviewer/issues/60), on Epic 3's
+milestone, since Epic 3 sizes its caps from numbers this gap inflates.
 
 ## Observations for Epic 3
 

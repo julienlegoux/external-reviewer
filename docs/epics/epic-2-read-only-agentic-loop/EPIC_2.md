@@ -3,11 +3,11 @@ type: Epic
 title: "Read-only agentic loop"
 description: "The multi-turn loop and four confined read-only tools that turn a prompt-pipe into a reviewer that chooses what to read, plus the instrumentation Epic 3's caps are sized from."
 tags: [epic]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-12T19:05:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/2
 epic: 2
 slug: read-only-agentic-loop
-status: open
+status: done
 gh_issue: 2
 milestone: 2
 source: docs/planning/SCOPE.md#milestone-2-read-only-agentic-loop
