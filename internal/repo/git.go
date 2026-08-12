@@ -40,7 +40,15 @@ func runGit(ctx context.Context, repoPath string, args ...string) ([]byte, error
 	// handle (CONVENTIONS § Code style & formatting; ripgrep was rejected on
 	// this exact point). git is the one program the confinement can survive,
 	// because what it returns is names, and names are re-resolved.
-	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", repoPath}, args...)...) //nolint:forbidigo // the one allowed exec, argv-only, no shell — see the comment above
+	//
+	// gosec's G204 fires here on principle — the arguments are not constants —
+	// and it is answered rather than suppressed blindly: the program is the
+	// literal "git", the arguments are an argv slice no shell ever sees, and
+	// on the platform where argument splitting is a CommandLineToArgvW problem
+	// that is the whole defence (specs 11). No caller passes model-supplied
+	// text through here: this issue's arguments are literals, and issue 06's
+	// git_read allowlists its subcommand before the command is built.
+	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", repoPath}, args...)...) //nolint:forbidigo,gosec // the one allowed exec: argv-only, no shell, see above
 	cmd.Env = gitEnvironment()
 
 	var stdout bytes.Buffer

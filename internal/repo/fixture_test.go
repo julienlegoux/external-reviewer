@@ -70,7 +70,7 @@ func initGitRepo(t *testing.T, dir string, track ...string) {
 func runGit(t *testing.T, dir string, args ...string) {
 	t.Helper()
 
-	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...) //nolint:forbidigo // test fixture
+	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...) //nolint:forbidigo,gosec // a fixture builds its repository with real git; argv only, no shell
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git %v in %s: %v\n%s", args, dir, err, output)
 	}
