@@ -2,6 +2,13 @@
 
 ## 2026-08-12
 
+* **Done**: Epic 2 issue 06 — [Add the confined git_read tool](https://github.com/julienlegoux/external-reviewer/issues/14) (#14)
+  merged into `develop` as [PR #55](https://github.com/julienlegoux/external-reviewer/pull/55);
+  issue closed. Reconciled the bundle's own bookkeeping — `issues/06-git-read-tool.md`
+  and `issues/index.md` still read `pr-open` though PR #55 and GitHub issue #14 were
+  already merged and closed. Epic 2 now stands at six of its seven issues `done`, with
+  issue 07 the sole `open` issue remaining.
+
 * **Merge**: `origin/develop` merged into Epic 2 issue 06's branch, twice — for issue
   05's [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53) and then for
   issue 04's [PR #54](https://github.com/julienlegoux/external-reviewer/pull/54), the two
