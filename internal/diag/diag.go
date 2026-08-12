@@ -41,8 +41,16 @@ func WriteTurn(w io.Writer, n, tools int, inTok, outTok int64, cost float64, ela
 }
 
 // WriteTool writes a "tool" line naming the call the reviewer just made.
+//
+// summary is built from the model's own tool-call arguments, so it is
+// provider-controlled text and gets the same escapeControlChars treatment
+// WriteWarn and WriteError get, for the same reason: without it a newline in
+// an argument could forge a second, well-formed line — a fake "done … stop=ok"
+// ahead of the real one — or an ANSI/OSC sequence could reach the terminal
+// raw. This function had no caller when that defence was added to the other
+// two (Epic 0 issue 12); the loop is its first (Epic 2 issue 03).
 func WriteTool(w io.Writer, summary string) {
-	_, _ = fmt.Fprintf(w, "tool    %s\n", summary)
+	_, _ = fmt.Fprintf(w, "tool    %s\n", escapeControlChars(summary))
 }
 
 // WriteModel writes the "model" line pre-flight emits once a reviewer has

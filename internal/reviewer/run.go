@@ -91,6 +91,11 @@ type Conversation struct {
 	models   ai.Models
 	model    *ai.Model
 	messages []ai.Message
+	// tools are the declarations sent with every request. Epic 1 sent none;
+	// the Loop sets them once from its ToolSet, and they travel on every turn
+	// rather than only the first, because a provider is stateless between
+	// requests and a model that is not told about a tool cannot call it.
+	tools []ai.Tool
 
 	// StreamTimeout bounds each round trip Next takes. NewConversation sets
 	// it to DefaultStreamTimeout; anything at or below zero is read as that
@@ -156,7 +161,7 @@ func (c *Conversation) Next(ctx context.Context) (Turn, error) {
 	turnCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	chat := ai.Context{Messages: c.messages}
+	chat := ai.Context{Messages: c.messages, Tools: c.tools}
 	// The timeout is handed to the adapter as well as held here: kern-link's
 	// transports arm their own read deadlines from StreamOptions.Timeout and
 	// arm none while it is zero, so this is what lets a dead connection be
@@ -206,6 +211,28 @@ func (c *Conversation) Next(ctx context.Context) (Turn, error) {
 		return turn, fmt.Errorf("the reviewer's turn stopped with reason %q: %s", message.StopReason, message.ErrorMessage)
 	}
 	return turn, nil
+}
+
+// declare fixes the tool declarations every subsequent request carries. The
+// Loop calls it once, before the first turn: the tool set is built from a
+// fixed list in code and does not change while a run is in flight.
+func (c *Conversation) declare(tools []ai.Tool) { c.tools = tools }
+
+// appendToolResult appends one tool call's answer to the conversation, in the
+// shape the next request carries it back to the model.
+//
+// isError is carried on the message rather than folded into its text: a
+// provider that distinguishes a failed tool from a successful one in its own
+// wire format needs the flag, and the reviewer reads both the same way — as
+// text saying what happened (specs 07, CONVENTIONS § Error handling).
+func (c *Conversation) appendToolResult(call ai.ToolCall, text string, isError bool) {
+	c.messages = append(c.messages, &ai.ToolResultMessage{
+		ToolCallID: call.ID,
+		ToolName:   call.Name,
+		Content:    []ai.UserContentPart{ai.TextContent{Text: text}},
+		IsError:    isError,
+		Timestamp:  time.Now().UnixMilli(),
+	})
 }
 
 // streamTimeout is StreamTimeout with the zero value read as the default, so
