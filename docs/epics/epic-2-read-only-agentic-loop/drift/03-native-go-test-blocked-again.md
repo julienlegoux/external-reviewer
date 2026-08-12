@@ -1,9 +1,9 @@
 ---
 type: Drift record
 title: "The native half of the test command stopped working again"
-description: "CONVENTIONS says `go test ./...` runs natively on the development machine once GOTMPDIR is moved; on 2026-08-12 it does not, whatever GOTMPDIR is set to, so issue 05's whole red-green cycle ran through scripts/test-remote.sh."
+description: "CONVENTIONS says `go test ./...` runs natively once GOTMPDIR is moved; on 2026-08-12 it did not, so issue 05 ran entirely on the remote — root cause found the same day (Smart App Control keys its verdict to the binary's hash), so the drift is resolved rather than accepted."
 tags: [epic-2, drift]
-timestamp: 2026-08-12T09:10:00Z
+timestamp: 2026-08-12T10:20:00Z
 epic: 2
 issue: 05
 ---
@@ -63,20 +63,53 @@ refusal is entirely local policy.
 Raising the policy itself is out of reach from a Claude Code session — no administrator
 rights, and Smart App Control cannot be re-enabled once turned off.
 
+## Resolved (2026-08-12) — the observations above are right, the cause named in them is wrong
+
+Everything recorded above was observed accurately. The inference — that the policy had
+started refusing to execute freshly linked test binaries as a class, making the native
+half unavailable — was wrong, and so was the older `GOTMPDIR` explanation it argued
+against.
+
+**Smart App Control keys its verdict to the binary's exact SHA-256, and nothing else.**
+Measured on `internal/confine` later the same day:
+
+| Binary | SHA-256 (first 8) | Verdict |
+|---|---|---|
+| `go test -c` output | `04773FBE` | blocked |
+| byte-identical copy, different name **and** directory | `04773FBE` | blocked |
+| deterministic rebuild of unchanged source | `04773FBE` | blocked |
+| same source built with `-ldflags=-s` | `E4DB25FC` | runs |
+
+Not the package, not the path, not the filename, not `-race`, not the size —
+`internal/diag`'s 10.8 MB race binary ran while `confine`'s 7.5 MB one was refused.
+
+This explains the four identical failures recorded under *Because*: they were four runs
+of **the same cached binary**, so they could only ever return the same verdict. It also
+explains why a concurrent session on another Go project saw a *different subset* blocked
+each run — its source was changing between runs, so every hash was new. One rule, two
+workflows, two contradictory-sounding reports.
+
+`-ldflags=-s` re-rolls the hash, and with it `go test -race -ldflags=-s ./... -count=1`
+passes natively on Windows — whole suite. cgo is not blocked either: WinLibs MinGW-W64
+UCRT `gcc` 16.1.0 compiles and its unsigned output executes.
+
+So the standard was never unworkable; it was described wrongly. [CONVENTIONS §
+Testing](../../../planning/CONVENTIONS.md) and [DRIFT](../../../planning/DRIFT.md) were
+both amended on 2026-08-12 to state the hash rule and drop `GOTMPDIR`. **This record needs
+no disposition at close beyond `resolved`.**
+
 ## Revisit when
 
-Anyone on this machine runs `go test ./...` and sees it pass. Until then, treat
-`scripts/test-remote.sh` as the **only** working test command here rather than as the
-`-race` half of a pair, and budget the ssh round trip into each red-green step. If the
-block turns out to be permanent, CONVENTIONS § Testing and the resolved DRIFT entry both
-need amending, and `scripts/test-remote.sh` should lose the sentence that says the plain
-suite stays local.
+A package starts failing again after a source change — that is a new hash drawing a
+block, not a regression in the toolchain or a policy change. Re-roll with build flags
+rather than debugging the code.
 
 Two smaller consequences worth carrying: concurrent implementers must give the script
 distinct `EXTERNAL_REVIEWER_TEST_DIR` values, since it wipes one fixed remote directory
-(`ci/external-reviewer`) that all of them would otherwise share; and the two-OS matrix
-claim in § Testing — *"`windows-latest` behaviour is otherwise reproducible on the spot"* —
-is currently false, because nothing at all is reproducible on the spot.
+(`ci/external-reviewer`) that all of them would otherwise share — that one still stands
+and is an open follow-up; and the two-OS matrix claim in § Testing —
+*"`windows-latest` behaviour is otherwise reproducible on the spot"* — which looked false
+at the time but holds again under the resolution below.
 
 ## Evidence
 

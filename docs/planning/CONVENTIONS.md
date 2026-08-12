@@ -111,34 +111,51 @@ vocabularies keep that from becoming a class of recurring bug
 - Standard library `testing` only. No `testify`, no assertion helpers, no mocking
   framework ([specs 16](/specs/16-testing-infrastructure.md)). `go test ./... -race` is
   the command.
-- **The command splits in two on the Windows development machine**, and the split is
-  the machine's Application Control policy, not a preference
-  ([drift](/DRIFT.md#09-10-11--the-decided-test-command-does-not-run-on-the-development-machine--resolved-2026-08-11)):
+- **The whole command runs natively on the Windows development machine**, `-race`
+  included, with one flag:
 
-  - **`go test ./...` runs natively**, and is the fast inner loop — no ssh, no sync.
-    It needs one machine-local setting, `go env -w GOTMPDIR=C:\dev\gotmp` or any path
-    outside `%LOCALAPPDATA%\Temp`. Without it the policy refuses the temporary binaries
-    `go test` builds and every package fails before a test runs. The setting lives in
-    the user's Go env file, not in this repository.
-  - **`-race` runs on a remote Linux host**, through `scripts/test-remote.sh`, which
-    copies the working tree over ssh, runs `go test` there with `-race` appended, and
-    exits with what the remote exited with:
+  ```sh
+  go test -race -ldflags=-s ./... -count=1
+  ```
 
-    ```sh
-    scripts/test-remote.sh                                  # the whole suite
-    scripts/test-remote.sh ./internal/cli -run TestFoo -v   # one test, for red-green
-    ```
+  The flag is not about the linker output anyone wants; it is there to change the
+  binary's bytes. Smart App Control on this machine refuses to *execute* some freshly
+  built, unsigned test binaries, and **its verdict is keyed to the binary's exact
+  SHA-256 and nothing else** — not the package, not the path, not the filename, not
+  `-race`, not the size. A given set of bytes gets one verdict, permanently; changing
+  any build input re-rolls it, and `-ldflags=-s` is the cheapest way to do that
+  ([drift](/DRIFT.md#09-10-11--the-decided-test-command-does-not-run-on-the-development-machine--resolved-2026-08-11)).
 
-    It syncs the *working tree*, not `HEAD`, so an uncommitted failing test is watchable
-    going red and then green — which is what strict red-green above needs. The remote
-    defaults to the ssh alias `vps` and needs only a Go toolchain and a C compiler;
-    `EXTERNAL_REVIEWER_TEST_REMOTE` points it at any other host.
+  What that means in practice:
 
-  `-race` cannot run natively here: it needs cgo, and the same policy refuses the
-  unsigned DLLs a Windows C toolchain loads at startup — a Go test binary is a single
-  static executable and passes, `gcc.exe` is not and does not. So a race that only
-  surfaces under the Windows scheduler is caught by CI, not locally. **Nothing else is
-  CI-only**: `windows-latest` behaviour is otherwise reproducible on the spot.
+  - A failure reading
+    `fork/exec ...\<pkg>.test.exe: An Application Control policy has blocked this file`
+    is **the machine, never the code**. Re-roll the hash; do not debug the package.
+  - It looks *sticky* when Go's build cache hands back the same binary run after run,
+    and *random* when the source keeps changing so every hash is new. Same rule, two
+    workflows — neither observation means the policy changed.
+  - `GOTMPDIR` is irrelevant. It was once believed to be the fix; it is not, and the
+    same package draws the same verdict wherever its temporary binaries are written.
+  - cgo works: a WinLibs MinGW-W64 UCRT toolchain compiles and its unsigned output
+    executes, so `-race` needs nothing remote.
+
+- **`scripts/test-remote.sh` is the fallback**, for Linux-specific reproduction or when
+  a hash keeps drawing a block. It copies the working tree over ssh, runs `go test`
+  there with `-race` appended, and exits with what the remote exited with:
+
+  ```sh
+  scripts/test-remote.sh                                  # the whole suite
+  scripts/test-remote.sh ./internal/cli -run TestFoo -v   # one test, for red-green
+  ```
+
+  It syncs the *working tree*, not `HEAD`, so an uncommitted failing test is watchable
+  going red and then green. The remote defaults to the ssh alias `vps` and needs only a
+  Go toolchain and a C compiler; `EXTERNAL_REVIEWER_TEST_REMOTE` points it at any other
+  host. It **wipes one fixed remote directory**, so concurrent agents must each pass a
+  distinct `EXTERNAL_REVIEWER_TEST_DIR`.
+
+  CI remains the authority for anything genuinely platform-sensitive, but nothing is
+  CI-only: `windows-latest` behaviour is reproducible on the spot.
 - **Black-box by default** ([decision](/conventions/05-test-package-layout.md)): tests
   are `package foo_test`. In-package tests are the exception, for unexported logic with
   no reachable path through the package's API, and go in a file named
