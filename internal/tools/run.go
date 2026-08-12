@@ -38,7 +38,7 @@ type Deps struct {
 func NewRunRegistry(deps Deps) *Registry {
 	return NewRegistry(
 		List(deps.Files),
-		// read_file — issue 04 registers it here.
+		ReadFile(deps.Scope),
 		Search(deps.Scope, deps.Files),
 		GitRead(deps.Scope, deps.RepoPath),
 	)
