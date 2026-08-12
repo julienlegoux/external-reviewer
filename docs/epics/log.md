@@ -2,6 +2,11 @@
 
 ## 2026-08-12
 
+* **PR open**: Epic 2 issue 07 — [Run a real review by hand and record the measurements](https://github.com/julienlegoux/external-reviewer/issues/15) (#15),
+  [PR #59](https://github.com/julienlegoux/external-reviewer/pull/59). The epic's last
+  issue, and the only one whose deliverable is a document rather than code: no `.go` file
+  is touched. 239 insertions against an `S` estimate.
+
 * **New document**: [Epic 2 — Hand-run measurements](/epic-2-read-only-agentic-loop/MEASUREMENTS.md),
   the epic's second deliverable and Epic 3's only input for the loop caps. Four hand runs
   on `openai-codex/gpt-5.5` against this repository — a documentation directory, `docs/`
