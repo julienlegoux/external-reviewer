@@ -3,13 +3,14 @@ type: Issue
 title: "Add the batched read_file tool"
 description: "Add read_file taking an array of paths with offset and limit, returning each file under its own header with a bad path reported inline while the rest still return."
 tags: [epic-2]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-12T08:30:00Z
 epic: 2
 issue: 04
 slug: read-file-tool
 size: M
-status: open
+status: pr-open
 gh_issue: 12
+gh_pr: 54
 resource: https://github.com/julienlegoux/external-reviewer/issues/12
 depends_on: [3]
 ---

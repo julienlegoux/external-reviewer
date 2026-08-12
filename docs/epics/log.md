@@ -2,6 +2,22 @@
 
 ## 2026-08-12
 
+* **PR open**: Epic 2 issue 04 — [Add the batched read_file tool](https://github.com/julienlegoux/external-reviewer/issues/12) (#12),
+  [PR #54](https://github.com/julienlegoux/external-reviewer/pull/54). `read_file`
+  takes a list of repo-relative paths plus `offset`/`limit`, every path resolved
+  through issue 01's `confine.Scope`; a refusal, a missing path, a directory or
+  non-UTF-8 content each render as an inline message under that path's own header
+  while the rest of the batch still returns, and only a malformed call (a bad
+  `paths`/`offset`/`limit` shape) is a tool error. Content is streamed line-by-line
+  via `bufio.Scanner` rather than read whole and trimmed, with the scan still
+  counting every line so the truncation marker's total is always real. Registers as
+  the one line issue 03's frozen seam reserved for it in `tools.NewRunRegistry`. 689
+  changed lines against a ~400-line M target (~700 split line) — under the split,
+  driven by test volume like every issue before it in this epic. No drift recorded;
+  the native `go test ./...` flake on `internal/confine` observed during this run
+  matches the machine's already-drift-recorded Application Control behavior under
+  concurrent sibling load, not a new finding.
+
 * **Done**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11)
   merged into `develop` as [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52);
   issue closed. Reconciled by issue 04's run.
