@@ -3,13 +3,14 @@ type: Issue
 title: "Drive the multi-turn loop with tool dispatch and the bounds seam"
 description: "Turn the single round trip into an accumulating multi-turn loop that declares tools, dispatches tool calls, feeds results back, and terminates on bound then cancellation then stop reason."
 tags: [epic-2]
-timestamp: 2026-08-11T03:38:33Z
+timestamp: 2026-08-12T06:05:00Z
 epic: 2
 issue: 03
 slug: multi-turn-loop-and-dispatch
 size: L
-status: open
+status: pr-open
 gh_issue: 11
+gh_pr: 52
 resource: https://github.com/julienlegoux/external-reviewer/issues/11
 depends_on: [2]
 ---
@@ -100,7 +101,13 @@ restructuring the loop.
       `0`.
 - [ ] A scripted tool call whose path is outside the allow-list yields a tool error whose
       text names the rule that refused (issue 01), the run continues, and the model's
-      next turn is dispatched.
+      next turn is dispatched. **Asserted at the `internal/reviewer` boundary rather than
+      through `Run`**: `list` takes a pattern, not a path, so this epic has no path-taking
+      tool to drive it through the CLI — the tools that do are issues 04–06. The
+      assertion uses a real `confine.Scope` over a real repository and the real
+      `tools.Registry`, with a three-line tool that only calls `Scope.Resolve`, so the
+      refusal text is `confine`'s own rather than a hand-written message
+      (`TestLoop_Run_AllowListRefusalReachesTheModelAsAToolError`).
 - [ ] A scripted turn failure mid-loop ends the run at exit `2` with an empty stdout and
       a reason on stderr.
 - [ ] Termination order is asserted: with a bound artificially set in a test **and** a

@@ -14,7 +14,9 @@ import (
 
 	"github.com/julienlegoux/external-reviewer/internal/confine"
 	"github.com/julienlegoux/external-reviewer/internal/diag"
+	"github.com/julienlegoux/external-reviewer/internal/repo"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
+	"github.com/julienlegoux/external-reviewer/internal/tools"
 )
 
 // reviewRequest is the parsed, validated form of a `review` invocation: a
@@ -28,6 +30,11 @@ type reviewRequest struct {
 	RepoPath string
 	Task     string
 	Scope    *confine.Scope
+	// Bounds is the run ceiling the loop consults at the top of every turn.
+	// It arrives here unset on every real invocation — no flag sets one yet
+	// (see run.go) — and travels on the request rather than as a package
+	// value so Epic 3 fills it in at the one place the request is built.
+	Bounds reviewer.Bounds
 }
 
 // allowList is the repeatable --allow flag's value: repo-relative wire paths,
@@ -92,25 +99,39 @@ func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest
 		return err
 	}
 
+	warn := func(message string) { diag.WriteWarn(stderr, message) }
 	resolution, err := reviewer.Resolver{
 		Models:     registry,
 		ProviderID: reviewer.DefaultProviderID,
 		ModelID:    reviewer.DefaultModelID,
-		Warn:       func(message string) { diag.WriteWarn(stderr, message) },
+		Warn:       warn,
 	}.Resolve(ctx)
 	if err != nil {
 		return err
 	}
 	diag.WriteModel(stderr, resolution.Model.Provider, resolution.Model.ID, resolution.AuthSource)
 
-	conversation := reviewer.NewConversation(registry, resolution.Model, req.Task)
-	turn, turnErr := conversation.Next(ctx)
-	recordTurn(stderr, state, turn)
-	if turnErr != nil {
-		return turnErr
+	loop := &reviewer.Loop{
+		Conversation: reviewer.NewConversation(registry, resolution.Model, req.Task),
+		Tools: tools.NewRunRegistry(tools.Deps{
+			Scope:    req.Scope,
+			RepoPath: req.RepoPath,
+			Files:    repo.NewEnumerator(req.Scope, req.RepoPath, warn),
+			Warn:     warn,
+		}),
+		// Unset on every real invocation, and that is the decision rather
+		// than an omission: SCOPE defers the turn, cost and wall-clock
+		// ceilings until issue 07 has measured a real review, so Epic 3 sets
+		// numbers on the way in instead of restructuring the loop (specs 07,
+		// reviewer.Bounds).
+		Bounds: req.Bounds,
+		State:  state,
+		Stderr: stderr,
 	}
-
-	report := reviewer.FinalText(turn.Message)
+	report, err := loop.Run(ctx)
+	if err != nil {
+		return err
+	}
 	if report == "" {
 		return errors.New("the reviewer finished but its final message carried no text")
 	}
@@ -149,77 +170,15 @@ func writeReport(stdout io.Writer, report string) error {
 	}
 }
 
-// recordTurn folds a completed round trip into the run state the done line
-// renders from and writes the turn's own line, plus a warn line for every
-// non-fatal diagnostic kern-link attached to the message. It runs on the
-// failure paths too: a turn that stopped with an error still consumed tokens,
-// and its diagnostics are usually why it stopped. state.StopReason is set
-// here to the turn's own reason on every call — runReview's switch
-// unconditionally overwrites it with the CLI word on any termination the
-// model's own turn does not explain (a failed turn, no_reviewer,
-// interrupted), so the value set here is only ever what the done line
-// actually renders on the success path.
-func recordTurn(stderr io.Writer, state *diag.State, turn reviewer.Turn) {
-	if turn.Message == nil {
-		return
-	}
-
-	state.Turns++
-	// Cached prompt tokens are prompt tokens: providers report them beside
-	// Input rather than inside it, so summing the three is what makes the in=
-	// figure comparable between a cold run and a warm one.
-	state.InputTokens += int64(turn.Usage.Input + turn.Usage.CacheRead + turn.Usage.CacheWrite)
-	state.OutputTokens += int64(turn.Usage.Output)
-	state.Cost += turn.Usage.Cost.Total
-	state.StopReason = modelStopReason(turn.StopReason)
-
-	for _, diagnostic := range turn.Message.Diagnostics {
-		diag.WriteWarn(stderr, diagnosticMessage(diagnostic))
-	}
-	diag.WriteTurn(stderr, state.Turns, turn.Tools, state.InputTokens, state.OutputTokens, state.Cost, turn.Elapsed)
-}
-
-// stopReasonUnspecified is the done line's named fallback for a successful
-// turn whose assistant message carried no StopReason at all, so stop= can
-// never render with nothing after it (SPECS § Interfaces).
-const stopReasonUnspecified = "unspecified"
-
 // usageStopReason is the CLI word every malformed invocation's done line
 // carries — a named constant rather than the literal repeated at every usage
 // call site in this file and run.go.
+//
+// The done line's other two sources moved to internal/reviewer with the
+// accumulation this file used to own: the model's own stop reason and its
+// "unspecified" fallback are set by the loop, one call frame below, because
+// that is where the totals the bound check reads have to live (issue 03).
 const usageStopReason = "usage"
-
-// modelStopReason renders a turn's own StopReason for the done line's
-// success path, spelled exactly as kern-link spells it — no translation
-// table between the model's vocabulary and the CLI's.
-func modelStopReason(reason ai.StopReason) string {
-	if reason == "" {
-		return stopReasonUnspecified
-	}
-	return string(reason)
-}
-
-// diagnosticMessage renders one AssistantMessageDiagnostic as a warn line's
-// text. No version of kern-link redacts diagnostic.Error.Message — `grep -rni
-// redact` over the module finds only Anthropic's unrelated thinking-block
-// redaction — and nothing here re-formats or re-derives anything from the
-// underlying error either, so no credential is reconstructed from it here.
-// What keeps the message from breaking the transcript is diag.WriteWarn's
-// own control-character escaping (issue 12): that stops a newline or an
-// ANSI/OSC sequence from forging a line or reaching the terminal raw, but it
-// is not a redaction and does not hide a credential the message might carry
-// (SPECS § Security — this binary formats no credential in the first
-// place).
-func diagnosticMessage(diagnostic ai.AssistantMessageDiagnostic) string {
-	kind := diagnostic.Type
-	if kind == "" {
-		kind = "diagnostic"
-	}
-	if diagnostic.Error == nil || diagnostic.Error.Message == "" {
-		return kind
-	}
-	return kind + ": " + diagnostic.Error.Message
-}
 
 // ensureModels returns registry unchanged when a caller supplied one — every
 // test does, as an explicit argument — and builds the real one, over
@@ -311,7 +270,7 @@ func readPromptFromStdin(ctx context.Context, stdin io.Reader) (string, error) {
 // its default behaviour would otherwise put an unprefixed "Usage of
 // review:" block on stderr ahead of the diag.WriteError line below, which
 // is exactly the second, unprefixed line the acceptance criteria forbid.
-func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models) error {
+func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models, bounds reviewer.Bounds) error {
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
@@ -436,7 +395,7 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return errors.New("empty task prompt")
 	}
 
-	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task, Scope: scope}, stdout, stderr, state)
+	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task, Scope: scope, Bounds: bounds}, stdout, stderr, state)
 }
 
 // runReview calls the review seam and folds its outcome into state's stop

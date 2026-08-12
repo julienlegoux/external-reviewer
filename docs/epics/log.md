@@ -2,6 +2,39 @@
 
 ## 2026-08-12
 
+* **PR open**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11),
+  [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52). The binary stops
+  being a prompt-pipe: `internal/reviewer.Loop` declares the registry's tools on every
+  request, dispatches each `ai.ToolCall` and feeds the answer back as a
+  `ToolResultMessage`, terminating in the asserted order bound → cancellation → stop
+  reason. `cli.recordTurn`'s accumulation moves into the loop, where the bound check can
+  read it. `reviewer.Bounds` ships with every field unset and is threaded from the
+  invocation through `reviewRequest`, so Epic 3 sets numbers rather than restructuring.
+  **Oversize**: ~1465 changed lines against a ~650-line `L` estimate; the implementation
+  is ~570 and on target, the overrun is 855 lines of scripted conversations — the split
+  line the issue's own size note nominated, and the third `L` in a row to overrun on
+  tests alone.
+
+  **The seam issues 04–06 build on is frozen here**: `reviewer.ToolSet`
+  (`Declarations() []ai.Tool` + `Dispatch(ctx, ai.ToolCall) (string, bool)`), which
+  `*tools.Registry` satisfies, so `internal/reviewer` never imports `internal/tools`.
+  Adding a tool is a new file in `internal/tools` plus one line in `tools.NewRunRegistry`,
+  the single registration point, over a `tools.Deps` that already carries `Scope`,
+  `RepoPath`, `Files` and `Warn`.
+
+  **No drift recorded.** Two amendments went the other way — SPECS moves `bounds` into
+  the closed `stop=` set it had reserved for this epic, and its transcript example now
+  shows a `tool` line the generic renderer can actually produce.
+
+* **Started**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11) —
+  branch `issue-03-multi-turn-loop-and-dispatch`.
+
+* **Done**: Epic 2 issue 02 — [Enumerate the repository through git ls-files and add the list tool](https://github.com/julienlegoux/external-reviewer/issues/10) (#10)
+  merged into `develop` as [PR #51](https://github.com/julienlegoux/external-reviewer/pull/51);
+  issue closed. Reconciled by issue 03's run — the issue file still read `pr-open` though
+  GitHub issue #10 was already closed. `internal/repo` and `internal/tools` exist but have
+  no `internal/cli` caller yet; wiring them in is issue 03's job.
+
 * **PR open**: Epic 2 issue 02 — [Enumerate the repository through git ls-files and add the list tool](https://github.com/julienlegoux/external-reviewer/issues/10) (#10),
   [PR #51](https://github.com/julienlegoux/external-reviewer/pull/51). Adds
   `internal/repo` — `git ls-files -z` enumeration with a walk as its fallback, and the

@@ -5,6 +5,8 @@ import (
 	"io"
 
 	"github.com/julienlegoux/kern-link/ai"
+
+	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // RunForTest calls Run's full behavior — including its signal.NotifyContext
@@ -18,7 +20,17 @@ import (
 // second copy of the wiring: a replica drifts the moment the real entry
 // point gains anything, and this one had already missed handleSIGPIPE.
 func RunForTest(argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) int {
-	return runProcess(argv, stdin, stdout, stderr, registry)
+	return runProcess(argv, stdin, stdout, stderr, registry, reviewer.Bounds{})
+}
+
+// RunWithBoundsForTest calls Run's inner seam with a run ceiling in place.
+// It exists because this epic ships the bounds seam with its values unset —
+// no invocation can set one, so a test is the only caller that ever puts a
+// number there, and "an exceeded bound returns what the run has at exit 0"
+// is otherwise unassertable from outside the package.
+func RunWithBoundsForTest(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models, bounds reviewer.Bounds) int {
+	code, _ := run(ctx, argv, stdin, stdout, stderr, registry, bounds)
+	return code
 }
 
 // RunWithModelsForTest calls Run's inner seam directly with ctx and
@@ -27,7 +39,7 @@ func RunForTest(argv []string, stdin io.Reader, stdout, stderr io.Writer, regist
 // runner: a pre-cancelled (or later-cancelled) context exercises the same
 // interruption path without one.
 func RunWithModelsForTest(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) int {
-	code, _ := run(ctx, argv, stdin, stdout, stderr, registry)
+	code, _ := run(ctx, argv, stdin, stdout, stderr, registry, reviewer.Bounds{})
 	return code
 }
 

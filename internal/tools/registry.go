@@ -15,6 +15,8 @@ package tools
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/julienlegoux/kern-link/ai"
 )
@@ -89,6 +91,35 @@ func (r *Registry) Declarations() []ai.Tool {
 func (r *Registry) Lookup(name string) (Tool, bool) {
 	tool, found := r.byName[name]
 	return tool, found
+}
+
+// Dispatch answers one tool call and is the whole of the loop's side of this
+// package: it satisfies internal/reviewer's ToolSet together with
+// Declarations, which is why it returns the text and the error flag rather
+// than a Result — internal/reviewer must not have to know this package's
+// types, so that adding a tool never means editing the loop.
+//
+// A name the registry never declared is answered rather than refused upward.
+// The message names both the invented tool and the ones that do exist,
+// because a model that hallucinated `write_file` can correct itself from a
+// list and cannot from a bare "unknown tool".
+//
+// Arguments reach the handler already decoded from the model's JSON, and nil
+// becomes an empty map so no handler has to distinguish "no arguments" from
+// "the provider sent null" before reading its own parameters.
+func (r *Registry) Dispatch(ctx context.Context, call ai.ToolCall) (string, bool) {
+	tool, found := r.Lookup(call.Name)
+	if !found {
+		return fmt.Sprintf("there is no tool named %q; the tools available are: %s",
+			call.Name, strings.Join(r.Names(), ", ")), true
+	}
+
+	arguments := call.Arguments
+	if arguments == nil {
+		arguments = map[string]any{}
+	}
+	result := tool.Handler(ctx, arguments)
+	return result.Text, result.IsError
 }
 
 // Names returns the declared tool names, for the message a dispatch miss

@@ -226,7 +226,7 @@ is `kern-link`'s credential store under `~/.pi/agent/`, which the dependency own
 ```
 model   openai-codex/gpt-5.5  auth=OAuth
 turn 3  tools=2  in=48210 out=1104  $0.0231  42.8s
-tool    read_file docs/epics/epic-2/EPIC_2.md:1-2000
+tool    list pattern="**/*.go"
 warn    config: unrecognised key "models" in [tiers.standard]
 done    turns=7  in=182430 out=9106  $0.0918  2m14s  stop=end_turn
 ```
@@ -235,6 +235,12 @@ The `model` line is written once, by pre-flight, as soon as a reviewer is resolv
 `provider/id` verbatim from `kern-link`'s own catalog, and `auth=<source>` — the only
 credential-adjacent value that ever reaches stderr (`AuthResult.Source`, e.g. `OAuth` or
 `ANTHROPIC_API_KEY`; never the credential itself).
+
+The `tool` line is written once per dispatch and names the call **generically** — the
+tool's name, then its arguments as `name=value` in a stable (sorted) order — because the
+loop renders it and cannot know which of any one tool's fields are the interesting ones.
+String values are converted to wire form before they are quoted, so a `/`-separated path
+is what reaches the transcript on either platform.
 
 The `done` line is emitted on **every** termination path, including failure and
 interruption. Its load-bearing fields are turns, tokens and elapsed time — the token
@@ -256,11 +262,15 @@ different questions and a usage error can never carry a model's own reason:
   an empty prompt), `help` (`help`/`--help`/`-h`), `no_reviewer` (exit `1`: no reviewer was
   ever reachable), `interrupted` (`SIGINT` or a cancelled context), `failed` (reached and
   then unusable for any other reason — a failed turn, a broken credential, an empty final
-  message, a report that could not be written to stdout).
+  message, a report that could not be written to stdout), and `bounds` (the run reached its
+  own turn, cost or elapsed ceiling — exit `0` with the report the run had, since a bounded
+  run neither failed nor was interrupted; a `warn` line names which of the three bit).
 
 This is a union that only grows: a later epic adds a value no code can produce yet rather
-than repurposing one of the above. Epic 2 adds at least `bounds`, for a run that ends at
-its own turn/cost/elapsed ceiling rather than at the model's own stop reason.
+than repurposing one of the above. `bounds` was added by Epic 2's loop
+([issue 03](../epics/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md)),
+which ships the ceiling as a seam with **no values set** — so no invocation can produce
+the word yet, and Epic 3 sets the numbers that make it reachable.
 
 **Exit codes turn on whether a reviewer was ever reachable**
 ([decision](/specs/13-error-handling-and-failure-classification.md)). Not reached → `1`,
