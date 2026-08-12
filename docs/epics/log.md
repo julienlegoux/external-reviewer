@@ -2,6 +2,10 @@
 
 ## 2026-08-12
 
+* **Done**: Epic 2 issue 01 — [Confine the run with --allow and os.OpenRoot](https://github.com/julienlegoux/external-reviewer/issues/9) (#9)
+  merged into `develop` as [PR #50](https://github.com/julienlegoux/external-reviewer/pull/50);
+  issue closed. `internal/confine` is now the boundary every later tool reads through.
+
 * **PR open**: Epic 2 issue 01 — [Confine the run with --allow and os.OpenRoot](https://github.com/julienlegoux/external-reviewer/issues/9) (#9),
   [PR #50](https://github.com/julienlegoux/external-reviewer/pull/50). Adds
   `internal/confine` — one `*os.Root` and the allow-list travelling as one `*Scope`, the

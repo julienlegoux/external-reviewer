@@ -3,12 +3,12 @@ type: Issue
 title: "Enumerate the repository through git ls-files and add the list tool"
 description: "Add gitignore-exact enumeration via git ls-files with an fs.WalkDir fallback, re-resolved through the root, and the first tool — list — with its declaration and announced truncation."
 tags: [epic-2]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-12T06:10:00Z
 epic: 2
 issue: 02
 slug: enumeration-and-list-tool
 size: L
-status: open
+status: in-progress
 gh_issue: 10
 resource: https://github.com/julienlegoux/external-reviewer/issues/10
 depends_on: [1]
