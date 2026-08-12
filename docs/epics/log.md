@@ -2,6 +2,12 @@
 
 ## 2026-08-12
 
+* **Done**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11)
+  merged into `develop` as [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52);
+  issue already closed by the supervisor. Reconciled by issue 06's run — the issue file
+  still read `pr-open`. The `ToolSet` seam it froze is now what issues 04, 05 and 06 plug
+  into concurrently.
+
 * **PR open**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11),
   [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52). The binary stops
   being a prompt-pipe: `internal/reviewer.Loop` declares the registry's tools on every
