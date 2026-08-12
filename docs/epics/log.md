@@ -2,6 +2,15 @@
 
 ## 2026-08-12
 
+* **Started**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13) —
+  branch `issue-05-search-tool`.
+
+* **Done**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11)
+  merged into `develop` as [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52);
+  issue closed. The dispatch seam it froze — `reviewer.ToolSet`, `tools.Deps` and the
+  single registration point `tools.NewRunRegistry` — is what issues 04, 05 and 06 plug
+  into, one file plus one line each.
+
 * **PR open**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11),
   [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52). The binary stops
   being a prompt-pipe: `internal/reviewer.Loop` declares the registry's tools on every
