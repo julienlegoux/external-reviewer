@@ -28,12 +28,14 @@ import (
 const markdownAnswer = "# Review\n\n- `main.go:12` — the loop never terminates\n\n```go\nfor {}\n```\n"
 
 // runReviewOver invokes a syntactically valid review of repoPath against
-// models, returning the exit code and both streams.
+// models, returning the exit code and both streams. It grants the whole
+// repository: every round trip here is about what happens after parsing, and
+// `--allow .` is the grant that says so out loud (Epic 2 issue 01).
 func runReviewOver(t *testing.T, models ai.Models, repoPath string) (int, string, string) {
 	t.Helper()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr, models)
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr, models)
 	return code, stdout.String(), stderr.String()
 }
 
@@ -329,7 +331,7 @@ func TestRun_CancelledMidStream_ExitsTwo(t *testing.T) {
 	defer cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunWithModelsForTest(ctx, []string{"review", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -513,6 +515,17 @@ func TestRun_CacheTokens_IncludedInInAccounting(t *testing.T) {
 // that tree byte-identical, down to the modification times. The forbidigo
 // guard in .golangci.yml says the write API is not in the source; this says
 // nothing the binary reaches writes either.
+//
+// Re-derived when Epic 2's os.Root confinement landed, rather than inherited:
+// confinement bounds *where* the binary may read, and says nothing about
+// whether it writes, so it subsumes none of what is asserted below — the
+// write guarantee still rests on forbidigo plus this behavioural check over
+// what the binary reaches, kern-link included. What did change is the subject:
+// the run now opens a root handle over this fixture for its whole life and
+// closes it, so the walk below covers that handle too. Directory modification
+// times stay excluded for the platform reason recorded on `entry`; opening a
+// directory through an *os.Root does not move one, and two consecutive walks
+// on Windows do.
 func TestRun_SuccessfulReview_TouchesNoFile(t *testing.T) {
 	repo := t.TempDir()
 	writeFixture(t, repo, "README.md", "# fixture\n")
@@ -631,7 +644,7 @@ func TestRun_LiveModel_ReturnsMarkdown(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := cli.Run(
-		[]string{"review", "--prompt", "Reply with a one-line markdown heading and nothing else.", t.TempDir()},
+		[]string{"review", "--allow", ".", "--prompt", "Reply with a one-line markdown heading and nothing else.", t.TempDir()},
 		strings.NewReader(""), &stdout, &stderr)
 
 	if code != 0 {
