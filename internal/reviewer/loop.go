@@ -83,7 +83,14 @@ type Loop struct {
 //  2. **The context ended** → stop and return the cancellation. A human at the
 //     keyboard is the only thing standing between an unbounded run and real
 //     money while the bounds above ship unset (scope risk 5), so this must
-//     work; internal/cli renders it stop=interrupted at exit 2.
+//     work; internal/cli renders it stop=interrupted at exit 2. There is no
+//     ctx.Err() check written here, deliberately: Conversation.Next already
+//     refuses to open a stream under a dead context, and a second check beside
+//     it would be a duplicate no test could tell apart — the shape Epic 0 spent
+//     an issue collapsing. The *order* is still this file's: the bound above is
+//     consulted before Next is called at all, so a run at its ceiling reports
+//     as bounded even with a cancellation already landed, and Next's refusal is
+//     reached before the stop reason below is ever read.
 //  3. **StopReason != StopReasonToolUse** → the model is done. The normal
 //     exit.
 //
@@ -107,9 +114,6 @@ func (l *Loop) Run(ctx context.Context) (string, error) {
 			diag.WriteWarn(l.Stderr, "the run stopped at its "+bound+" bound")
 			l.State.StopReason = BoundsStopReason
 			return report, nil
-		}
-		if err := ctx.Err(); err != nil {
-			return "", fmt.Errorf("driving the reviewer's loop: %w", err)
 		}
 
 		turn, err := l.Conversation.Next(ctx)

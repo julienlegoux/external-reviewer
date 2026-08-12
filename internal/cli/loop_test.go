@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/julienlegoux/kern-link/ai"
@@ -380,6 +381,81 @@ func TestRun_UnsetBounds_AreWhatAnOrdinaryInvocationGets(t *testing.T) {
 	}
 	if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop == "bounds" {
 		t.Errorf("done stop = bounds, want the model's own reason — this epic ships no values")
+	}
+}
+
+// TestRun_CancelledBetweenTurns_ExitsTwoWithADoneLine is the loop's own
+// cancellation path — the one Epic 1 could not have: a run interrupted after a
+// turn completed and its tools were dispatched, rather than mid-stream. It
+// must still terminate through the same seam every other path does, so the
+// transcript ends with exactly one done line saying which of failure and
+// interruption happened.
+//
+// The stream is scripted rather than queued on faux's response queue, and the
+// cancellation lands *after* the terminal event has already been pushed. That
+// is what makes this an assertion instead of a race: Conversation.Next
+// deliberately prefers a message that is already there over a cancellation
+// beside it, so turn 1 completes and the loop's own check is what stops the
+// run before turn 2.
+func TestRun_CancelledBetweenTurns_ExitsTwoWithADoneLine(t *testing.T) {
+	const partial = "# Review\n\nstill reading\n"
+	ctx, cancel := context.WithCancel(context.Background())
+	var calls atomic.Int64
+
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: reviewer.DefaultProviderID,
+		ModelIDs:   []string{reviewer.DefaultModelID},
+		Auth:       fauxtest.CredentialedAuth("OAuth"),
+		Priced:     true,
+		Stream: func(context.Context, *ai.Model, ai.Context, *ai.SimpleStreamOptions) *ai.Stream {
+			stream := ai.NewStream()
+			// A second call means the loop kept going through a cancelled
+			// context: answer with a final message so the test fails on the
+			// exit code rather than hanging.
+			if calls.Add(1) > 1 {
+				stream.Push(ai.DoneEvent{Reason: ai.StopReasonStop, Message: &ai.AssistantMessage{
+					Content:    []ai.AssistantContentPart{ai.TextContent{Text: markdownAnswer}},
+					StopReason: ai.StopReasonStop,
+				}})
+				return stream
+			}
+			stream.Push(ai.DoneEvent{Reason: ai.StopReasonToolUse, Message: &ai.AssistantMessage{
+				Content: []ai.AssistantContentPart{
+					ai.TextContent{Text: partial},
+					ai.ToolCall{ID: "call-1", Name: "list"},
+				},
+				StopReason: ai.StopReasonToolUse,
+			}})
+			cancel()
+			return stream
+		},
+	})
+
+	var stdout, stderr bytes.Buffer
+	code := cli.RunWithModelsForTest(
+		ctx,
+		[]string{"review", "--allow", ".", "--prompt", "review this", repoWith(t, "main.go")},
+		strings.NewReader(""), &stdout, &stderr, models,
+	)
+
+	if code != 2 {
+		t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
+	}
+	if stdout.String() != "" {
+		t.Errorf("stdout = %q, want empty on an interrupted run", stdout.String())
+	}
+	fields := fauxtest.ParseDoneLine(t, stderr.String())
+	if fields.Stop != "interrupted" {
+		t.Errorf("done stop = %q, want interrupted", fields.Stop)
+	}
+	if fields.Turns != "1" {
+		t.Errorf("done turns = %q, want 1 — the completed turn still counts", fields.Turns)
+	}
+	if got := strings.Count(stderr.String(), "\ndone    "); got != 1 {
+		t.Errorf("done lines = %d, want exactly 1 (stderr: %q)", got, stderr.String())
+	}
+	if got := calls.Load(); got != 1 {
+		t.Errorf("requests = %d, want 1 — the second turn is never sent under a cancelled context", got)
 	}
 }
 
