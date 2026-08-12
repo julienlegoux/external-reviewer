@@ -8,8 +8,9 @@ epic: 2
 issue: 01
 slug: allow-list-and-root-confinement
 size: L
-status: in-progress
+status: pr-open
 gh_issue: 9
+gh_pr: 50
 resource: https://github.com/julienlegoux/external-reviewer/issues/9
 depends_on: []
 ---

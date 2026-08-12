@@ -3,7 +3,7 @@
 Cut in dependency order: the boundary first, then the loop, then the tools that plug into
 it, then the measurements the whole epic exists to produce.
 
-* [Confine the run with --allow and os.OpenRoot](/epic-2-read-only-agentic-loop/issues/01-allow-list-and-root-confinement.md) - L, in-progress, [#9](https://github.com/julienlegoux/external-reviewer/issues/9)
+* [Confine the run with --allow and os.OpenRoot](/epic-2-read-only-agentic-loop/issues/01-allow-list-and-root-confinement.md) - L, pr-open, [#9](https://github.com/julienlegoux/external-reviewer/issues/9), [PR #50](https://github.com/julienlegoux/external-reviewer/pull/50)
 * [Enumerate the repository through git ls-files and add the list tool](/epic-2-read-only-agentic-loop/issues/02-enumeration-and-list-tool.md) - L, open, [#10](https://github.com/julienlegoux/external-reviewer/issues/10)
 * [Drive the multi-turn loop with tool dispatch and the bounds seam](/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md) - L, open, [#11](https://github.com/julienlegoux/external-reviewer/issues/11)
 * [Add the batched read_file tool](/epic-2-read-only-agentic-loop/issues/04-read-file-tool.md) - M, open, [#12](https://github.com/julienlegoux/external-reviewer/issues/12)
