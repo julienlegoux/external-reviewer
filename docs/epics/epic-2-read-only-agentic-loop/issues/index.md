@@ -8,5 +8,5 @@ it, then the measurements the whole epic exists to produce.
 * [Drive the multi-turn loop with tool dispatch and the bounds seam](/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md) - L, done, [#11](https://github.com/julienlegoux/external-reviewer/issues/11), [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52)
 * [Add the batched read_file tool](/epic-2-read-only-agentic-loop/issues/04-read-file-tool.md) - M, open, [#12](https://github.com/julienlegoux/external-reviewer/issues/12)
 * [Add the search tool with surrounding context lines](/epic-2-read-only-agentic-loop/issues/05-search-tool.md) - L, open, [#13](https://github.com/julienlegoux/external-reviewer/issues/13)
-* [Add the confined git_read tool](/epic-2-read-only-agentic-loop/issues/06-git-read-tool.md) - L, in-progress, [#14](https://github.com/julienlegoux/external-reviewer/issues/14)
+* [Add the confined git_read tool](/epic-2-read-only-agentic-loop/issues/06-git-read-tool.md) - L, pr-open, [#14](https://github.com/julienlegoux/external-reviewer/issues/14), [PR #55](https://github.com/julienlegoux/external-reviewer/pull/55)
 * [Run a real review by hand and record the measurements](/epic-2-read-only-agentic-loop/issues/07-hand-run-measurements.md) - S, open, [#15](https://github.com/julienlegoux/external-reviewer/issues/15)

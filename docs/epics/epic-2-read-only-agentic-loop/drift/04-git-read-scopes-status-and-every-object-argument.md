@@ -99,4 +99,4 @@ where it applies, which was written before `git diff <blob> <blob>` and `status
   the `diff` half, both in `internal/tools/git_read_test.go`. Removing the appended
   pathspecs makes the three scoping tests fail with the ungranted subtree's commit and
   paths in the output — verified by mutation, not assumed.
-- [Issue 06](../issues/06-git-read-tool.md), PR #56.
+- [Issue 06](../issues/06-git-read-tool.md), PR #55.

@@ -2,6 +2,25 @@
 
 ## 2026-08-12
 
+* **PR open**: Epic 2 issue 06 — [Add the confined git_read tool](https://github.com/julienlegoux/external-reviewer/issues/14) (#14),
+  [PR #55](https://github.com/julienlegoux/external-reviewer/pull/55). History is the one
+  surface `*os.Root` cannot guard, so `git_read` makes its confinement in argument space
+  before the command exists: the subcommand against the fixed `log`/`diff`/`show`/`status`
+  allowlist, every `<rev>:<path>` object — including the index forms `:<path>` and
+  `:<stage>:<path>`, in every subcommand's arguments — through `confine.Scope.Resolve`,
+  and the granted subtrees appended as pathspecs a literal `--` may not reach past.
+  `repo.Git` exports issue 02's exec helper rather than adding a second exec, now
+  capturing git's stderr so a non-zero exit is a tool error the model can act on.
+  **Oversize**: ~1008 changed lines against a ~700-line `L` estimate; implementation ~385
+  and on target, the overrun is 578 lines of git-fixture tests — the fourth `L` in this
+  epic to overrun on tests alone.
+
+  **Drift recorded**:
+  [04 — git_read scopes status too, and validates `<rev>:<path>` in every subcommand](/epic-2-read-only-agentic-loop/drift/04-git-read-scopes-status-and-every-object-argument.md).
+  specs 10 says "`status` is unaffected" and confines only `show`'s object form; measured
+  against real git, an unscoped `status` names every path in the repository and
+  `git diff <blob> <blob>` prints two files' contents.
+
 * **Started**: Epic 2 issue 06 — [Add the confined git_read tool](https://github.com/julienlegoux/external-reviewer/issues/14) (#14) —
   branch `issue-06-git-read-tool`.
 
