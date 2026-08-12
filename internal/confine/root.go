@@ -173,6 +173,60 @@ func (s *Scope) ReadFile(wirePath string) ([]byte, error) {
 	return data, nil
 }
 
+// Stat resolves a wire path and stats it through the root. It is what turns a
+// path some other mechanism named — the paths `git ls-files` reports — into a
+// path this run may actually read: the gate answers the three rules, and the
+// root itself answers whether the name still denotes a file inside the tree.
+//
+// It follows symlinks, deliberately: a tracked symlink whose target leaves the
+// repository is refused here as ErrOutsideRoot rather than enumerated as an
+// ordinary file.
+func (s *Scope) Stat(wirePath string) (fs.FileInfo, error) {
+	cleaned, err := s.Resolve(wirePath)
+	if err != nil {
+		return nil, err
+	}
+	info, err := s.root.Stat(filepath.FromSlash(cleaned))
+	if err != nil {
+		return nil, openError(wirePath, err)
+	}
+	return info, nil
+}
+
+// ReadDir resolves a wire path and lists that directory through the root.
+//
+// This is the enumeration primitive, and it exists instead of exposing the
+// root's fs.FS. An fs.FS handed to a caller reads on the strength of the root
+// alone: fs.WalkDir over it would descend into subtrees no --allow granted and
+// open files the floor covers, leaving both of them advice rather than
+// boundaries — and it cannot even start where it needs to, since walking "."
+// is refused outright when a single subtree is granted. Every name a walk
+// touches therefore comes back through Resolve, directories included, which is
+// what lets a walk prune `.git/` and a credentials directory by the same rule
+// that refuses reading a file inside them.
+//
+// The listing itself is not filtered: it reports what the directory contains,
+// and the caller decides what to do with each name. Nothing is opened by
+// listing a directory, so a name the floor covers is refused at the moment it
+// would be read, exactly as it is for a path git named.
+func (s *Scope) ReadDir(wirePath string) ([]fs.DirEntry, error) {
+	cleaned, err := s.Resolve(wirePath)
+	if err != nil {
+		return nil, err
+	}
+	dir, err := s.root.Open(filepath.FromSlash(cleaned))
+	if err != nil {
+		return nil, openError(wirePath, err)
+	}
+	defer func() { _ = dir.Close() }()
+
+	entries, err := dir.ReadDir(-1)
+	if err != nil {
+		return nil, openError(wirePath, err)
+	}
+	return entries, nil
+}
+
 // openError classifies what os.Root refused. Only two of its outcomes are
 // separable by sentinel — a plain absence and a permission failure — and
 // everything else it declines is the one fact it exists to state: this name
