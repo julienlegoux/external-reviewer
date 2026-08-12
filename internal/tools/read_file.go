@@ -98,14 +98,14 @@ func readFiles(scope *confine.Scope, arguments map[string]any) Result {
 	if err != nil {
 		return errorResult(err.Error())
 	}
-	offset, err := intArgument(arguments, "offset", 1)
+	offset, err := wholeNumberArgument(arguments, "offset", 1)
 	if err != nil {
 		return errorResult(err.Error())
 	}
 	if offset < 1 {
 		return errorResult("the offset parameter must be at least 1")
 	}
-	limit, err := intArgument(arguments, "limit", DefaultReadLimit)
+	limit, err := wholeNumberArgument(arguments, "limit", DefaultReadLimit)
 	if err != nil {
 		return errorResult(err.Error())
 	}
@@ -248,12 +248,16 @@ func pathsArgument(arguments map[string]any) ([]string, error) {
 	return paths, nil
 }
 
-// intArgument reads one integer parameter, accepting both a JSON-decoded
-// number (float64, the shape a real tool call arrives in) and a Go int (the
-// shape a test builds arguments in directly, without a JSON round trip). A
-// value of the wrong type or with a fractional part is the model's mistake to
-// learn from, so it comes back as a call-level refusal naming the parameter.
-func intArgument(arguments map[string]any, name string, fallback int) (int, error) {
+// wholeNumberArgument reads one integer parameter, accepting both a
+// JSON-decoded number (float64, the shape a real tool call arrives in) and a
+// Go int (the shape a test builds arguments in directly, without a JSON round
+// trip). A value of the wrong type or with a fractional part is the model's
+// mistake to learn from, so it comes back as a call-level refusal naming the
+// parameter — unlike search's own intArgument, which clamps into a range
+// instead of erroring, this tool's offset/limit have no such range to clamp
+// into below the cap, so a fraction or an out-of-range value is refused
+// rather than silently rounded.
+func wholeNumberArgument(arguments map[string]any, name string, fallback int) (int, error) {
 	raw, present := arguments[name]
 	if !present || raw == nil {
 		return fallback, nil

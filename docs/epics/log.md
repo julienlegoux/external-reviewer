@@ -2,6 +2,14 @@
 
 ## 2026-08-12
 
+* **Merge**: `origin/develop` merged into Epic 2 issue 04's branch to pick up issue
+  05's concurrently-merged [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53).
+  Resolved `internal/tools/run.go` as a union — `ReadFile(deps.Scope)` and
+  `Search(deps.Scope, deps.Files)` both registered in `tools.NewRunRegistry`, issue
+  06's placeholder comment left intact — and this file and `issues/index.md` likewise,
+  reconciling issue 05 to `done` in the same pass issue 04's own run already gave
+  issue 03.
+
 * **PR open**: Epic 2 issue 04 — [Add the batched read_file tool](https://github.com/julienlegoux/external-reviewer/issues/12) (#12),
   [PR #54](https://github.com/julienlegoux/external-reviewer/pull/54). `read_file`
   takes a list of repo-relative paths plus `offset`/`limit`, every path resolved
@@ -18,9 +26,30 @@
   matches the machine's already-drift-recorded Application Control behavior under
   concurrent sibling load, not a new finding.
 
+* **PR open**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13),
+  [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53). In-process RE2 over
+  the same enumeration `list` reads from, streamed line by line through the `Scope`: a
+  match renders `path:line:text`, a context line `path-line-text`, non-adjacent windows
+  are separated by `--`, and overlapping windows merge rather than repeat their shared
+  lines. One result is bounded by four numbers at once — 200 matches, 10 context lines
+  either side, 500 characters per line, 2 MB per file with binary files sniffed out — and
+  truncation carries both real numbers, so matches past the cap are counted but not kept.
+  **Oversize**: 1324 changed lines against a ~650-line `L` estimate; the implementation is
+  457 and on target, the overrun is 763 lines of tests, split along the line the issue
+  itself nominated (the context rendering and its edge cases).
+
+  **Drift recorded**: the native half of the test command stopped working on the
+  development machine, whatever `GOTMPDIR` says, so this issue's whole red-green cycle ran
+  through `scripts/test-remote.sh` with `-race`.
+
+* **Started**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13) —
+  branch `issue-05-search-tool`.
+
 * **Done**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11)
   merged into `develop` as [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52);
-  issue closed. Reconciled by issue 04's run.
+  issue closed. The dispatch seam it froze — `reviewer.ToolSet`, `tools.Deps` and the
+  single registration point `tools.NewRunRegistry` — is what issues 04, 05 and 06 plug
+  into, one file plus one line each.
 
 * **PR open**: Epic 2 issue 03 — [Drive the multi-turn loop with tool dispatch and the bounds seam](https://github.com/julienlegoux/external-reviewer/issues/11) (#11),
   [PR #52](https://github.com/julienlegoux/external-reviewer/pull/52). The binary stops
