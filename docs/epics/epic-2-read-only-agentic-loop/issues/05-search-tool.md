@@ -3,13 +3,14 @@ type: Issue
 title: "Add the search tool with surrounding context lines"
 description: "Add search: an in-process RE2 regex over the confined enumeration, returning path:line:text with context lines, capped at 200 matches with the truncation announced."
 tags: [epic-2]
-timestamp: 2026-08-12T08:15:00Z
+timestamp: 2026-08-12T09:30:00Z
 epic: 2
 issue: 05
 slug: search-tool
 size: L
-status: in-progress
+status: pr-open
 gh_issue: 13
+gh_pr: 53
 resource: https://github.com/julienlegoux/external-reviewer/issues/13
 depends_on: [3]
 ---

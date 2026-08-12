@@ -2,6 +2,22 @@
 
 ## 2026-08-12
 
+* **PR open**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13),
+  [PR #53](https://github.com/julienlegoux/external-reviewer/pull/53). In-process RE2 over
+  the same enumeration `list` reads from, streamed line by line through the `Scope`: a
+  match renders `path:line:text`, a context line `path-line-text`, non-adjacent windows
+  are separated by `--`, and overlapping windows merge rather than repeat their shared
+  lines. One result is bounded by four numbers at once — 200 matches, 10 context lines
+  either side, 500 characters per line, 2 MB per file with binary files sniffed out — and
+  truncation carries both real numbers, so matches past the cap are counted but not kept.
+  **Oversize**: 1324 changed lines against a ~650-line `L` estimate; the implementation is
+  457 and on target, the overrun is 763 lines of tests, split along the line the issue
+  itself nominated (the context rendering and its edge cases).
+
+  **Drift recorded**: the native half of the test command stopped working on the
+  development machine, whatever `GOTMPDIR` says, so this issue's whole red-green cycle ran
+  through `scripts/test-remote.sh` with `-race`.
+
 * **Started**: Epic 2 issue 05 — [Add the search tool with surrounding context lines](https://github.com/julienlegoux/external-reviewer/issues/13) (#13) —
   branch `issue-05-search-tool`.
 
