@@ -34,7 +34,7 @@ func runReviewOver(t *testing.T, models ai.Models, repoPath string) (int, string
 	t.Helper()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr, models)
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", repoPath}, strings.NewReader(""), &stdout, &stderr, models)
 	return code, stdout.String(), stderr.String()
 }
 
@@ -330,7 +330,7 @@ func TestRun_CancelledMidStream_ExitsTwo(t *testing.T) {
 	defer cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -643,7 +643,7 @@ func TestRun_LiveModel_ReturnsMarkdown(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := cli.Run(
-		[]string{"review", "--allow", ".", "--prompt", "Reply with a one-line markdown heading and nothing else.", t.TempDir()},
+		[]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "Reply with a one-line markdown heading and nothing else.", t.TempDir()},
 		strings.NewReader(""), &stdout, &stderr)
 
 	if code != 0 {

@@ -116,7 +116,7 @@ func catalogRegistry(t *testing.T, auth ai.ProviderAuth, catalog map[string][]st
 func runSelection(t *testing.T, models ai.Models, flags ...string) (int, string, string) {
 	t.Helper()
 
-	argv := append([]string{"review", "--allow", ".", "--prompt", "review this"}, flags...)
+	argv := append([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this"}, flags...)
 	argv = append(argv, t.TempDir())
 
 	var stdout, stderr bytes.Buffer
@@ -600,9 +600,9 @@ func mentionsFlag(usage, name string) bool {
 }
 
 // TestUsage_ListsExactlyTheFlagsThatWork: the usage text is a promise, and a
-// promise of a flag that is itself a usage error is worse than silence. It
-// must gain the three flags this PR ships and still name none of the surfaces
-// later issues add.
+// promise of a flag that is itself a usage error is worse than silence. Every
+// flag and command this binary accepts is documented, and none of the
+// surfaces later issues add is.
 func TestUsage_ListsExactlyTheFlagsThatWork(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if code := cli.Run([]string{"help"}, strings.NewReader(""), &stdout, &stderr); code != 0 {
@@ -610,17 +610,22 @@ func TestUsage_ListsExactlyTheFlagsThatWork(t *testing.T) {
 	}
 	usage := stdout.String()
 
-	for _, flag := range []string{"--allow", "--prompt", "--tier", "--model", "--exclude-family"} {
+	for _, flag := range []string{"--allow", "--system", "--prompt", "--tier", "--model", "--exclude-family"} {
 		if !mentionsFlag(usage, flag) {
 			t.Errorf("usage text does not document %s, which this binary accepts:\n%s", flag, usage)
 		}
 	}
-	for _, absent := range []string{"--system", "--provider", "--refresh", "--all"} {
+	for _, absent := range []string{"--system-file", "--provider", "--refresh", "--all"} {
 		if mentionsFlag(usage, absent) {
 			t.Errorf("usage text promises %s, which is still a usage error:\n%s", absent, usage)
 		}
 	}
-	for _, absent := range []string{"models", "version"} {
+	for _, command := range []string{"tiers", "version"} {
+		if !strings.Contains(usage, "\n  "+command) {
+			t.Errorf("usage text does not document the %s command, which this binary accepts:\n%s", command, usage)
+		}
+	}
+	for _, absent := range []string{"models"} {
 		if strings.Contains(usage, "\n  "+absent) {
 			t.Errorf("usage text promises the %s command, which does not exist yet:\n%s", absent, usage)
 		}

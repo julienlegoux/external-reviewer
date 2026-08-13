@@ -31,8 +31,13 @@ import (
 // takes the Scope, and there is no other way for it to reach a file.
 type reviewRequest struct {
 	RepoPath string
-	Task     string
-	Scope    *confine.Scope
+	// System is the caller-supplied system prompt, from the request object on
+	// stdin or from --system. It is never empty here: the binary owns no
+	// prompt and substitutes none, so an invocation that supplies none is a
+	// usage error before a request is built (specs 08).
+	System string
+	Task   string
+	Scope  *confine.Scope
 	// Bounds is the run ceiling the loop consults at the top of every turn.
 	// It arrives here unset on every real invocation — no flag sets one yet
 	// (see run.go) — and travels on the request rather than as a package
@@ -124,7 +129,7 @@ func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest
 	diag.WriteModel(stderr, resolution.Model.Provider, resolution.Model.ID, resolution.AuthSource)
 
 	loop := &reviewer.Loop{
-		Conversation: reviewer.NewConversation(registry, resolution.Model, req.Task),
+		Conversation: reviewer.NewConversation(registry, resolution.Model, req.System, req.Task),
 		Tools: tools.NewRunRegistry(tools.Deps{
 			Scope:    req.Scope,
 			RepoPath: req.RepoPath,
@@ -351,14 +356,19 @@ func ensureModels(registry ai.Models) (ai.Models, error) {
 	return built, nil
 }
 
-// maxPromptBytes bounds the stdin read: the task prompt is an instruction,
-// not a document — the reviewer reads repository content itself, through
-// the tools Epic 2 wires, not through this read. 1 MiB is orders of
-// magnitude above any legitimate instruction while still stopping an
-// accidental multi-gigabyte pipe (`cat 8GB.bin | external-reviewer review
-// /repo`) from buffering fully into memory — or reaching a third-party model
-// in full — before validation ever runs (CONVENTIONS § Dependencies
-// L155-156, the supply-chain and exposure surface).
+// maxPromptBytes bounds the stdin read: the request object carries an
+// instruction, not a document — the reviewer reads repository content itself,
+// through the tools Epic 2 wires, not through this read. 1 MiB is orders of
+// magnitude above any legitimate system prompt and task together while still
+// stopping an accidental multi-gigabyte pipe (`cat 8GB.bin |
+// external-reviewer review /repo`) from buffering fully into memory — or
+// reaching a third-party model in full — before validation ever runs
+// (CONVENTIONS § Dependencies L155-156, the supply-chain and exposure
+// surface).
+//
+// The bound applies to the bytes read, ahead of any decoding, which is what
+// keeps it a defence: a JSON parser handed an unbounded stream would already
+// have buffered the whole thing before it could object to it.
 const maxPromptBytes = 1 << 20 // 1 MiB
 
 // errPromptTooLarge is the named sentinel a stdin body over maxPromptBytes
@@ -366,7 +376,7 @@ const maxPromptBytes = 1 << 20 // 1 MiB
 // the rendered message text (CONVENTIONS § Error handling).
 var errPromptTooLarge = errors.New("task prompt exceeds the maximum size")
 
-// readPromptFromStdin reads the task prompt from stdin under ctx, bounded to
+// readPromptFromStdin reads the request object from stdin under ctx, bounded to
 // maxPromptBytes+1 bytes — the +1 is what distinguishes "exactly at the
 // bound" (returned whole) from "over it" (errPromptTooLarge) without ever
 // reading past the bound itself.
@@ -411,8 +421,9 @@ func readPromptFromStdin(ctx context.Context, stdin io.Reader) (string, error) {
 }
 
 // runReviewCommand parses the `review` subcommand's flags and positional
-// repository path out of args, resolves the task prompt from --prompt or
-// stdin, and validates both before anything talks to a model. It returns
+// repository path out of args, resolves the system prompt and task from the
+// --system/--prompt shorthand or from the JSON request object on stdin, and
+// validates everything before anything talks to a model. It returns
 // the error classify uses to pick the process exit code: nil is exit 0,
 // ErrNoReviewer is exit 1, anything else — including every usage error
 // below — is exit 2. Every usage error writes exactly one diag.WriteError
@@ -427,7 +438,8 @@ func readPromptFromStdin(ctx context.Context, stdin io.Reader) (string, error) {
 func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, state *diag.State, registry ai.Models, bounds reviewer.Bounds) error {
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
-	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
+	system := fs.String("system", "", "the caller-owned system prompt; requires --prompt")
+	prompt := fs.String("prompt", "", "the task prompt for the reviewer; requires --system")
 	tier := fs.String("tier", defaultTier, "the weight of reviewer to select: light, standard or heavy")
 	model := fs.String("model", "", "an explicit provider/id, bypassing tiers entirely")
 	excludeFamily := fs.String("exclude-family", defaultExcludeFamily, "comma-separated model families that may not review")
@@ -451,9 +463,18 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 	// is even stat'd: they are decided wholly from argv, they cost no I/O,
 	// and the grammar they form is the contract the calling skill's template
 	// is built from (specs 02).
-	given := flagsSet(fs, "tier", "model")
+	given := flagsSet(fs, "tier", "model", "system", "prompt")
 	if given["tier"] && given["model"] {
 		return usageError(stderr, state, "--tier and --model are alternatives: give one or the other, not both")
+	}
+	// The by-hand shorthand is all of it or none of it, decided here rather
+	// than after stdin has been read, because the two flags mean "do not read
+	// stdin" whether or not the pair is complete. Falling back to stdin on
+	// half a pair would answer a different invocation from the one that was
+	// typed — and on a terminal it would block, waiting for a request object
+	// the caller had already said it was not sending.
+	if given["system"] != given["prompt"] {
+		return usageError(stderr, state, "--system and --prompt are the by-hand shorthand for the request object and must be given together: pass both, or neither and put {\"system\": …, \"task\": …} on stdin")
 	}
 	selectedTier := ""
 	if !given["model"] {
@@ -526,18 +547,26 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 	// called inside it rather than after it.
 	defer func() { _ = scope.Close() }()
 
-	promptSet := false
-	fs.Visit(func(f *flag.Flag) {
-		if f.Name == "prompt" {
-			promptSet = true
+	// Two channels, one shape. Either the caller gave both shorthand flags —
+	// in which case stdin is not touched at all — or it gave neither and the
+	// request object on stdin carries the same two values. The half-given
+	// case was already refused above, so `given["prompt"]` here means the
+	// whole pair.
+	var request requestObject
+	if given["prompt"] {
+		request = requestObject{System: *system, Task: *prompt}
+		// The flag channel gets the same two emptiness refusals the request
+		// object's decoding applies, for the same reason: there is no default
+		// system prompt to fall back to, and `--system ""` must not become
+		// one by omission.
+		if strings.TrimSpace(request.System) == "" {
+			return usageError(stderr, state, "--system is empty: the caller owns the system prompt and this binary substitutes none")
 		}
-	})
-
-	var task string
-	if promptSet {
-		task = *prompt
+		if strings.TrimSpace(request.Task) == "" {
+			return usageError(stderr, state, "--prompt is empty: there is nothing to review")
+		}
 	} else {
-		data, err := readPromptFromStdin(ctx, stdin)
+		body, err := readPromptFromStdin(ctx, stdin)
 		if err != nil {
 			switch {
 			case interruptedError(err):
@@ -555,27 +584,30 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 				state.StopReason = usageStopReason
 				return err
 			default:
-				diag.WriteError(stderr, fmt.Sprintf("reading task prompt from stdin: %v", err))
+				diag.WriteError(stderr, fmt.Sprintf("reading the request object from stdin: %v", err))
 				state.StopReason = usageStopReason
-				return fmt.Errorf("reading task prompt from stdin: %w", err)
+				return fmt.Errorf("reading the request object from stdin: %w", err)
 			}
 		}
-		task = data
+		// A malformed request object is stop=usage, not stop=failed: it is
+		// written by the same caller, in the same breath, as argv, so a
+		// mistyped key is a mistyped invocation exactly like an unknown tier.
+		// stop=failed stays reserved for the machine being wrong while the
+		// invocation is right (see malformedFlagAssignment).
+		request, err = decodeRequestObject(body)
+		if err != nil {
+			return usageError(stderr, state, err.Error())
+		}
 	}
-	// strings.TrimSpace decides emptiness only. task itself — what reaches
-	// reviewRequest.Task and eventually the model — is never rewritten, so a
-	// caller's own leading/trailing whitespace around real text still
-	// reaches the model verbatim (asserted in
+	// Nothing above rewrote either value: strings.TrimSpace decided emptiness
+	// and nothing else, so a caller's own leading and trailing whitespace
+	// around real text still reaches the model verbatim (asserted in
 	// TestRun_Review_PromptWhitespaceReachesModelVerbatim).
-	if strings.TrimSpace(task) == "" {
-		diag.WriteError(stderr, "empty task prompt: pass --prompt or provide one on stdin")
-		state.StopReason = usageStopReason
-		return errors.New("empty task prompt")
-	}
 
 	return runReview(ctx, registry, reviewRequest{
 		RepoPath:  repoPath,
-		Task:      task,
+		System:    request.System,
+		Task:      request.Task,
 		Scope:     scope,
 		Bounds:    bounds,
 		Tier:      selectedTier,

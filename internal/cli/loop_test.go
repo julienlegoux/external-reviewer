@@ -338,7 +338,7 @@ func TestRun_ExceededBound_ReturnsWhatTheRunHasAtExitZero(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.RunWithBoundsForTest(
 		context.Background(),
-		[]string{"review", "--allow", ".", "--prompt", "review this", repoWith(t, "main.go")},
+		[]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", repoWith(t, "main.go")},
 		strings.NewReader(""), &stdout, &stderr, models,
 		reviewer.Bounds{MaxTurns: 1},
 	)
@@ -379,7 +379,7 @@ func TestRun_ExceededBound_WithNoProseYet_ExitsZeroWithEmptyStdout(t *testing.T)
 	var stdout, stderr bytes.Buffer
 	code := cli.RunWithBoundsForTest(
 		context.Background(),
-		[]string{"review", "--allow", ".", "--prompt", "review this", repoWith(t, "main.go")},
+		[]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", repoWith(t, "main.go")},
 		strings.NewReader(""), &stdout, &stderr, models,
 		reviewer.Bounds{MaxTurns: 1},
 	)
@@ -472,7 +472,7 @@ func TestRun_CancelledBetweenTurns_ExitsTwoWithADoneLine(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.RunWithModelsForTest(
 		ctx,
-		[]string{"review", "--allow", ".", "--prompt", "review this", repoWith(t, "main.go")},
+		[]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", repoWith(t, "main.go")},
 		strings.NewReader(""), &stdout, &stderr, models,
 	)
 

@@ -6,19 +6,28 @@ import (
 )
 
 // usageText documents the subset of the CLI grammar this binary accepts
-// today: SPECS fixes a larger surface (the models, tiers and version
-// commands, the JSON request object and --system) that the remaining issues
-// add. Only what is accepted is listed here, so the message never promises a
-// flag that would itself be a usage error.
+// today: SPECS fixes one more surface, the models command, that issue 07
+// adds. Only what is accepted is listed here, so the message never promises
+// a flag that would itself be a usage error.
 const usageText = `usage: external-reviewer <command> [flags] [args]
 
 commands:
   review --allow <path> [--allow <path> ...]
          [--tier light|standard|heavy | --model <provider>/<id>]
          [--exclude-family <family>[,<family>...]]
-         [--prompt <text>] <repo-path>
-      Review the repository at <repo-path>. The task prompt comes from
-      --prompt, or from stdin when --prompt is not given.
+         [--system <text> --prompt <text>] <repo-path>
+      Review the repository at <repo-path>. The system prompt and the task
+      come from a JSON request object on stdin:
+
+          {"system": "...", "task": "..."}
+
+      Both fields are required and neither may be empty: the caller owns the
+      system prompt and this binary supplies none. An unknown field is an
+      error rather than a silently missing prompt.
+
+      --system and --prompt are the by-hand shorthand for the same two
+      values. They must be given together, and giving them means stdin is
+      not read at all.
 
       --allow grants one repo-relative subtree the reviewer may read, and is
       repeatable. At least one is required: nothing outside the granted
@@ -47,6 +56,10 @@ commands:
       resolves. Exits 2 only when it could not be answered at all: a
       malformed invocation, malformed config, or a credential store that
       cannot be located.
+
+  version
+      Print the module path, version and VCS revision this binary was built
+      from, so a report can be traced back to a build.
 
   help | --help | -h
       Print this message.

@@ -3,7 +3,7 @@ type: Drift record
 title: "The native -race command did not run: gcc itself is now blocked, not the test binary"
 description: "CONVENTIONS says `go test -race -ldflags=-s ./... -count=1` runs natively on the development machine; on 2026-08-13 every package failed in cgo, because gcc.exe now dies with STATUS_FAIL_FAST_EXCEPTION before compiling anything — so -race ran on the remote instead."
 tags: [epic-3, drift]
-timestamp: 2026-08-13T10:35:00Z
+timestamp: 2026-08-13T18:40:00Z
 epic: 3
 issue: 02
 ---
@@ -83,6 +83,23 @@ the policy has not judged, or when the machine's policy changes for unrelated re
 Re-verify with the one-line C file above before trusting `-race` locally again; a green
 `go build -race` proves nothing while `runtime/cgo` can come from the build cache.
 
+**Sharpened by issue 08, 2026-08-13.** `gcc --version` is no longer the check: it now
+exits `0` and prints `gcc.exe (MinGW-W64 x86_64-ucrt-posix-seh …) 16.1.0`, while the same
+one-line C file still fails — at a *different* stage, and with a different message:
+
+```
+$ gcc scratch\t.c -o scratch\t.exe        # int main(void){return 0;}
+collect2.exe: fatal error: CreateProcess: No such file or directory
+compilation terminated.
+```
+
+The driver runs and the refusal has moved to the image it spawns, so a policy keyed to
+each binary's own hash refuses `collect2.exe` (or `ld.exe` beneath it) while letting
+`gcc.exe` through. `go test -race` fails at link rather than in `cgo.exe`
+(`link.exe: running gcc failed: exit status 1`), which reads as yet another symptom of the
+same block. **Only the one-line C file settles it** — the `gcc --version` shortcut this
+section offered would now report a working toolchain that cannot link.
+
 Worth carrying separately: § Testing's cgo sentence should be softened from a settled fact
 to a check, since it has now been false twice for two different reasons, and each time the
 symptom first read as a code failure.
@@ -94,6 +111,9 @@ symptom first read as a code failure.
 - The remote run that produced this PR's `-race` numbers:
   `EXTERNAL_REVIEWER_TEST_DIR=ci/external-reviewer-epic3-issue02 scripts/test-remote.sh
   ./... -count=1` — eight packages, all `ok`.
+- Issue 08 re-measured the same block on 2026-08-13 (see § Revisit when) and ran `-race`
+  the same way, `EXTERNAL_REVIEWER_TEST_DIR=ci/external-reviewer-issue67` — ten packages,
+  all `ok`.
 - [CONVENTIONS § Testing](../../../planning/CONVENTIONS.md),
   [DRIFT § 09, 10, 11](../../../planning/DRIFT.md), and Epic 2's
   [drift record 03](/epic-2-read-only-agentic-loop/drift/03-native-go-test-blocked-again.md),

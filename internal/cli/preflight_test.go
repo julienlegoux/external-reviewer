@@ -24,6 +24,15 @@ const (
 	fixtureModel    = "gpt-5.5"
 )
 
+// fixtureSystem is the caller-supplied system prompt every test that is not
+// about the prompt channel passes alongside --prompt. It lives in the test
+// package because the binary carries none of its own and substitutes none:
+// specs 08 puts the text entirely in the caller's hands, and
+// TestBinary_CarriesNoSystemPrompt keeps it out of non-test source. Since
+// issue 08 the two shorthand flags are all-or-nothing, so this is the
+// difference between an invocation that runs and a usage error.
+const fixtureSystem = "You review repositories you did not write."
+
 // registryWith builds the offline registry a run resolves against and
 // streams from: kern-link's in-process faux provider under the fixture
 // provider id, serving modelIDs, with auth scripted. No network, no bill, no
@@ -66,7 +75,7 @@ func runReview(t *testing.T, models ai.Models) (int, string, string) {
 	t.Helper()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", t.TempDir()}, strings.NewReader(""), &stdout, &stderr, models)
 	return code, stdout.String(), stderr.String()
 }
 

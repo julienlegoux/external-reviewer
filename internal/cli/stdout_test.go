@@ -74,7 +74,7 @@ func runReviewInto(t *testing.T, stdout io.Writer, answer string) (int, string) 
 	models := scripted(t, 0, faux.Step(faux.TextMessage(answer, nil)))
 
 	var stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()},
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", t.TempDir()},
 		strings.NewReader(""), stdout, &stderr, models)
 	return code, stderr.String()
 }
@@ -213,7 +213,7 @@ func TestBrokenStdoutPipeChild(t *testing.T) {
 	_, _ = io.Copy(io.Discard, os.Stdin)
 
 	models := scripted(t, 0, faux.Step(faux.TextMessage(brokenPipeReport, nil)))
-	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()},
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", t.TempDir()},
 		strings.NewReader(""), os.Stdout, os.Stderr, models)
 	os.Exit(code)
 }

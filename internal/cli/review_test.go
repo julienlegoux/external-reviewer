@@ -30,24 +30,24 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "prompt flag and repo path parses and reaches the run path",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--allow", ".", "--prompt", "review this", t.TempDir()}
+				return []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "review this", t.TempDir()}
 			},
 			wantExit:        0,
 			wantStdoutEmpty: false,
 		},
 		{
-			name: "prompt from stdin parses identically",
+			name: "the request object on stdin parses identically",
 			argv: func(t *testing.T) []string {
 				return []string{"review", "--allow", ".", t.TempDir()}
 			},
-			stdin:           "review this",
+			stdin:           requestObject(fixtureSystem, "review this"),
 			wantExit:        0,
 			wantStdoutEmpty: false,
 		},
 		{
 			name: "missing repository path is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--allow", ".", "--prompt", "x"}
+				return []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "x"}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -56,7 +56,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "extra positional arguments are a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--allow", ".", "--prompt", "x", t.TempDir(), "extra"}
+				return []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "x", t.TempDir(), "extra"}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -65,7 +65,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "nonexistent repository path is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--allow", ".", "--prompt", "x", filepath.Join(t.TempDir(), "does-not-exist")}
+				return []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "x", filepath.Join(t.TempDir(), "does-not-exist")}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -79,7 +79,7 @@ func TestRun_Review(t *testing.T) {
 				if err := os.WriteFile(file, []byte("x"), 0o600); err != nil {
 					t.Fatalf("WriteFile fixture: %v", err)
 				}
-				return []string{"review", "--allow", ".", "--prompt", "x", file}
+				return []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "x", file}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -97,8 +97,10 @@ func TestRun_Review(t *testing.T) {
 		},
 		{
 			// echo with nothing to say pipes a single newline, not an
-			// empty stream -- strings.TrimSpace is what catches this; the
-			// old `task == ""` check did not.
+			// empty stream. Since issue 08 both are the same refusal for
+			// the same reason -- neither is a JSON request object -- but
+			// the row stays, because the two are distinct states of a real
+			// pipe and a decoder could plausibly accept one of them.
 			name: "whitespace-only stdin (echo with no arguments) is a usage error",
 			argv: func(t *testing.T) []string {
 				return []string{"review", "--allow", ".", t.TempDir()}
@@ -111,7 +113,7 @@ func TestRun_Review(t *testing.T) {
 		{
 			name: "whitespace-only --prompt is a usage error",
 			argv: func(t *testing.T) []string {
-				return []string{"review", "--allow", ".", "--prompt", " ", t.TempDir()}
+				return []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", " ", t.TempDir()}
 			},
 			wantExit:         2,
 			wantStdoutEmpty:  true,
@@ -219,7 +221,7 @@ func TestRun_Review(t *testing.T) {
 // tree. `--allow .` grants everything and has to be said.
 func TestRun_Review_WithoutAllow_IsUsageError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+	code := cli.RunForTest([]string{"review", "--system", fixtureSystem, "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {
@@ -251,7 +253,7 @@ func TestRun_Review_RepeatedAllow_ParsesEveryValue(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := cli.RunForTest(
-		[]string{"review", "--allow", "docs", "--allow", "internal", "--prompt", "review this", repo},
+		[]string{"review", "--allow", "docs", "--allow", "internal", "--system", fixtureSystem, "--prompt", "review this", repo},
 		strings.NewReader(""), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
@@ -285,7 +287,7 @@ func TestRun_Review_AllowValueThatIsNotASubtree_IsUsageError(t *testing.T) {
 			writeFixture(t, repo, "README.md", "# fixture\n")
 
 			var stdout, stderr bytes.Buffer
-			code := cli.RunForTest([]string{"review", "--allow", tc.allow, "--prompt", "x", repo},
+			code := cli.RunForTest([]string{"review", "--allow", tc.allow, "--system", fixtureSystem, "--prompt", "x", repo},
 				strings.NewReader(""), &stdout, &stderr,
 				registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
@@ -329,7 +331,7 @@ func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
 	if stdout.Len() != 0 {
 		t.Errorf("stdout = %q, want empty", stdout.String())
 	}
-	if !strings.Contains(stderr.String(), "error:  reading task prompt from stdin") {
+	if !strings.Contains(stderr.String(), "error:  reading the request object from stdin") {
 		t.Errorf("stderr = %q, want an error: line naming the stdin failure", stderr.String())
 	}
 	assertOnlyKnownPrefixedLines(t, stderr.String())
@@ -347,7 +349,7 @@ func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
 // exit-2 sibling.
 func TestRun_NoReviewerReached_WritesNoErrorLine(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
 		registry(t, fauxtest.UnconfiguredAuth(), nil, fixtureModel))
 
 	if code != 1 {
@@ -401,7 +403,7 @@ func TestRun_Review_PathDiagnostics_AreWireForm(t *testing.T) {
 			wirePath := filepath.ToSlash(filepath.Clean(nativePath))
 
 			var stdout, stderr bytes.Buffer
-			code := cli.Run([]string{"review", "--allow", ".", "--prompt", "x", nativePath}, strings.NewReader(""), &stdout, &stderr)
+			code := cli.Run([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "x", nativePath}, strings.NewReader(""), &stdout, &stderr)
 
 			if code != 2 {
 				t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -444,7 +446,7 @@ func TestRun_Review_NoTestCausesProcessExit(t *testing.T) {
 // turns it red, as recorded in this issue's PR body.
 func TestRun_Review_PromptFlagEmptyString_IsUsageError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "", t.TempDir()}, strings.NewReader("review this"), &stdout, &stderr,
+	code := cli.RunForTest([]string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "", t.TempDir()}, strings.NewReader("review this"), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {

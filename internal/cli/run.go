@@ -159,6 +159,20 @@ func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.
 		printUsage(stdout)
 		state.StopReason = "help"
 		return 0, nil
+	case "version":
+		// Argument-free by design, and refused rather than ignored when
+		// given one: a caller that typed `version --json` asked for
+		// something this command does not do, and printing the plain line
+		// anyway would let it believe otherwise.
+		if len(rest) != 0 {
+			diag.WriteError(stderr, "version takes no arguments")
+			state.StopReason = usageStopReason
+			err := errors.New("version takes no arguments")
+			return classify(err), err
+		}
+		printVersion(stdout)
+		state.StopReason = "version"
+		return 0, nil
 	case "review":
 		err := runReviewCommand(ctx, rest, stdin, stdout, stderr, state, registry, bounds)
 		return classify(err), err
