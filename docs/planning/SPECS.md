@@ -3,7 +3,7 @@ type: Technical Specification
 title: "External Reviewer — Technical Specs"
 description: "A single Go binary that runs a bounded, read-only agent loop over an explicitly allowed slice of a repository, on a model outside the Anthropic family, and returns markdown on stdout."
 tags: [planning, specs]
-timestamp: 2026-08-09T07:50:00Z
+timestamp: 2026-08-13T06:10:00Z
 status: final
 ---
 
@@ -272,7 +272,7 @@ different questions and a usage error can never carry a model's own reason:
   `ai.AssistantMessage`, spelled exactly as `kern-link` spells it — no translation table
   between the two. `unspecified` is the named fallback for the rare successful message
   whose `StopReason` is itself empty, so `stop=` can never render with nothing after it.
-- **On every termination the model never reaches**, it is one of five fixed CLI words:
+- **On every termination the model never reaches**, it is one of six fixed CLI words:
   `usage` (a malformed invocation — bad flags, a missing or non-directory repository path,
   an empty prompt), `help` (`help`/`--help`/`-h`), `no_reviewer` (exit `1`: no reviewer was
   ever reachable), `interrupted` (`SIGINT` or a cancelled context), `failed` (reached and

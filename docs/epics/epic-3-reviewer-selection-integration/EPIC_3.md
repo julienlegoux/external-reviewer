@@ -3,7 +3,7 @@ type: Epic
 title: "Reviewer selection and pipeline integration"
 description: "Weight tiers, the machine-local assignment, binary-enforced family exclusion, caps sized from real measurements, and the review-interfaces.md swap that retires opencode."
 tags: [epic]
-timestamp: 2026-08-09T04:34:00Z
+timestamp: 2026-08-13T06:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/3
 epic: 3
 slug: reviewer-selection-integration
@@ -57,6 +57,14 @@ work back to Claude.
   stops the loop and returns what the run has, rather than failing.
 - **The `review-interfaces.md` swap**: probe and call `external-reviewer`, remove the
   `opencode` branch, leave the native fallback unchanged and unconditional.
+- The `paths` parameter on `git_read` — a path-scoped diff made reachable, which is the
+  single largest distortion in the turn counts this epic sizes its caps from
+  ([MEASUREMENTS](/epic-2-read-only-agentic-loop/MEASUREMENTS.md)).
+- The JSON request object on stdin, `--system`, and `version` — the request channel the
+  calling skill actually uses, with the caller owning the system prompt
+  ([specs 08](../../planning/specs/08-system-prompt-and-task-assembly.md)), plus the
+  build identity a report traces to
+  ([specs 17](../../planning/specs/17-distribution-and-ci.md)).
 
 ## Out of scope
 
@@ -93,6 +101,12 @@ Plus the mechanics they rest on:
 - `tiers` shows which tiers resolve, and an unrecognised config key produces a `warn`
   line rather than a silently missing tier.
 - The whole embedded catalog passes through the family classifier in a table-driven test.
+- A path-scoped `diff` through `git_read`'s `paths` parameter reaches one subtree and is
+  refused outside the granted set.
+- A `review` invocation whose stdin carries `{"system","task"}` — or whose `--system` and
+  `--prompt` flags carry the same text — reaches the model with the caller's prompt
+  verbatim and no substituted default.
+- `version` prints build information and exits `0`.
 
 ## Dependencies
 
