@@ -6,9 +6,9 @@ the resolution chain and the surfaces over it, then the caps, and finally the cr
 swap and the run that proves v1's success criteria. Issue 10 lands in the **lx skills
 repository**, not this one.
 
-* [Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md) - M, pr-open, [#60](https://github.com/julienlegoux/external-reviewer/issues/60), [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81)
+* [Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md) - M, done, [#60](https://github.com/julienlegoux/external-reviewer/issues/60), [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81)
 * [Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md) - L, open, [#61](https://github.com/julienlegoux/external-reviewer/issues/61)
-* [Read the machine-local tier assignment TOML](/epic-3-reviewer-selection-integration/issues/03-tier-assignment-config-file.md) - M, open, [#62](https://github.com/julienlegoux/external-reviewer/issues/62)
+* [Read the machine-local tier assignment TOML](/epic-3-reviewer-selection-integration/issues/03-tier-assignment-config-file.md) - M, pr-open, [#62](https://github.com/julienlegoux/external-reviewer/issues/62), [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80)
 * [Resolve a tier to a reachable, allowed model](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md) - L, open, [#63](https://github.com/julienlegoux/external-reviewer/issues/63)
 * [Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md) - L, open, [#64](https://github.com/julienlegoux/external-reviewer/issues/64)
 * [Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md) - M, open, [#65](https://github.com/julienlegoux/external-reviewer/issues/65)

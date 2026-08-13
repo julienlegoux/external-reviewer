@@ -9,7 +9,7 @@ epic: 3
 issue: 01
 slug: git-read-path-scoped-diff
 size: M
-status: pr-open
+status: done
 gh_issue: 60
 gh_pr: 81
 depends_on: []
