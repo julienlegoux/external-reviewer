@@ -9,7 +9,7 @@ epic: 3
 issue: 02
 slug: model-family-classifier
 size: L
-status: pr-open
+status: done
 gh_issue: 61
 gh_pr: 82
 depends_on: []

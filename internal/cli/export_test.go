@@ -10,18 +10,30 @@ import (
 )
 
 // RunForTest calls Run's full behavior — including its signal.NotifyContext
-// and SIGPIPE wiring — against registry rather than the network, for every
-// test that isn't specifically exercising cancellation. It is the
+// and SIGPIPE wiring, and the run ceiling every real invocation carries —
+// against registry rather than the network, for every test that isn't
+// specifically exercising cancellation or the bounds seam itself. It is the
 // constructor a test uses in place of mutating a package-level registry
 // variable: registry is passed in as an explicit argument, once, at the call
 // site.
 //
 // It delegates to runProcess, which is Run's own body, rather than keeping a
 // second copy of the wiring: a replica drifts the moment the real entry
-// point gains anything, and this one had already missed handleSIGPIPE.
+// point gains anything, and this one had already missed handleSIGPIPE. Using
+// shippedBounds rather than the zero value is the same reasoning applied to
+// the bounds seam: every scripted conversation this suite drives is a
+// handful of turns, well under the shipped ceiling, so this is free coverage
+// that the shipped caps do not interfere with an ordinary review.
 func RunForTest(argv []string, stdin io.Reader, stdout, stderr io.Writer, registry ai.Models) int {
-	return runProcess(argv, stdin, stdout, stderr, registry, reviewer.Bounds{})
+	return runProcess(argv, stdin, stdout, stderr, registry, shippedBounds)
 }
+
+// ShippedBoundsForTest exposes the run ceiling Run wires on every real
+// invocation, so a test can assert the values directly — MaxTurns,
+// MaxElapsed and MaxCost — rather than only their effect on a scripted run.
+// A later edit that quietly unsets one of the three then fails this test
+// directly instead of silently shipping an unbounded review.
+func ShippedBoundsForTest() reviewer.Bounds { return shippedBounds }
 
 // RunWithBoundsForTest calls Run's inner seam with a run ceiling in place.
 // It exists because this epic ships the bounds seam with its values unset —
