@@ -2,6 +2,23 @@
 
 ## 2026-08-13
 
+* **Issue 09 PR opened**: [09 — Set the loop caps from Epic 2's measurements](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
+  ([#68](https://github.com/julienlegoux/external-reviewer/issues/68)) opened as
+  [PR #83](https://github.com/julienlegoux/external-reviewer/pull/83) from branch
+  `issue-09-epic3-caps`. `cli.Run` wires a non-zero `reviewer.Bounds` on every real
+  invocation: `MaxTurns: 30` (SCOPE-fixed [25, 40]), `MaxElapsed: 20 * time.Minute`
+  (SCOPE-fixed [15m, 25m]), `MaxCost` stays 0 — sized from Epic 2's MEASUREMENTS, read
+  knowing issue 01 (PR #81, merged) had already closed the `git_read` gap that inflated
+  the twelve-turn run. Also fixes the correctness gap the issue named:
+  `resolveAndReview`'s empty-report check no longer reclassifies a bounds stop with no
+  prose yet as `failed` — it now checks `state.StopReason` first, verified red against
+  the pre-fix code (exit 2, `stop=failed`) before the fix went in. **No flag** exposes
+  any of the three ceilings — they are a safety net sized well above every measured run,
+  not a knob the invocation template has asked to turn, and the seam already makes
+  adding one later an ordinary PR rather than a restructuring; reasoning recorded in the
+  PR body since the issue explicitly permits answering "no". 126 changed lines against
+  the ~500-line S target.
+
 * **Issue 01 done**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
   ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) — [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81)
   merged into `develop`; issue #60 already closed. Reconciled here — the issue file and
