@@ -2,6 +2,35 @@
 
 ## 2026-08-13
 
+* **Epic 3, issue 10 pr-open**: [Swap review-interfaces.md from opencode to external-reviewer](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md)
+  ([julienlegoux/skills#37](https://github.com/julienlegoux/skills/issues/37)) —
+  [PR julienlegoux/skills#42](https://github.com/julienlegoux/skills/pull/42) opened against
+  that repository's `main` from branch `feat/external-reviewer-delegation`. **The code change
+  lands in the lx skills repository, not this one**; this repo's PR carries only the
+  bookkeeping. `_shared/review-interfaces.md` now probes `command -v external-reviewer` and
+  calls `review --allow <path> [--allow <path>…] --tier <weight> <repo>` with
+  `{"system": …, "task": …}` on stdin; the `opencode` branch is removed rather than kept
+  alongside, and `docs/pipeline.md` drops its `opencode` sentence with it. The contract now
+  carries the **system prompt in full**, because the binary owns none — which is where
+  leads-not-findings, and "a review that confirms is a legitimate outcome", stop being a
+  guarantee this binary makes and become text the skills repo versions (specs 08). The
+  native fallback is left unchanged and **unconditional**, stated outright in the file
+  rather than implied, since it is the branch that protects a machine with no reviewer at
+  all (scope 13). Every claim in the file was verified against `internal/cli` at `develop`
+  rather than taken from the issue: two of the issue's predictions did not survive that
+  reading — issue 09 shipped the run caps with **no ceiling flag**, so the template gains
+  none, and the binary injects **no repository path or file listing** into the conversation,
+  so the file tells the caller to name the artifacts in the `task`, repo-relative. Drift
+  record 05's revisit condition is settled in the affirmative: the template keeps stderr and
+  points a diagnosing user at the `warn` line, so the exit-1 line is not dead output and the
+  decision stands. No Go code changed; the suite was run once to prove the tree clean.
+
+* **Issue 08 done**: [08 — Accept the JSON request object on stdin, add --system and version](/epic-3-reviewer-selection-integration/issues/08-request-object-and-version.md)
+  ([#67](https://github.com/julienlegoux/external-reviewer/issues/67)) — [PR #88](https://github.com/julienlegoux/external-reviewer/pull/88)
+  merged into `develop`; GitHub issue #67 already closed and carrying no status label.
+  Reconciled by issue 10's run. Issue 05 (PR #86) and issue 06 (PR #87) were already `done`
+  in the bundle and needed nothing.
+
 * **Issue 06 done**: [06 — Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
   ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
   merged into `develop`; GitHub issue #65 already closed and carrying no status label.

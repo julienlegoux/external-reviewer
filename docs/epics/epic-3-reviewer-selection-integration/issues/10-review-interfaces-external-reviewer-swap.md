@@ -3,14 +3,15 @@ type: Issue
 title: "Swap review-interfaces.md from opencode to external-reviewer"
 description: "In the lx skills repository: probe and call external-reviewer, remove the opencode branch, and leave the native fallback unchanged and unconditional."
 tags: [epic-3]
-timestamp: 2026-08-13T06:25:00Z
+timestamp: 2026-08-13T20:40:00Z
 resource: https://github.com/julienlegoux/skills/issues/37
 epic: 3
 issue: 10
 slug: review-interfaces-external-reviewer-swap
 size: M
-status: open
+status: pr-open
 gh_issue: julienlegoux/skills#37
+gh_pr: julienlegoux/skills#42
 depends_on: [5, 6, 8]
 ---
 
