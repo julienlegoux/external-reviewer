@@ -361,6 +361,44 @@ func TestRun_ExceededBound_ReturnsWhatTheRunHasAtExitZero(t *testing.T) {
 	}
 }
 
+// TestRun_ExceededBound_WithNoProseYet_ExitsZeroWithEmptyStdout is the
+// correctness gap issue 09 of Epic 3 fixes: a bound that bites before the run
+// ever produced any assistant text must still report as bounded — exit 0,
+// stop=bounds, empty stdout — rather than being reclassified as failed by
+// resolveAndReview's "the final message carried no text" check, which exists
+// for the ordinary case of a reviewer that genuinely finished with nothing to
+// say, not for a run cut off before it had the chance to say anything.
+func TestRun_ExceededBound_WithNoProseYet_ExitsZeroWithEmptyStdout(t *testing.T) {
+	models := scripted(t, 0,
+		faux.Step(faux.AssistantMessage(
+			[]ai.AssistantContentPart{faux.ToolCall("list", nil, nil)},
+			&faux.AssistantMessageOptions{StopReason: ai.StopReasonToolUse},
+		)),
+	)
+
+	var stdout, stderr bytes.Buffer
+	code := cli.RunWithBoundsForTest(
+		context.Background(),
+		[]string{"review", "--allow", ".", "--prompt", "review this", repoWith(t, "main.go")},
+		strings.NewReader(""), &stdout, &stderr, models,
+		reviewer.Bounds{MaxTurns: 1},
+	)
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 — a bound with no prose yet is bounded, not failed (stderr: %q)", code, stderr.String())
+	}
+	if stdout.String() != "" {
+		t.Errorf("stdout = %q, want empty — no assistant text was ever produced", stdout.String())
+	}
+	fields := fauxtest.ParseDoneLine(t, stderr.String())
+	if fields.Stop != "bounds" {
+		t.Errorf("done stop = %q, want bounds", fields.Stop)
+	}
+	if fields.Turns != "1" {
+		t.Errorf("done turns = %q, want 1", fields.Turns)
+	}
+}
+
 // TestRun_UnsetBounds_AreWhatAnOrdinaryInvocationGets pins what this epic
 // actually ships: no invocation can set a bound, so nothing bounds a run. The
 // same conversation that stops at one turn above runs to its end here.

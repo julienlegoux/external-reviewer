@@ -10,12 +10,45 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/julienlegoux/kern-link/ai"
 
 	"github.com/julienlegoux/external-reviewer/internal/diag"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
+
+// shippedBounds is the run ceiling every real invocation of Run carries, sized
+// from Epic 2's MEASUREMENTS and re-read knowing issue 01 of Epic 3 had
+// already closed the git_read gap that inflated the twelve-turn run — see
+// MEASUREMENTS § Observations for Epic 3.
+//
+// MaxTurns sits in the SCOPE-fixed [25, 40] range: the three completed hand
+// runs took 4, 6 and 12 turns, the 12 inflated by a path-scoped diff being
+// unreachable through git_read, a gap MEASUREMENTS says would plausibly have
+// cost 6-8 turns instead. Nothing observed justifies a single-digit cap.
+//
+// MaxElapsed sits in the SCOPE-fixed [15m, 25m] range: wall clock was
+// 1m57s-3m59s across the three runs, but the final report-writing turn alone
+// took 1m35s-2m5s in every one of them, so a deadline under roughly five
+// minutes would kill a run mid-report and discard everything it had.
+//
+// MaxCost stays unset (0): the credential this binary authenticates with is a
+// subscription, nothing is billed per token, and a cost ceiling is the least
+// informative of the three on that credential. The field stays in Bounds
+// because a tier that names an API-key provider makes it real again, and the
+// check costs one comparison either way (reviewer.Bounds.check).
+//
+// No flag exposes any of the three on the command line (see the PR that
+// landed this seam's values for the reasoning): they are a safety net sized
+// well above every measured run, not a per-invocation tuning knob the
+// review-epics/review-issues template has ever asked for, and the seam
+// already lets a flag be added later — a normal PR, not a restructuring —
+// the moment something actually needs one.
+var shippedBounds = reviewer.Bounds{
+	MaxTurns:   30,
+	MaxElapsed: 20 * time.Minute,
+}
 
 // Run is the entire behavior of the external-reviewer binary. It takes argv
 // (without the program name) and the process's standard streams, and
@@ -47,11 +80,7 @@ import (
 // handleSIGPIPE), because `external-reviewer review … | head -20` would
 // otherwise kill the process outright and skip the done line entirely.
 func Run(argv []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	// The zero Bounds is the shipped run ceiling: unset, so nothing bounds a
-	// review. No flag sets one yet — SCOPE defers the numbers until issue 07
-	// has measured a real run, and Epic 3 adds the surface that fills this in
-	// (specs 02, reviewer.Bounds).
-	return runProcess(argv, stdin, stdout, stderr, nil, reviewer.Bounds{})
+	return runProcess(argv, stdin, stdout, stderr, nil, shippedBounds)
 }
 
 // runProcess is Run's body with the registry left as an argument, so that
