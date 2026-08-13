@@ -2,6 +2,12 @@
 
 ## 2026-08-13
 
+* **Issue 02 done**: [02 — Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
+  ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
+  merged into `develop`. Reconciled from issue 04's branch, which depends on it;
+  `02-model-family-classifier.md` and `issues/index.md` still read `pr-open`, and the GitHub
+  issue was already closed by the merge but still carried the `status: pr-open` label.
+
 * **Epic 3, issue 02 pr-open**: [Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
   ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
   opened against `develop`. New `internal/family` package: `(Provider, ID)` classified
