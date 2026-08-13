@@ -3,13 +3,13 @@ type: Issue
 title: "Add the tiers command"
 description: "Report which tiers resolve to a reachable model on this machine right now, the config path that was read, and why a tier does not resolve."
 tags: [epic-3]
-timestamp: 2026-08-13T07:10:00Z
+timestamp: 2026-08-13T09:54:34Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/65
 epic: 3
 issue: 06
 slug: tiers-command
 size: M
-status: open
+status: in-progress
 gh_issue: 65
 depends_on: [4, 5]
 ---
