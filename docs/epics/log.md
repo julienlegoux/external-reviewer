@@ -2,6 +2,13 @@
 
 ## 2026-08-13
 
+* **Issue 06 done**: [06 — Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
+  ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
+  merged into `develop`; GitHub issue #65 already closed and carrying no status label.
+  Reconciled by issue 08's run, while merging `origin/develop` into that branch to resolve
+  the conflict the two PRs' shared surfaces produced — the issue file and
+  `issues/index.md` still read `pr-open`.
+
 * **Epic 3, issue 08 pr-open**: [Accept the JSON request object on stdin, add --system and version](/epic-3-reviewer-selection-integration/issues/08-request-object-and-version.md)
   ([#67](https://github.com/julienlegoux/external-reviewer/issues/67)) — [PR #88](https://github.com/julienlegoux/external-reviewer/pull/88)
   opened against `develop` from branch `issue-67-request-object-and-version`. stdin for
@@ -23,13 +30,37 @@
   No new drift record; drift record 02 was **sharpened** instead — `gcc --version` now
   exits 0 while a one-line C file still fails at `collect2.exe`, so that record's own
   revisit shortcut would report a working toolchain that cannot link. `-race` ran
-  remotely, ten packages green.
+  remotely, ten packages green. Issue 06 (PR #87) merged mid-flight and was merged back
+  in: `run.go`'s switch, `usageText` and `TestUsage_ListsExactlyTheFlagsThatWork` resolved
+  as a union, both commands surviving, the dispatcher unrestructured.
+
+* **Epic 3, issue 06 PR opened**: [Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
+  ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
+  opened against `develop` from branch `issue-06-tier-resolve-cli`. `tiers
+  [--exclude-family …]` reports one row per weight tier — its assignment, where it came
+  from (config file or `EXTERNAL_REVIEWER_TIER_<TIER>`), and, when it does not resolve,
+  which rule refused it — over the same `reviewer.Assigner`/`reviewer.Resolver` issues 04
+  and 05 already ship, with no redesign of either. A broken credential on one tier is a
+  fact about that row (`credential broken`, exit `0`), not a reason to abort the whole
+  query; a malformed assignment from the environment or config *is* treated as "the query
+  could not be answered" (exit `2`), the same class as malformed TOML, since it isn't in
+  the issue's six-reason vocabulary. Adds a new `stop=answered` word to the done line's
+  closed set — none of the existing six fit a query that never tries to reach a model —
+  amending `SPECS.md` per its own "union that only grows" precedent from `bounds`. 679
+  changed lines against a ~500-line M target, ~1.35x and entirely test volume; full suite
+  green natively and via `scripts/test-remote.sh -race`
+  (`EXTERNAL_REVIEWER_TEST_DIR=ci/external-reviewer-issue65`); `golangci-lint` clean. No
+  new drift — the known `github-copilot`/unknown-family defect ([drift
+  04](/epic-3-reviewer-selection-integration/drift/04-github-copilot-tiers-resolve-to-no-reviewer.md))
+  surfaces through this command's `excluded by family: unknown` row exactly as designed,
+  reported rather than fixed, per that record's own disposition. Also reconciled issue 05
+  to `done` at the start of this run (PR #86 merged, issue #64 already closed, bundle
+  still read `pr-open`).
 
 * **Issue 05 done**: [05 — Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
   ([#64](https://github.com/julienlegoux/external-reviewer/issues/64)) — [PR #86](https://github.com/julienlegoux/external-reviewer/pull/86)
-  merged into `develop`; GitHub issue #64 already closed and carrying no status label.
-  Reconciled by issue 08's run — the issue file and `issues/index.md` still read
-  `pr-open`.
+  merged into `develop`; issue #64 already closed. Reconciled by issue 06's run — the
+  issue file and `issues/index.md` still read `pr-open`.
 
 * **Epic 3, issue 05 pr-open**: [Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
   ([#64](https://github.com/julienlegoux/external-reviewer/issues/64)) — [PR #86](https://github.com/julienlegoux/external-reviewer/pull/86)

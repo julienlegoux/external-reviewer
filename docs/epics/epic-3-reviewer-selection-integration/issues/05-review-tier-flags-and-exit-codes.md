@@ -3,7 +3,7 @@ type: Issue
 title: "Select the reviewer from the command line with --tier, --model and --exclude-family"
 description: "Wire tier resolution into `review`, retire the hard-coded reviewer, and prove the exit-code contract end to end through Run."
 tags: [epic-3]
-timestamp: 2026-08-13T18:05:00Z
+timestamp: 2026-08-13T09:54:34Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/64
 epic: 3
 issue: 05

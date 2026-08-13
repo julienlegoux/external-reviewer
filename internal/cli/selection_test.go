@@ -620,10 +620,12 @@ func TestUsage_ListsExactlyTheFlagsThatWork(t *testing.T) {
 			t.Errorf("usage text promises %s, which is still a usage error:\n%s", absent, usage)
 		}
 	}
-	if !strings.Contains(usage, "\n  version") {
-		t.Errorf("usage text does not document the version command, which this binary accepts:\n%s", usage)
+	for _, command := range []string{"tiers", "version"} {
+		if !strings.Contains(usage, "\n  "+command) {
+			t.Errorf("usage text does not document the %s command, which this binary accepts:\n%s", command, usage)
+		}
 	}
-	for _, absent := range []string{"tiers", "models"} {
+	for _, absent := range []string{"models"} {
 		if strings.Contains(usage, "\n  "+absent) {
 			t.Errorf("usage text promises the %s command, which does not exist yet:\n%s", absent, usage)
 		}
