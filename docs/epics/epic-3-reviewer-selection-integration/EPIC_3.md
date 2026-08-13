@@ -147,3 +147,7 @@ measurements exist.
 - **Assumed and unenforceable (SCOPE risk 6)**: everything downstream of a mediocre
   review is safe only because the calling skill verifies each lead against the files
   before it enters a report. This epic wires up that caller; it cannot make it verify.
+- **The three success criteria are answered in
+  [VERIFICATION](/epic-3-reviewer-selection-integration/VERIFICATION.md)** — four real runs
+  through the swapped contract, their leads verified against the files one by one, and the
+  measured wall clock, cap headroom and quota position each criterion turns on.

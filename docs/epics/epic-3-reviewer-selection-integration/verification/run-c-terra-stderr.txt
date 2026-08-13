@@ -1,0 +1,23 @@
+model   openai-codex/gpt-5.6-terra  auth=OAuth
+turn 1  tools=4  in=2374 out=157  $0.0066  7.3s
+tool    git_read args=[--stat 24e1b24...729dee9] command="diff"
+tool    git_read args=[--oneline --decorate 24e1b24..729dee9] command="log"
+tool    git_read args=[--name-status 24e1b24...729dee9] command="diff"
+tool    git_read args=[] command="status"
+turn 2  tools=4  in=8549 out=505  $0.0232  7.6s
+tool    git_read args=[--unified=80 24e1b24...729dee9] command="diff" paths=[internal/family internal/config internal/reviewer]
+tool    git_read args=[--unified=60 24e1b24...729dee9] command="diff" paths=[internal/tools/git_read.go internal/tools/git_read_test.go docs/planning/specs/09-read-only-tool-contract.md docs/planning/specs/10-repository-confinement.md]
+tool    git_read args=[--unified=60 24e1b24...729dee9] command="diff" paths=[internal/cli/models.go internal/cli/tiers.go internal/cli/request.go internal/cli/review.go internal/cli/run.go internal/cli/usage.go internal/cli/version.go internal/diag/diag.go]
+tool    git_read args=[--unified=30 24e1b24...729dee9] command="diff" paths=[docs/planning/SPECS.md go.mod go.sum .github/workflows/ci.yml]
+turn 3  tools=4  in=78486 out=910  $0.1679  11.1s
+tool    git_read args=[--unified=80 24e1b24...729dee9] command="diff" paths=[internal/reviewer/chain.go internal/reviewer/resolve.go internal/reviewer/run.go internal/reviewer/resolve_test.go internal/reviewer/chain_test.go internal/reviewer/run_test.go internal/reviewer/loop_test.go internal/reviewer/turn_test.go]
+tool    git_read args=[--unified=30 24e1b24...729dee9] command="diff" paths=[internal/cli/selection_test.go internal/cli/request_test.go internal/cli/models_test.go internal/cli/tiers_test.go]
+tool    git_read args=[--unified=30 24e1b24...729dee9] command="diff" paths=[internal/cli/review_test.go internal/cli/run_test.go internal/cli/preflight_test.go internal/cli/loop_test.go internal/cli/roundtrip_test.go internal/cli/stdin_test.go internal/cli/stdout_test.go internal/cli/exit_test.go internal/cli/export_test.go internal/cli/version_test.go]
+tool    git_read args=[--unified=30 24e1b24...729dee9] command="diff" paths=[docs/epics/epic-3-reviewer-selection-integration docs/epics/log.md docs/epics/index.md]
+turn 4  tools=4  in=249029 out=1499  $0.3916  16.4s
+tool    git_read args=[--unified=100 24e1b24...729dee9] command="diff" paths=[internal/cli/models_test.go]
+tool    git_read args=[--unified=100 24e1b24...729dee9] command="diff" paths=[internal/cli/tiers_test.go internal/cli/selection_test.go]
+tool    git_read args=[--unified=100 24e1b24...729dee9] command="diff" paths=[internal/reviewer/catalog_test.go internal/reviewer/chain_test.go]
+tool    git_read args=[--unified=100 24e1b24...729dee9] command="diff" paths=[internal/cli/version_test.go internal/cli/run_test.go internal/cli/loop_test.go]
+turn 5  tools=0  in=454619 out=4384  $0.8374  55.0s
+done    turns=5  in=454619 out=4384  $0.8374  1m38s  stop=stop

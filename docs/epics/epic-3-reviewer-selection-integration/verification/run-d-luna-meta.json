@@ -1,0 +1,11 @@
+{
+  "label": "d-luna",
+  "model": "openai-codex/gpt-5.6-luna",
+  "command": "external-reviewer review --allow . --model openai-codex/gpt-5.6-luna <repo> < request-diff.json",
+  "started_utc": "2026-08-13T11:55:09.9451066Z",
+  "ended_utc": "2026-08-13T11:56:46.7911151Z",
+  "wall_clock_seconds": 96.85,
+  "exit_code": 0,
+  "stdout_bytes": 2050,
+  "stderr_bytes": 2736
+}
