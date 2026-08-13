@@ -2,6 +2,30 @@
 
 ## 2026-08-13
 
+* **Epic 3, issue 07 PR opened**: [Add the models command](/epic-3-reviewer-selection-integration/issues/07-models-command.md)
+  ([#66](https://github.com/julienlegoux/external-reviewer/issues/66)) — [PR #89](https://github.com/julienlegoux/external-reviewer/pull/89)
+  opened against `develop` from branch `issue-07-models-command`. `models [--provider
+  <id>] [--refresh] [--all]` lists the intersection of the catalog, this machine's
+  credentials (`Models.GetAuth`, probed once per provider) and the family rule
+  (`family.DefaultExclusion()`), with price and context window per row — the query half
+  of discovery that answers "what could be" beside `tiers`' "what is configured". `--all`
+  drops the credential and family filters and marks what it would otherwise have hidden;
+  `--refresh` calls `Refresh` once per refreshable provider and turns a failure into a
+  `warn` line rather than a failed query; a credentialed, refreshable provider with an
+  empty catalog is named as needing `--refresh` rather than rendering as absent. Reuses
+  `tiers`' `stop=answered` done-line word rather than minting a new one — renamed to
+  `queryAnsweredStopReason` in `internal/cli/tiers.go`, `SPECS.md` amended to say the
+  word is shared by both commands. 726 changed lines against a ~500-line M target
+  (~1.45x), almost entirely the two new files; full suite green natively and via
+  `scripts/test-remote.sh -race` (`EXTERNAL_REVIEWER_TEST_DIR=ci/external-reviewer-issue66`,
+  `gcc` blocked natively exactly as drift record 02 describes); `golangci-lint` clean. No
+  new drift — the known bare-name-provider defect
+  ([drift 04](/epic-3-reviewer-selection-integration/drift/04-github-copilot-tiers-resolve-to-no-reviewer.md))
+  surfaces through this command's `excluded by family: unknown` note exactly as designed,
+  reported in the PR body rather than fixed, per that record's own disposition. Also
+  reconciled issue 06 to `done` at the start of this run (PR #87 merged, issue #65
+  already closed, bundle and its `status: pr-open` label still stale).
+
 * **Issue 06 done**: [06 — Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
   ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
   merged into `develop`; issue #65 already closed. Reconciled by issue 07's run — the
