@@ -2,6 +2,24 @@
 
 ## 2026-08-13
 
+* **Issue 01 done**: [01 Amend EPIC_3 with the scope its issues will
+  ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
+  [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) merged into
+  `develop`.
+
+* **PR opened**: [01 Amend EPIC_3 with the scope its issues will
+  ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
+  [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) against
+  `develop`. `EPIC_3.md`'s Scope and Acceptance criteria gain the `git_read` `paths`
+  parameter and the JSON request object / `--system` / `version`, already cut into
+  issues 01 and 08 but never named in the epic; `SPECS.md:275`'s stop-reason miscount
+  ("five" for a list of six) is fixed alongside. 4 files, 20 insertions / 6 deletions
+  against an S target.
+
+* **Started**: [01 Amend EPIC_3 with the scope its issues will
+  ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
+  branch `issue-01-epic0-plan-repair`.
+
 * **Issues created**: [Epic 0: Epic 3 plan repair](/epic-0-epic-3-plan-repair/EPIC_0.md)
   (#70) cut into four issues on milestone 5, all four native sub-issues of #70:
   [01](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md)
