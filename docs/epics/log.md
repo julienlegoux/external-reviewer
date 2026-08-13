@@ -2,6 +2,19 @@
 
 ## 2026-08-13
 
+* **Epic 3, issue 01 PR opened**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
+  ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) opened as
+  [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81) from branch
+  `issue-60-git-read-path-scoped-diff`. `git_read` gains a **`paths`** parameter: every
+  entry resolved through `Scope.Resolve` before the command is built, under the same three
+  rules and the same wording as a `<rev>:<path>` object, then used as the pathspecs in
+  place of the granted subtrees — a narrowing of the grant, never a widening, and refused
+  alongside an object because git takes pathspecs or an object and not both. Verified by
+  mutation: dropping the resolution makes the out-of-allow-list test fail carrying the
+  ungranted subtree's own diff. SPECS' tool table, specs 09 and specs 10's pathspec bullet
+  amended to match. No drift record — this is the gap specs 10 left, not a departure from
+  it.
+
 * **Retirement**: Epic 0 (Epic 3 plan repair) retired - 4 issues, milestone 5 closed.
   Consumed reports docs/reviews/2026-08-13-issues-epic-3.md. Fixed: repaired Epic 3's plan
   against all eight review findings — the scope EPIC_3 never named for its own issues 01
