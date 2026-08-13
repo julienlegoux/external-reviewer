@@ -3,13 +3,13 @@ type: Issue
 title: "Repair Epic 3's cross-repository pointer, dependency edges and the models criterion"
 description: "Qualify issue 10's gh_issue so no consumer resolves it locally, add the three missing dependency edges, and give issue 07 a criterion for the silently empty catalog."
 tags: [epic-0]
-timestamp: 2026-08-13T05:50:38Z
+timestamp: 2026-08-13T06:20:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/72
 epic: 0
 issue: 02
 slug: epic-3-issue-corrections
 size: S
-status: open
+status: in-progress
 gh_issue: 72
 depends_on: []
 ---

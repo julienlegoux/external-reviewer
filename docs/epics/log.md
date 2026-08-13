@@ -32,6 +32,11 @@
   own split line, which is the defect issue 03 exists to fix in Epic 3 and would have been
   hypocritical to reproduce here.
 
+* **Issue 02 started**: work began on
+  [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+  ([#72](https://github.com/julienlegoux/external-reviewer/issues/72)), branch
+  `issue-72-epic-3-issue-corrections`.
+
 * **Creation**: Established [Epic 0: Epic 3 plan repair](https://github.com/julienlegoux/external-reviewer/issues/70)
   by converting [the Epic 3 issue review](../reviews/2026-08-13-issues-epic-3.md) —
   milestone 5, issue [#70](https://github.com/julienlegoux/external-reviewer/issues/70).
