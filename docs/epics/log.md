@@ -2,6 +2,16 @@
 
 ## 2026-08-13
 
+* **Epic 3, issue 04 pr-open**: [Resolve a tier to a reachable, allowed model](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md)
+  ([#63](https://github.com/julienlegoux/external-reviewer/issues/63)) — [PR #85](https://github.com/julienlegoux/external-reviewer/pull/85)
+  opened against `develop`. The four-layer precedence chain as `reviewer.Assigner`, the
+  family gate sequenced between `GetModel` and `GetAuth` inside `Resolver`, and
+  `reviewer.Chain` composing them; `NoReviewerError` now carries which rule refused, and a
+  malformed `provider/id` is a third error class that is deliberately not `ErrNoReviewer`.
+  Refresh-before-lookup verified by mutation. One drift record written — a `github-copilot`
+  tier resolves to no reviewer because all 25 of that provider's ids are bare, ten of them
+  Anthropic's, so the fix is a specs 04 rule rather than a widening of this PR.
+
 * **Issue 02 done**: [02 — Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
   ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
   merged into `develop`. Reconciled from issue 04's branch, which depends on it;
