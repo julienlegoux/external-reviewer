@@ -3,13 +3,13 @@ type: Issue
 title: "Re-grade Epic 3's issue sizes and sync the recorded surfaces"
 description: "Replace the uniform M and the boilerplate PR-size note with graded sizes and per-issue notes, then make issues/index.md, docs/epics/index.md, log.md and GitHub #60 say what was actually cut."
 tags: [epic-0]
-timestamp: 2026-08-13T05:50:38Z
+timestamp: 2026-08-13T07:05:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/73
 epic: 0
 issue: 03
 slug: epic-3-sizes-and-surfaces
 size: M
-status: open
+status: in-progress
 gh_issue: 73
 depends_on: [2]
 ---
