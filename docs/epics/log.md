@@ -2,6 +2,44 @@
 
 ## 2026-08-13
 
+* **Creation**: Established [Epic 0: Epic 3 plan repair](https://github.com/julienlegoux/external-reviewer/issues/70)
+  by converting [the Epic 3 issue review](../reviews/2026-08-13-issues-epic-3.md) —
+  milestone 5, issue [#70](https://github.com/julienlegoux/external-reviewer/issues/70).
+  The
+  remediation lane, which runs before [Epic 3](/epic-3-reviewer-selection-integration/EPIC_3.md)
+  is implemented and is retired once every issue is `done` and its milestone closed.
+  **Consumed reports**: `docs/reviews/2026-08-13-issues-epic-3.md`.
+
+  **8 findings extracted, 0 dropped as stale, 7 repairs.** Staleness was checked rather
+  than assumed: no commit touched `docs/epics/` or `docs/planning/` between the report and
+  this conversion — the last is `72d9350`, which is the tree the report reviewed — every
+  cited `file:line` was re-verified against the working tree, `gh issue list --state all`
+  covers none of the eight, and DRIFT has accepted none of them. Nothing was recorded
+  `won't-fix`.
+
+  The compression is small because the findings are mostly one-of-a-kind rather than one
+  defect replicated: only two pairs group (the two dependency-graph findings, and the two
+  outward-facing surfaces). Where it does bite is the sizing sweep — one repair covering
+  ten issue files and the index — and the seventh repair is not a finding at all but the
+  report's own first open question, promoted: `specs/05:118-122` and `EPIC_3.md:130-132`
+  both promise a README that states v1's OpenAI-only validation boundary, and this
+  repository has no `README.md`.
+
+  **Two riders were folded in rather than filed**, both edits rather than decisions, both
+  in files a repair already opens: `SPECS.md:275` introduces the non-model stop reasons as
+  "one of five fixed CLI words" and lists six, and issue 10's invocation template says
+  nothing about whether issue 09 exposes a cap on the command line.
+
+  **One thing this lane cannot reach.** `_shared/pipeline-interfaces.md` defines `gh_issue`
+  as an unqualified integer, with no way to express a cross-repository issue — which is how
+  issue 10 came to point `gh_issue: 37` at a merged Epic-0 issue in *this* repository while
+  meaning `julienlegoux/skills#37`. Repair B works around it locally with a qualified value;
+  the schema lives in `julienlegoux/skills` and gets filed there once this lane lands.
+
+  `docs/REPORT_1.md` and `docs/REPORT_2.md` were **not** re-read: the first was applied
+  2026-08-09 as a revision to the twelve issues of Epics 1 and 2, the second consumed by
+  the previous Epic 0 (retirement notice, 2026-08-11).
+
 * **Issues created**: [Epic 3: Reviewer selection and pipeline integration](/epic-3-reviewer-selection-integration/EPIC_3.md)
   (#3) cut into eleven issues, all sized S or M — nothing needed the L ceiling. In build
   order: [01](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
