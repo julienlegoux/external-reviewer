@@ -2,6 +2,18 @@
 
 ## 2026-08-13
 
+* **Epic 3, epic-adjacent**: the three current `openai-codex` models — `gpt-5.6-sol`,
+  `gpt-5.6-terra` and `gpt-5.6-luna`, the user's own definitions verbatim — are registered
+  locally onto kern-link v0.1.1's `openai-codex` provider, because the models exist and the
+  release carrying them does not. Not an issue of this epic and no issue file was cut; the
+  departure is recorded as
+  [drift 06](/epic-3-reviewer-selection-integration/drift/06-gpt-5-6-models-registered-locally.md),
+  whose revisit trigger is a deletion: when a kern-link release ships these ids, the local
+  registration goes rather than being kept beside the upstream one. Registration goes
+  through `ai.MutableModels.SetProvider` with a decorator over the real provider, so auth
+  and the wire adapter stay kern-link's and the embedded catalog is added to, never
+  shadowed. The pin is untouched.
+
 * **Epic 3, issue 10 pr-open**: [Swap review-interfaces.md from opencode to external-reviewer](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md)
   ([julienlegoux/skills#37](https://github.com/julienlegoux/skills/issues/37)) —
   [PR julienlegoux/skills#42](https://github.com/julienlegoux/skills/pull/42) opened against

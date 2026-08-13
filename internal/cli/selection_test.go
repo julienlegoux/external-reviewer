@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -628,16 +629,23 @@ func TestUsage_ListsExactlyTheFlagsThatWork(t *testing.T) {
 }
 
 // TestBinary_NamesNoProviderOutsideTheFamilyTables is the issue's grep
-// criterion as a test, so it keeps holding: after this PR the mechanism knows
-// no vendor. The family classifier's data table is the one place a provider
-// id may be written down, because classifying one is its entire job.
+// criterion as a test, so it keeps holding: the *mechanism* knows no vendor.
+// A provider id may only be written down in a data table whose entire job is
+// to name providers — the family classifier's, and the local catalog
+// registration that carries the model definitions kern-link v0.1.1's embedded
+// catalog predates (drift record 06). Neither is selection: no resolution
+// path, flag default or fallback names a provider, which is what the
+// criterion is about.
 //
 // Test files are exempt — a fixture has to name something reachable — and so
 // are dot-directories, which on the development machine hold sibling git
 // worktrees of this same repository.
 func TestBinary_NamesNoProviderOutsideTheFamilyTables(t *testing.T) {
 	root := filepath.Join("..", "..")
-	allowed := filepath.Join(root, "internal", "family", "vendors.go")
+	allowed := []string{
+		filepath.Join(root, "internal", "family", "vendors.go"),
+		filepath.Join(root, "internal", "reviewer", "catalog.go"),
+	}
 
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -652,7 +660,7 @@ func TestBinary_NamesNoProviderOutsideTheFamilyTables(t *testing.T) {
 			}
 			return nil
 		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") || path == allowed {
+		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") || slices.Contains(allowed, path) {
 			return nil
 		}
 		source, err := os.ReadFile(path) //nolint:gosec // G304/G122: a test reads this module's own source tree, whose paths come from walking it
@@ -660,7 +668,7 @@ func TestBinary_NamesNoProviderOutsideTheFamilyTables(t *testing.T) {
 			return err
 		}
 		if bytes.Contains(source, []byte("openai-codex")) {
-			t.Errorf("%s names a provider; only %s may", path, allowed)
+			t.Errorf("%s names a provider; only %s may", path, strings.Join(allowed, " and "))
 		}
 		return nil
 	})
