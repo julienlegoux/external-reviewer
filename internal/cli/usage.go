@@ -6,10 +6,10 @@ import (
 )
 
 // usageText documents the subset of the CLI grammar this binary accepts
-// today: SPECS fixes a larger surface (the models, tiers and version
-// commands, the JSON request object and --system) that the remaining issues
-// add. Only what is accepted is listed here, so the message never promises a
-// flag that would itself be a usage error.
+// today: SPECS fixes a larger surface (the version command, the JSON request
+// object and --system) that the remaining issues add. Only what is accepted
+// is listed here, so the message never promises a flag that would itself be
+// a usage error.
 const usageText = `usage: external-reviewer <command> [flags] [args]
 
 commands:
@@ -47,6 +47,26 @@ commands:
       resolves. Exits 2 only when it could not be answered at all: a
       malformed invocation, malformed config, or a credential store that
       cannot be located.
+
+  models [--provider <id>] [--refresh] [--all]
+      List the models this machine can review with: the intersection of the
+      catalog, what this machine's credentials reach, and what the family
+      rule allows, with price (per million tokens) and context window per
+      row. The report is on stdout; warnings and diagnostics are on stderr.
+
+      --provider restricts the listing to one provider id; a name no
+      provider matches is a usage error.
+
+      --refresh asks dynamic providers to fetch their current model list
+      first — opt-in, because it costs network calls.
+
+      --all drops the credential and family filters and shows the whole
+      catalog, marking each row the default view would otherwise have
+      dropped and why.
+
+      Exits 0 whenever the query was answered, including when nothing is
+      left to show. Exits 2 only when it could not be answered at all: a
+      malformed invocation, or a credential store that cannot be located.
 
   help | --help | -h
       Print this message.

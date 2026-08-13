@@ -283,9 +283,10 @@ different questions and a usage error can never carry a model's own reason:
   message, a report that could not be written to stdout), `bounds` (the run reached its
   own turn, cost or elapsed ceiling — exit `0` with the report the run had, since a bounded
   run neither failed nor was interrupted; a `warn` line names which of the three bit), and
-  `answered` (the `tiers` command's own success path — exit `0`, whether or not any tier
-  resolved, since a query that reports "nothing resolves" answered the question asked of
-  it; `no_reviewer` stays reserved for `review`'s *own* reviewer never being reached).
+  `answered` (the `tiers` and `models` commands' own success path — exit `0`, whether or
+  not any tier resolved or any model row was left to print, since a query that reports
+  "nothing resolves" or "nothing to show" answered the question asked of it;
+  `no_reviewer` stays reserved for `review`'s *own* reviewer never being reached).
 
 This is a union that only grows: a later epic adds a value no code can produce yet rather
 than repurposing one of the above. `bounds` was added by Epic 2's loop
@@ -293,7 +294,10 @@ than repurposing one of the above. `bounds` was added by Epic 2's loop
 which ships the ceiling as a seam with **no values set** — so no invocation can produce
 the word yet, and Epic 3 sets the numbers that make it reachable. `answered` was added by
 [issue 06](../epics/epic-3-reviewer-selection-integration/issues/06-tiers-command.md), the
-`tiers` command's own success path.
+`tiers` command's own success path, and reused rather than re-minted by
+[issue 07](../epics/epic-3-reviewer-selection-integration/issues/07-models-command.md)'s
+`models` command — the same shape of question, a query that never tries to reach a model
+at all.
 
 **Exit codes turn on whether a reviewer was ever reachable**
 ([decision](/specs/13-error-handling-and-failure-classification.md)). Not reached → `1`,
