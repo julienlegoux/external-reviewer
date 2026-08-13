@@ -47,7 +47,9 @@ The command is one of log, diff, show or status — nothing else, so no commit, 
 
 History is confined exactly as the working tree is. log, diff, show and status are all scoped to the subtrees this run was granted, appended as pathspecs, so a commit that only touched an ungranted subtree is not reported. An argument of the form <rev>:<path> — the form that reads a file's contents at a revision, and the index forms :<path> and :<stage>:<path> — has its path checked against those same subtrees and against the sensitive-file floor before git is run at all; a refused path never reaches git. Any revision is allowed: HEAD, a branch, a tag, a SHA, a range.
 
-Two arguments are refused: a literal -- (this tool appends the granted subtrees as pathspecs itself) and --output (this run writes no files). When one argument names a <rev>:<path> object, all of them must, since git cannot take pathspecs alongside a blob.
+The paths parameter narrows a read to part of what was granted, and is how a diff is scoped to a subtree: an array of repo-relative, /-separated paths, checked against the granted subtrees and the sensitive-file floor exactly as a <rev>:<path> is, then used as the pathspecs in place of the whole grant. {"command": "diff", "args": ["--unified=0", "HEAD~3..HEAD"], "paths": ["internal/confine"]} diffs that subtree alone rather than everything. Leave paths out and the whole granted surface is read, which is what hits the line cap on a large change. It cannot be combined with a <rev>:<path> object, since git takes pathspecs or an object and not both.
+
+Two arguments are refused: a literal -- (this tool appends the pathspecs itself, and paths is how to choose them) and --output (this run writes no files). When one argument names a <rev>:<path> object, all of them must, since git cannot take pathspecs alongside a blob.
 
 At most 2000 lines are returned. When there are more, the last line reads "[truncated: showing 2000 of N lines]" with the real total — narrow the request with -n, --stat, or a pathspec-free argument like --oneline.`
 
@@ -67,6 +69,11 @@ var gitReadParameters = ai.JSONSchema(`{
       "type": "array",
       "items": {"type": "string"},
       "description": "Arguments passed to git as an argv array, one element per argument. Never a single string: there is no shell to split one."
+    },
+    "paths": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Repo-relative, /-separated paths to narrow this read to, inside the subtrees this run was granted. This is how a diff is scoped to a subtree. Omit it to read the whole granted surface."
     }
   },
   "required": ["command"],
@@ -107,7 +114,11 @@ func gitRead(ctx context.Context, scope *confine.Scope, repoPath string, argumen
 	if err != nil {
 		return errorResult(err.Error())
 	}
-	argv, err := gitReadArgv(scope, command, args)
+	paths, err := stringsArgument(arguments, "paths")
+	if err != nil {
+		return errorResult(err.Error())
+	}
+	argv, err := gitReadArgv(scope, command, args, paths)
 	if err != nil {
 		return errorResult(err.Error())
 	}
@@ -138,7 +149,12 @@ func gitReadCommand(arguments map[string]any) (string, error) {
 // gitReadArgv turns the model's arguments into the argv git is handed, or
 // refuses. Nothing here runs git: every rule is decided on the strings, which
 // is what makes "a refused path never reaches git" true rather than likely.
-func gitReadArgv(scope *confine.Scope, command string, args []string) ([]string, error) {
+func gitReadArgv(scope *confine.Scope, command string, args, paths []string) ([]string, error) {
+	pathspecs, err := gitReadPathspecs(scope, paths)
+	if err != nil {
+		return nil, err
+	}
+
 	objects := 0
 	commits := 0
 	for _, arg := range args {
@@ -161,7 +177,12 @@ func gitReadArgv(scope *confine.Scope, command string, args []string) ([]string,
 
 	argv := append([]string{command}, args...)
 	if objects == 0 {
-		return append(append(argv, pathspecSeparator), scope.Allowed()...), nil
+		return append(append(argv, pathspecSeparator), pathspecs...), nil
+	}
+	if len(paths) > 0 {
+		return nil, errors.New("git_read cannot take paths alongside a <rev>:<path> object, " +
+			"because git takes pathspecs or an object and not both; ask for the object on its own, " +
+			"which already names the one path it reads")
 	}
 	if commits > 0 {
 		// git takes pathspecs *or* a blob pair, never both — `git diff <blob>
@@ -174,6 +195,37 @@ func gitReadArgv(scope *confine.Scope, command string, args []string) ([]string,
 			command, strings.Join(scope.Allowed(), ", "))
 	}
 	return argv, nil
+}
+
+// gitReadPathspecs decides what follows the single `--` this tool owns: the
+// granted subtrees when the model named no paths, and the paths it named when
+// it did. That is the whole of the parameter — a path-scoped diff was
+// unreachable not because scoping was refused but because there was no way to
+// spell one, the literal `--` being reserved and everything before it read by
+// git as a revision.
+//
+// Every entry goes through the same gate as a <rev>:<path> object, before a
+// command exists, so what comes back is always a subset of the grant: a
+// narrowing, never a widening. That is also what makes handing the model's own
+// strings to git safe where pathspec magic is concerned — `:(exclude)…`, `:/…`
+// and a wildcard are all just strings to Scope.Resolve, and any of them that
+// does not name something inside a granted subtree is refused. The one grant
+// they survive is `.`, which has nothing narrower to reach past; a pathspec
+// cannot leave the repository at all.
+func gitReadPathspecs(scope *confine.Scope, paths []string) ([]string, error) {
+	if len(paths) == 0 {
+		return scope.Allowed(), nil
+	}
+
+	pathspecs := make([]string, 0, len(paths))
+	for _, wirePath := range paths {
+		cleaned, err := scope.Resolve(wirePath)
+		if err != nil {
+			return nil, pathsRefusal(wirePath, err, scope.Allowed())
+		}
+		pathspecs = append(pathspecs, cleaned)
+	}
+	return pathspecs, nil
 }
 
 // allowedArgument refuses the two arguments that reach past the confinement
@@ -247,6 +299,14 @@ func objectRefusal(arg, wirePath string, err error, allowed []string) error {
 		return fmt.Errorf("%s is refused: %q is not a path inside the repository, "+
 			"which is repo-relative and /-separated whichever operating system this runs on", arg, wirePath)
 	}
+}
+
+// pathsRefusal states which of the three rules refused a paths entry, in
+// objectRefusal's own words. The rules are the same three rules, so a reviewer
+// that learned "widen --allow" from an object argument reads it identically
+// here rather than having to learn a second vocabulary for the same boundary.
+func pathsRefusal(wirePath string, err error, allowed []string) error {
+	return objectRefusal(fmt.Sprintf("the paths entry %q", wirePath), wirePath, err, allowed)
 }
 
 // gitFailure renders a git that would not run, or ran and refused, as text the

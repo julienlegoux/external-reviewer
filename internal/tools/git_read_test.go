@@ -234,6 +234,68 @@ func TestGitRead_RefusesMixingAnObjectWithACommit(t *testing.T) {
 	mentions(t, result, "pathspec")
 }
 
+// TestGitRead_RefusesAPathsEntryOutsideTheAllowedSubtreesWithoutReachingGit is
+// the first rule over the new parameter, and it is asserted with PATH emptied
+// because the point is not the wording alone: a pathspec the allow-list never
+// granted must be decided before a command exists to run.
+func TestGitRead_RefusesAPathsEntryOutsideTheAllowedSubtreesWithoutReachingGit(t *testing.T) {
+	withoutGitOnPath(t)
+	tool := newGitReadTool(t, gitReadTree(t, gitReadFiles()), "docs")
+
+	result := tool.Handler(t.Context(), map[string]any{"command": "diff", "paths": []any{"secret"}})
+
+	mentions(t, result, "--allow", "secret")
+	if strings.Contains(result.Text, "floor") {
+		t.Errorf("the allow-list refusal is spelled as the floor refusal:\n%s", result.Text)
+	}
+}
+
+// TestGitRead_RefusesAPathsEntryOnTheSensitiveFileFloor is the second rule, and
+// `--allow .` is the fixture on purpose: the floor is what is left when the
+// allow-list grants everything, and a pathspec is how a diff would otherwise
+// print a credential's contents.
+func TestGitRead_RefusesAPathsEntryOnTheSensitiveFileFloor(t *testing.T) {
+	withoutGitOnPath(t)
+	tool := newGitReadTool(t, gitReadTree(t, gitReadFiles()), ".")
+
+	for _, entry := range []string{".env", ".git/config"} {
+		result := tool.Handler(t.Context(), map[string]any{"command": "diff", "paths": []any{entry}})
+
+		mentions(t, result, "floor")
+	}
+}
+
+// TestGitRead_RefusesAPathsEntrySpelledAsSomethingOtherThanAWirePath is the
+// third rule. All three spellings are refused on both matrix OSes, which is the
+// whole reason the vocabulary is checked above *os.Root: `C:\Windows\win.ini`
+// is an absolute path on Windows and an ordinary filename on Linux.
+func TestGitRead_RefusesAPathsEntrySpelledAsSomethingOtherThanAWirePath(t *testing.T) {
+	withoutGitOnPath(t)
+	tool := newGitReadTool(t, gitReadTree(t, gitReadFiles()), ".")
+
+	for _, entry := range []string{"../outside", "/etc/passwd", `C:\Windows\win.ini`} {
+		result := tool.Handler(t.Context(), map[string]any{"command": "diff", "paths": []any{entry}})
+
+		mentions(t, result, "repository")
+	}
+}
+
+// TestGitRead_RefusesPathsAlongsideAnObject is the same bookkeeping that
+// refuses mixing an object with a commit: git takes pathspecs or an object and
+// never both, so a call that named both would have to drop one silently.
+func TestGitRead_RefusesPathsAlongsideAnObject(t *testing.T) {
+	withoutGitOnPath(t)
+	tool := newGitReadTool(t, gitReadTree(t, gitReadFiles()), ".")
+
+	result := tool.Handler(t.Context(), map[string]any{
+		"command": "show",
+		"args":    []any{"HEAD:docs/notes.md"},
+		"paths":   []any{"docs"},
+	})
+
+	mentions(t, result, "pathspec", "object")
+}
+
 func TestGitRead_DeclarationIsAWireContract(t *testing.T) {
 	tool := newGitReadTool(t, gitReadTree(t, gitReadFiles()), ".")
 	declaration := tool.Declaration
@@ -241,7 +303,7 @@ func TestGitRead_DeclarationIsAWireContract(t *testing.T) {
 	if declaration.Name != "git_read" {
 		t.Errorf("tool name is %q, want %q", declaration.Name, "git_read")
 	}
-	for _, mention := range []string{"log", "diff", "show", "status", "array"} {
+	for _, mention := range []string{"log", "diff", "show", "status", "array", "paths parameter"} {
 		if !strings.Contains(declaration.Description, mention) {
 			t.Errorf("the tool description never mentions %q:\n%s", mention, declaration.Description)
 		}
@@ -263,6 +325,13 @@ func TestGitRead_DeclarationIsAWireContract(t *testing.T) {
 					Type string `json:"type"`
 				} `json:"items"`
 			} `json:"args"`
+			Paths struct {
+				Type        string `json:"type"`
+				Description string `json:"description"`
+				Items       struct {
+					Type string `json:"type"`
+				} `json:"items"`
+			} `json:"paths"`
 		} `json:"properties"`
 	}
 	if err := json.Unmarshal(declaration.Parameters, &schema); err != nil {
@@ -280,10 +349,20 @@ func TestGitRead_DeclarationIsAWireContract(t *testing.T) {
 	if schema.Properties.Args.Items.Type != "string" {
 		t.Errorf("the args items are of type %q, want %q", schema.Properties.Args.Items.Type, "string")
 	}
+	if schema.Properties.Paths.Type != "array" {
+		t.Errorf("the paths parameter is of type %q, want %q", schema.Properties.Paths.Type, "array")
+	}
+	if schema.Properties.Paths.Items.Type != "string" {
+		t.Errorf("the paths items are of type %q, want %q", schema.Properties.Paths.Items.Type, "string")
+	}
 	if !slices.Contains(schema.Required, "command") {
 		t.Errorf("the schema requires %q, want command among them", schema.Required)
 	}
-	if schema.Properties.Command.Description == "" || schema.Properties.Args.Description == "" {
+	if slices.Contains(schema.Required, "paths") {
+		t.Errorf("the schema requires %q, want paths optional — its absence is today's whole-grant behaviour", schema.Required)
+	}
+	if schema.Properties.Command.Description == "" || schema.Properties.Args.Description == "" ||
+		schema.Properties.Paths.Description == "" {
 		t.Error("a parameter carries no description")
 	}
 }
@@ -453,6 +532,53 @@ func TestGitRead_ScopesStatusToTheGrantedSubtrees(t *testing.T) {
 	}
 	if strings.Contains(result.Text, "secret/creds.txt") {
 		t.Errorf("status named a path from a subtree no --allow granted:\n%s", result.Text)
+	}
+}
+
+// TestGitRead_PathsScopesTheDiffToOneGrantedSubtree is the gap this parameter
+// closes. Before it, the only diff a reviewer could obtain was the whole
+// granted surface — which is exactly the read that hits the line cap — because
+// `diff <range> -- <path>` is refused and `diff <range> <path>` makes the path
+// a revision.
+func TestGitRead_PathsScopesTheDiffToOneGrantedSubtree(t *testing.T) {
+	root := gitReadRepo(t, nil)
+	tool := newGitReadTool(t, root, ".")
+
+	result := call(t, tool, map[string]any{
+		"command": "diff",
+		"args":    []any{"--unified=0", "HEAD~2"},
+		"paths":   []any{"docs"},
+	})
+
+	if result.IsError {
+		t.Fatalf("a diff scoped inside the grant was refused: %s", result.Text)
+	}
+	if !strings.Contains(result.Text, "docs/notes.md") {
+		t.Errorf("the scoped diff dropped the subtree it was scoped to:\n%s", result.Text)
+	}
+	if strings.Contains(result.Text, "secret/creds.txt") {
+		t.Errorf("the scoped diff reported a subtree paths never named:\n%s", result.Text)
+	}
+}
+
+// TestGitRead_PathsNarrowTheGrantAndNeverWidenIt is the same refusal as
+// TestGitRead_RefusesAPathsEntryOutsideTheAllowedSubtreesWithoutReachingGit,
+// asserted where the mutation is visible: git is on PATH here on purpose, so
+// deleting the resolution over `paths` does not merely change the wording — the
+// call succeeds and this test fails carrying the ungranted subtree's own diff.
+func TestGitRead_PathsNarrowTheGrantAndNeverWidenIt(t *testing.T) {
+	root := gitReadRepo(t, nil)
+	tool := newGitReadTool(t, root, "docs")
+
+	result := tool.Handler(t.Context(), map[string]any{
+		"command": "diff",
+		"args":    []any{"HEAD~2"},
+		"paths":   []any{"secret"},
+	})
+
+	mentions(t, result, "--allow", "secret")
+	if strings.Contains(result.Text, "rotated") {
+		t.Errorf("the ungranted subtree's own diff came back:\n%s", result.Text)
 	}
 }
 

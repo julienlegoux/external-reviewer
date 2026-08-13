@@ -9,7 +9,58 @@
   `Exclusion`, proved over all 1042 models of the 35 embedded providers. Two drift records
   written — `azure-openai-responses` classified by rule 1 rather than the reseller rule, and
   the native `-race` command not running because `gcc.exe` draws an Application Control
-  fail-fast.
+  fail-fast. That second record carries the root cause behind the `gcc` refusal issue 03
+  reported the same day: `0xC0000602` on a one-line C file, so no Go build flag can
+  re-roll it.
+
+* **Issue 03 done**: [03 — Read the machine-local tier assignment TOML](https://github.com/julienlegoux/external-reviewer/issues/62)
+  ([#62](https://github.com/julienlegoux/external-reviewer/issues/62)) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80)
+  merged into `develop`. Reconciled here while merging `develop` into issue 02's branch to
+  resolve a conflict — `03-tier-assignment-config-file.md` and `issues/index.md` still read
+  `pr-open`.
+
+* **Issue 01 done**: [01 — Make a path-scoped diff reachable through git_read](https://github.com/julienlegoux/external-reviewer/issues/60)
+  (#60) — [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81) merged into
+  `develop`. Reconciled here while merging `develop` into issue 03's branch to resolve a
+  conflict — `01-git-read-path-scoped-diff.md` and `issues/index.md` still read `pr-open`.
+
+* **PR opened**: Epic 3 issue 03 — [Read the machine-local tier assignment TOML](https://github.com/julienlegoux/external-reviewer/issues/62)
+  (#62) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80) against
+  `develop`, from branch `issue-03-epic3-reviewer-selection`. Adds `internal/config`:
+  `Locate()`/`LoadFile()`/`Load()` find and decode the hand-written, never-committed
+  tier assignment TOML — `EXTERNAL_REVIEWER_CONFIG` or `os.UserConfigDir()`, then
+  `[tiers.<name>]` tables into `provider`/`model` assignments verbatim, with
+  `MetaData.Undecoded()` driving the unrecognised-key warning in SPECS' exact wording.
+  Also adds the project's second and last non-stdlib dependency,
+  `github.com/BurntSushi/toml v1.6.0`. 441 changed lines against a ~500-line M target.
+
+  Two things found by the red-green loop rather than assumed: printing the OS path in
+  the malformed-TOML error with `%q` would have escaped a Windows path's backslashes,
+  contradicting CONVENTIONS' "printed as the OS renders it" — fixed to `%s`. And a
+  typo'd key (e.g. `models` for `model`) alongside the resulting missing `model` would
+  otherwise fire two warnings for one mistake; the missing-required-key warning is now
+  suppressed for a tier that already carries an unrecognised-key warning, matching the
+  issue's "exactly one warning" criterion.
+
+  **No native `-race` run this session**: `gcc.exe` itself is currently refused by
+  Smart App Control (exit 127, no output, even on `gcc --version`), a step beyond the
+  per-test-binary hash blocking DRIFT already documents. Verified instead through the
+  documented fallback, `scripts/test-remote.sh` — full suite green, `-race` included.
+  Not promoted to a new drift record: DRIFT already documents this class of problem and
+  its fallback; this run exercised the fallback rather than proving anything wrong.
+
+* **Epic 3, issue 01 PR opened**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
+  ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) opened as
+  [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81) from branch
+  `issue-60-git-read-path-scoped-diff`. `git_read` gains a **`paths`** parameter: every
+  entry resolved through `Scope.Resolve` before the command is built, under the same three
+  rules and the same wording as a `<rev>:<path>` object, then used as the pathspecs in
+  place of the granted subtrees — a narrowing of the grant, never a widening, and refused
+  alongside an object because git takes pathspecs or an object and not both. Verified by
+  mutation: dropping the resolution makes the out-of-allow-list test fail carrying the
+  ungranted subtree's own diff. SPECS' tool table, specs 09 and specs 10's pathspec bullet
+  amended to match. No drift record — this is the gap specs 10 left, not a departure from
+  it.
 
 * **Retirement**: Epic 0 (Epic 3 plan repair) retired - 4 issues, milestone 5 closed.
   Consumed reports docs/reviews/2026-08-13-issues-epic-3.md. Fixed: repaired Epic 3's plan

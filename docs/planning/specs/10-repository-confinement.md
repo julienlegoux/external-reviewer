@@ -136,7 +136,12 @@ that never touches `*os.Root`. File-level confinement is worthless while that wo
   `git status --porcelain` names every changed path in the repository, including the ones
   the allow-list refuses and the ones the floor exists to hide. It is the one subcommand
   that leaks path names without reading a file, so the standard this bullet sets was not
-  met while it was exempt.
+  met while it was exempt. **Amended 2026-08-13** — the appended pathspecs are the allowed
+  subtrees *by default*; `git_read`'s `paths[]` parameter
+  ([decision 09](/specs/09-read-only-tool-contract.md)) replaces them with entries the
+  model names, each resolved through this same allow-list and floor before the command is
+  built. It narrows and never widens, and it exists because owning the `--` separator, as
+  this bullet requires, is also what made a path-scoped diff unreachable.
 
 **The deny-list survives, demoted.** `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`,
 `*.pfx`, `.npmrc`, `.netrc`, `credentials*` and `.git/` remain refused *within* allowed
