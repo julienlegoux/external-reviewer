@@ -108,6 +108,13 @@ type Resolution struct {
 	// AuthSource is AuthResult.Source: a label like "OAuth" or
 	// "ANTHROPIC_API_KEY", never a secret.
 	AuthSource string
+	// Assignment is which layer of the precedence chain named this model, and
+	// the variable or file it named it in — what the `model` stderr line and
+	// the `tiers` command print, because "why did this tier resolve to that?"
+	// cannot be answered from the provider and id alone. It is set by
+	// [Chain.ResolveTier]; the zero value means the caller named the pair
+	// itself and already knows.
+	Assignment Assignment
 }
 
 // Resolver is the pre-flight that turns a provider and model id into a
