@@ -275,20 +275,25 @@ different questions and a usage error can never carry a model's own reason:
   `ai.AssistantMessage`, spelled exactly as `kern-link` spells it — no translation table
   between the two. `unspecified` is the named fallback for the rare successful message
   whose `StopReason` is itself empty, so `stop=` can never render with nothing after it.
-- **On every termination the model never reaches**, it is one of six fixed CLI words:
+- **On every termination the model never reaches**, it is one of seven fixed CLI words:
   `usage` (a malformed invocation — bad flags, a missing or non-directory repository path,
   an empty prompt), `help` (`help`/`--help`/`-h`), `no_reviewer` (exit `1`: no reviewer was
   ever reachable), `interrupted` (`SIGINT` or a cancelled context), `failed` (reached and
   then unusable for any other reason — a failed turn, a broken credential, an empty final
-  message, a report that could not be written to stdout), and `bounds` (the run reached its
+  message, a report that could not be written to stdout), `bounds` (the run reached its
   own turn, cost or elapsed ceiling — exit `0` with the report the run had, since a bounded
-  run neither failed nor was interrupted; a `warn` line names which of the three bit).
+  run neither failed nor was interrupted; a `warn` line names which of the three bit), and
+  `answered` (the `tiers` command's own success path — exit `0`, whether or not any tier
+  resolved, since a query that reports "nothing resolves" answered the question asked of
+  it; `no_reviewer` stays reserved for `review`'s *own* reviewer never being reached).
 
 This is a union that only grows: a later epic adds a value no code can produce yet rather
 than repurposing one of the above. `bounds` was added by Epic 2's loop
 ([issue 03](../epics/epic-2-read-only-agentic-loop/issues/03-multi-turn-loop-and-dispatch.md)),
 which ships the ceiling as a seam with **no values set** — so no invocation can produce
-the word yet, and Epic 3 sets the numbers that make it reachable.
+the word yet, and Epic 3 sets the numbers that make it reachable. `answered` was added by
+[issue 06](../epics/epic-3-reviewer-selection-integration/issues/06-tiers-command.md), the
+`tiers` command's own success path.
 
 **Exit codes turn on whether a reviewer was ever reachable**
 ([decision](/specs/13-error-handling-and-failure-classification.md)). Not reached → `1`,

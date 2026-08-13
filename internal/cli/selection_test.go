@@ -620,7 +620,7 @@ func TestUsage_ListsExactlyTheFlagsThatWork(t *testing.T) {
 			t.Errorf("usage text promises %s, which is still a usage error:\n%s", absent, usage)
 		}
 	}
-	for _, absent := range []string{"tiers", "models", "version"} {
+	for _, absent := range []string{"models", "version"} {
 		if strings.Contains(usage, "\n  "+absent) {
 			t.Errorf("usage text promises the %s command, which does not exist yet:\n%s", absent, usage)
 		}
