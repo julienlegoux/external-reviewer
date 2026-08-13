@@ -2,17 +2,46 @@
 
 ## 2026-08-13
 
-* **Issue 04 done**: [04 — Add the README stating v1's OpenAI-only validation boundary](/epic-0-epic-3-plan-repair/issues/04-readme-validation-boundary.md)
+* **Retirement**: Epic 0 (Epic 3 plan repair) retired - 4 issues, milestone 5 closed.
+  Consumed reports docs/reviews/2026-08-13-issues-epic-3.md. Fixed: repaired Epic 3's plan
+  against all eight review findings — the scope EPIC_3 never named for its own issues 01
+  and 08, issue 10's cross-repository `gh_issue` resolving to the wrong repository, three
+  missing dependency edges, the uniform M sizing and its boilerplate PR-size note, issue
+  07's missing silent-empty-catalog criterion, two stale outward-facing surfaces, and the
+  `README.md` the plan promised but no issue created.
+
+  **What survives on GitHub**: issues [#71](https://github.com/julienlegoux/external-reviewer/issues/71),
+  [#72](https://github.com/julienlegoux/external-reviewer/issues/72),
+  [#73](https://github.com/julienlegoux/external-reviewer/issues/73) and
+  [#74](https://github.com/julienlegoux/external-reviewer/issues/74) (issues 01–04),
+  tracking issue [#70](https://github.com/julienlegoux/external-reviewer/issues/70), merged
+  as [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) (01),
+  [PR #77](https://github.com/julienlegoux/external-reviewer/pull/77) (02),
+  [PR #78](https://github.com/julienlegoux/external-reviewer/pull/78) (03) and
+  [PR #76](https://github.com/julienlegoux/external-reviewer/pull/76) (04), plus the
+  reconcile [PR #79](https://github.com/julienlegoux/external-reviewer/pull/79).
+
+  **Recorded, not scheduled — upstream.** `_shared/pipeline-interfaces.md`'s issue schema
+  has no way to express a cross-repository `gh_issue` — it defines the field as an
+  unqualified integer, which is what let Epic 3's issue 10 point at the wrong repository;
+  repair B worked around it locally with a qualified value. The schema lives in
+  `julienlegoux/skills` and this epic could not reach it — still to be filed there.
+
+  The folder `docs/epics/epic-0-epic-3-plan-repair/` is gone; milestone 5 and issues
+  #70–#74 survive on GitHub and every link that pointed into the folder was repointed
+  there first. The epic-0 slot is free for the next triage cycle.
+
+* **Issue 04 done**: [04 — Add the README stating v1's OpenAI-only validation boundary](https://github.com/julienlegoux/external-reviewer/issues/74)
   ([#74](https://github.com/julienlegoux/external-reviewer/issues/74)) — [PR #76](https://github.com/julienlegoux/external-reviewer/pull/76) merged into
   `develop`; issue #74 already closed. Reconciled here — `04-readme-validation-boundary.md`
   and `issues/index.md` still read `pr-open`.
 
-* **Issue 03 done**: [03 — Re-grade Epic 3's issue sizes and sync the recorded surfaces](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md)
+* **Issue 03 done**: [03 — Re-grade Epic 3's issue sizes and sync the recorded surfaces](https://github.com/julienlegoux/external-reviewer/issues/73)
   ([#73](https://github.com/julienlegoux/external-reviewer/issues/73)) — [PR #78](https://github.com/julienlegoux/external-reviewer/pull/78) merged into
   `develop`; issue #73 already closed. Reconciled here — `03-epic-3-sizes-and-surfaces.md`
   and `issues/index.md` still read `pr-open`.
 
-* **Issue 03 PR opened**: [03 — Re-grade Epic 3's issue sizes and sync the recorded surfaces](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md)
+* **Issue 03 PR opened**: [03 — Re-grade Epic 3's issue sizes and sync the recorded surfaces](https://github.com/julienlegoux/external-reviewer/issues/73)
   ([#73](https://github.com/julienlegoux/external-reviewer/issues/73)) opened as
   [PR #78](https://github.com/julienlegoux/external-reviewer/pull/78) from branch
   `issue-03-epic0-work`. **Re-graded against Epic 2's measured shapes** — a new package
@@ -25,18 +54,18 @@
   "`create-issues` deliberately deferred" clause and rewrote GitHub #60's body to the same
   rendering `#61`–`#69` carry, keeping the original discovery transcript as its Summary.
 
-* **Issue 02 done**: [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+* **Issue 02 done**: [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](https://github.com/julienlegoux/external-reviewer/issues/72)
   (#72) — [PR #77](https://github.com/julienlegoux/external-reviewer/pull/77) merged into
   `develop`; issue #72 already closed. Reconciled here — `02-epic-3-issue-corrections.md`
   and `issues/index.md` still read `pr-open`.
 
 * **Issue 01 done**: [01 Amend EPIC_3 with the scope its issues will
-  ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
+  ship](https://github.com/julienlegoux/external-reviewer/issues/71) (#71) —
   [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) merged into
   `develop`.
 
 * **PR opened**: [01 Amend EPIC_3 with the scope its issues will
-  ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
+  ship](https://github.com/julienlegoux/external-reviewer/issues/71) (#71) —
   [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) against
   `develop`. `EPIC_3.md`'s Scope and Acceptance criteria gain the `git_read` `paths`
   parameter and the JSON request object / `--system` / `version`, already cut into
@@ -45,18 +74,18 @@
   against an S target.
 
 * **Started**: [01 Amend EPIC_3 with the scope its issues will
-  ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
+  ship](https://github.com/julienlegoux/external-reviewer/issues/71) (#71) —
   branch `issue-01-epic0-plan-repair`.
 
-* **Issues created**: [Epic 0: Epic 3 plan repair](/epic-0-epic-3-plan-repair/EPIC_0.md)
+* **Issues created**: [Epic 0: Epic 3 plan repair](https://github.com/julienlegoux/external-reviewer/issues/70)
   (#70) cut into four issues on milestone 5, all four native sub-issues of #70:
-  [01](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md)
+  [01](https://github.com/julienlegoux/external-reviewer/issues/71)
   ([#71](https://github.com/julienlegoux/external-reviewer/issues/71)),
-  [02](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+  [02](https://github.com/julienlegoux/external-reviewer/issues/72)
   ([#72](https://github.com/julienlegoux/external-reviewer/issues/72)),
-  [03](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md)
+  [03](https://github.com/julienlegoux/external-reviewer/issues/73)
   ([#73](https://github.com/julienlegoux/external-reviewer/issues/73)) and
-  [04](/epic-0-epic-3-plan-repair/issues/04-readme-validation-boundary.md)
+  [04](https://github.com/julienlegoux/external-reviewer/issues/74)
   ([#74](https://github.com/julienlegoux/external-reviewer/issues/74)).
 
   **Seven repairs, four issues — cut by which files each opens rather than by repair.**
@@ -78,7 +107,7 @@
   own split line, which is the defect issue 03 exists to fix in Epic 3 and would have been
   hypocritical to reproduce here.
 
-* **Issue 02 PR opened**: [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+* **Issue 02 PR opened**: [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](https://github.com/julienlegoux/external-reviewer/issues/72)
   ([#72](https://github.com/julienlegoux/external-reviewer/issues/72)) opened as
   [PR #77](https://github.com/julienlegoux/external-reviewer/pull/77) from branch
   `issue-72-epic-3-issue-corrections`, qualifying issue 10's cross-repository
@@ -126,7 +155,7 @@
 * **Issues created**: [Epic 3: Reviewer selection and pipeline integration](/epic-3-reviewer-selection-integration/EPIC_3.md)
   (#3) cut into eleven issues, sized uniformly S or M at cut time — a grading later shown
   to be wrong against Epic 2's measured shapes and corrected by
-  [Epic 0 issue 03](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md) to
+  [Epic 0 issue 03](https://github.com/julienlegoux/external-reviewer/issues/73) to
   three L, six M and two S. In build
   order: [01](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
   ([#60](https://github.com/julienlegoux/external-reviewer/issues/60), filed at Epic 2's
