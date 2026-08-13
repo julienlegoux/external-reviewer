@@ -1,5 +1,50 @@
 # Log
 
+## 2026-08-13
+
+* **Issues created**: [Epic 3: Reviewer selection and pipeline integration](/epic-3-reviewer-selection-integration/EPIC_3.md)
+  (#3) cut into eleven issues, all sized S or M — nothing needed the L ceiling. In build
+  order: [01](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
+  ([#60](https://github.com/julienlegoux/external-reviewer/issues/60), filed at Epic 2's
+  close and adopted as this epic's first issue rather than created again),
+  [02](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
+  ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)),
+  [03](/epic-3-reviewer-selection-integration/issues/03-tier-assignment-config-file.md)
+  ([#62](https://github.com/julienlegoux/external-reviewer/issues/62)),
+  [04](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md)
+  ([#63](https://github.com/julienlegoux/external-reviewer/issues/63)),
+  [05](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
+  ([#64](https://github.com/julienlegoux/external-reviewer/issues/64)),
+  [06](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
+  ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)),
+  [07](/epic-3-reviewer-selection-integration/issues/07-models-command.md)
+  ([#66](https://github.com/julienlegoux/external-reviewer/issues/66)),
+  [08](/epic-3-reviewer-selection-integration/issues/08-request-object-and-version.md)
+  ([#67](https://github.com/julienlegoux/external-reviewer/issues/67)),
+  [09](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
+  ([#68](https://github.com/julienlegoux/external-reviewer/issues/68)),
+  [10](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md)
+  ([julienlegoux/skills#37](https://github.com/julienlegoux/skills/issues/37)) and
+  [11](/epic-3-reviewer-selection-integration/issues/11-success-criteria-verification-run.md)
+  ([#69](https://github.com/julienlegoux/external-reviewer/issues/69)). All eleven are
+  native sub-issues of #3, **including the cross-repository one** — GitHub accepted a
+  sub-issue owned by another repository of the same account, so the epic's progress bar
+  tracks the skills-repo work too.
+
+  Three things the cut decided that the epic did not state. **Issue 01 comes first**
+  because [MEASUREMENTS](/epic-2-read-only-agentic-loop/MEASUREMENTS.md) says the
+  `git_read` gap inflated the turn counts issue 09's caps are sized from (12 turns, versus
+  a predicted 6–8 with it closed) — sizing a ceiling against a tool that wastes turns bakes
+  the waste in. **Issue 08 is in scope by necessity**: the caller-owned system prompt and
+  its JSON request channel were deferred by
+  [Epic 1 issue 02](/epic-1-walking-skeleton/issues/02-review-invocation-parsing.md) to
+  "the epics that need them", and issue 10 cannot write an invocation template without one;
+  `version` rides along as the last unimplemented item of SPECS' grammar. And **issue 09
+  carries a correctness gap found while reading the code**: at a bounds stop `Loop.Run`
+  returns the accumulated report, which is empty when the run never wrote prose, and
+  `resolveAndReview` turns an empty report into a `failed` at exit 2 — while
+  [SPECS § Interfaces](../planning/SPECS.md) says a bounded run is exit 0 with what it had.
+
 ## 2026-08-12
 
 * **Epic closed**: [Epic 2: Read-only agentic loop](/epic-2-read-only-agentic-loop/EPIC_2.md)
