@@ -3,7 +3,7 @@ type: Issue
 title: "Run a real review through the pipeline and record the success criteria"
 description: "Drive review-epics or review-issues through external-reviewer on this project's own artifacts, verify the leads, and record wall clock and quota headroom against SCOPE's three v1 success criteria."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T06:25:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/69
 epic: 3
 issue: 11
@@ -11,7 +11,7 @@ slug: success-criteria-verification-run
 size: S
 status: open
 gh_issue: 69
-depends_on: [10]
+depends_on: [1, 9, 10]
 ---
 
 # Run a real review through the pipeline and record the success criteria
@@ -110,7 +110,12 @@ against).
 
 ## Dependencies
 
-- Blocked by: [10 — review-interfaces swap](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md).
+- Blocked by: [01 — git_read path-scoped diff](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
+  (closes the `git_read` gap whose effect on the turn count this run measures against
+  MEASUREMENTS),
+  [09 — loop caps from measurements](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
+  (sets the `Bounds` this run reports cap bits and headroom against), and
+  [10 — review-interfaces swap](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md).
   There is nothing to verify until the pipeline calls the binary.
 - Blocks: the epic's close.
 

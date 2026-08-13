@@ -3,7 +3,7 @@ type: Issue
 title: "Add the models command"
 description: "List the intersection of the catalog, this machine's credentials and the family rule, with price and context window per row."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T06:25:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/66
 epic: 3
 issue: 07
@@ -11,7 +11,7 @@ slug: models-command
 size: M
 status: open
 gh_issue: 66
-depends_on: [2, 4]
+depends_on: [2, 4, 6]
 ---
 
 # Add the models command
@@ -74,6 +74,9 @@ registry ([CONVENTIONS § Testing](../../../planning/CONVENTIONS.md)); no networ
 - [ ] Without `--refresh`, no `Refresh` call is made at all.
 - [ ] A refresh that fails emits a `warn` line and still prints the rows the last-known
       catalog holds; exit stays `0`.
+- [ ] A credentialed provider reporting `CanRefreshModels()` whose catalog is empty is named
+      on stdout as **needing `--refresh`**, rather than rendering as an absent row — asserted
+      with a registry holding exactly one such provider.
 - [ ] `--provider <unknown>` → exit `2`, `stop=usage`, one `error:` line.
 - [ ] Rows are sorted by provider then id; running the same command twice against an
       unchanged registry produces byte-identical stdout.
@@ -103,7 +106,11 @@ Governing decisions:
 
 - Blocked by: [02 — family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md),
   [04 — tier resolution chain](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md)
-  (for the registry and refresh behaviour it reuses).
+  (for the registry and refresh behaviour it reuses),
+  [06 — tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md).
+  Not a functional dependency on 06 — a sequencing one: both rewrite `internal/cli/run.go`'s
+  subcommand switch and `internal/cli/usage.go`'s `usageText`, and landing them in parallel
+  produces a conflict neither PR's tests would catch.
 - Blocks: None.
 
 ## PR size note
