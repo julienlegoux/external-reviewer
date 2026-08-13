@@ -9,8 +9,9 @@ epic: 3
 issue: 06
 slug: tiers-command
 size: M
-status: in-progress
+status: pr-open
 gh_issue: 65
+gh_pr: 87
 depends_on: [4, 5]
 ---
 
