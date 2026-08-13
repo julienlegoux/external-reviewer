@@ -2,6 +2,11 @@
 
 ## 2026-08-13
 
+* **Issue 02 done**: [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+  (#72) — [PR #77](https://github.com/julienlegoux/external-reviewer/pull/77) merged into
+  `develop`; issue #72 already closed. Reconciled here — `02-epic-3-issue-corrections.md`
+  and `issues/index.md` still read `pr-open`.
+
 * **Issue 01 done**: [01 Amend EPIC_3 with the scope its issues will
   ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
   [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) merged into
