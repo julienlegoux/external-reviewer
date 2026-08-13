@@ -2,7 +2,10 @@ module github.com/julienlegoux/external-reviewer
 
 go 1.26
 
-require github.com/julienlegoux/kern-link v0.1.1
+require (
+	github.com/BurntSushi/toml v1.6.0
+	github.com/julienlegoux/kern-link v0.1.1
+)
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
