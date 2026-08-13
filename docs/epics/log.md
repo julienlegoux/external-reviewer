@@ -24,19 +24,57 @@
   record 05's revisit condition is settled in the affirmative: the template keeps stderr and
   points a diagnosing user at the `warn` line, so the exit-1 line is not dead output and the
   decision stands. No Go code changed; the suite was run once to prove the tree clean.
+  `models` (issue 07, PR #89) merged while this PR was open and `origin/develop` was merged
+  back in; the swapped contract names `tiers` as the setup pointer and `models` nowhere, so
+  nothing in it depended on that landing and the skills PR was left alone.
+
+* **Issue 07 done**: [07 — Add the models command](/epic-3-reviewer-selection-integration/issues/07-models-command.md)
+  ([#66](https://github.com/julienlegoux/external-reviewer/issues/66)) — [PR #89](https://github.com/julienlegoux/external-reviewer/pull/89)
+  merged into `develop`; issue #66 already closed, its stale `status: pr-open` label removed
+  here. Reconciled by issue 10's run, while merging `origin/develop` into
+  `issue-10-epic3-review-interfaces-swap` — the conflict was bookkeeping only (the issue 07
+  and 08 lines, the two runs' log entries, one timestamp), resolved as a union with one entry
+  per fact. With this, issues 01–09 are all `done` and issue 11 is the only `open` one left.
 
 * **Issue 08 done**: [08 — Accept the JSON request object on stdin, add --system and version](/epic-3-reviewer-selection-integration/issues/08-request-object-and-version.md)
   ([#67](https://github.com/julienlegoux/external-reviewer/issues/67)) — [PR #88](https://github.com/julienlegoux/external-reviewer/pull/88)
-  merged into `develop`; GitHub issue #67 already closed and carrying no status label.
-  Reconciled by issue 10's run. Issue 05 (PR #86) and issue 06 (PR #87) were already `done`
-  in the bundle and needed nothing.
+  merged into `develop`; issue #67 already closed, its stale `status: pr-open` label
+  removed here. Reconciled by issue 07's run while merging `origin/develop` into
+  `issue-07-models-command` to resolve the conflict the two PRs' shared surfaces
+  produced — `run.go`'s subcommand switch, `usageText` and
+  `TestUsage_ListsExactlyTheFlagsThatWork` all resolved as a union, every command's
+  case and usage block surviving (`review`, `tiers`, `models`, `version`, `help`), the
+  dispatcher left unrestructured.
+
+* **Epic 3, issue 07 PR opened**: [Add the models command](/epic-3-reviewer-selection-integration/issues/07-models-command.md)
+  ([#66](https://github.com/julienlegoux/external-reviewer/issues/66)) — [PR #89](https://github.com/julienlegoux/external-reviewer/pull/89)
+  opened against `develop` from branch `issue-07-models-command`. `models [--provider
+  <id>] [--refresh] [--all]` lists the intersection of the catalog, this machine's
+  credentials (`Models.GetAuth`, probed once per provider) and the family rule
+  (`family.DefaultExclusion()`), with price and context window per row — the query half
+  of discovery that answers "what could be" beside `tiers`' "what is configured". `--all`
+  drops the credential and family filters and marks what it would otherwise have hidden;
+  `--refresh` calls `Refresh` once per refreshable provider and turns a failure into a
+  `warn` line rather than a failed query; a credentialed, refreshable provider with an
+  empty catalog is named as needing `--refresh` rather than rendering as absent. Reuses
+  `tiers`' `stop=answered` done-line word rather than minting a new one — renamed to
+  `queryAnsweredStopReason` in `internal/cli/tiers.go`, `SPECS.md` amended to say the
+  word is shared by both commands. 726 changed lines against a ~500-line M target
+  (~1.45x), almost entirely the two new files; full suite green natively and via
+  `scripts/test-remote.sh -race` (`EXTERNAL_REVIEWER_TEST_DIR=ci/external-reviewer-issue66`,
+  `gcc` blocked natively exactly as drift record 02 describes); `golangci-lint` clean. No
+  new drift — the known bare-name-provider defect
+  ([drift 04](/epic-3-reviewer-selection-integration/drift/04-github-copilot-tiers-resolve-to-no-reviewer.md))
+  surfaces through this command's `excluded by family: unknown` note exactly as designed,
+  reported in the PR body rather than fixed, per that record's own disposition. Also
+  reconciled issue 06 to `done` at the start of this run (PR #87 merged, issue #65
+  already closed, bundle and its `status: pr-open` label still stale).
 
 * **Issue 06 done**: [06 — Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
   ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
-  merged into `develop`; GitHub issue #65 already closed and carrying no status label.
-  Reconciled by issue 08's run, while merging `origin/develop` into that branch to resolve
-  the conflict the two PRs' shared surfaces produced — the issue file and
-  `issues/index.md` still read `pr-open`.
+  merged into `develop`; issue #65 already closed, carrying no status label. Reconciled
+  independently by both issue 07's and issue 08's runs — the issue file, `issues/index.md`
+  and the `status: pr-open` label all still read `pr-open` when each started.
 
 * **Epic 3, issue 08 pr-open**: [Accept the JSON request object on stdin, add --system and version](/epic-3-reviewer-selection-integration/issues/08-request-object-and-version.md)
   ([#67](https://github.com/julienlegoux/external-reviewer/issues/67)) — [PR #88](https://github.com/julienlegoux/external-reviewer/pull/88)

@@ -610,24 +610,19 @@ func TestUsage_ListsExactlyTheFlagsThatWork(t *testing.T) {
 	}
 	usage := stdout.String()
 
-	for _, flag := range []string{"--allow", "--system", "--prompt", "--tier", "--model", "--exclude-family"} {
+	for _, flag := range []string{"--allow", "--system", "--prompt", "--tier", "--model", "--exclude-family", "--provider", "--refresh", "--all"} {
 		if !mentionsFlag(usage, flag) {
 			t.Errorf("usage text does not document %s, which this binary accepts:\n%s", flag, usage)
 		}
 	}
-	for _, absent := range []string{"--system-file", "--provider", "--refresh", "--all"} {
+	for _, absent := range []string{"--system-file"} {
 		if mentionsFlag(usage, absent) {
 			t.Errorf("usage text promises %s, which is still a usage error:\n%s", absent, usage)
 		}
 	}
-	for _, command := range []string{"tiers", "version"} {
+	for _, command := range []string{"tiers", "models", "version"} {
 		if !strings.Contains(usage, "\n  "+command) {
 			t.Errorf("usage text does not document the %s command, which this binary accepts:\n%s", command, usage)
-		}
-	}
-	for _, absent := range []string{"models"} {
-		if strings.Contains(usage, "\n  "+absent) {
-			t.Errorf("usage text promises the %s command, which does not exist yet:\n%s", absent, usage)
 		}
 	}
 }

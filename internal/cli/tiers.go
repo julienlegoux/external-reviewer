@@ -18,15 +18,17 @@ import (
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
-// tiersAnsweredStopReason is the `stop=` word the done line carries when the
-// tiers command completes: neither of the six words SPECS already fixes fits
-// a query that never tries to reach a model at all — not even `no_reviewer`,
-// which means *this run's own* reviewer was never reached, whereas `tiers`
-// reporting that no tier resolves is the query correctly answered. SPECS
-// calls the stop-reason set "a union that only grows" and gives `bounds`
-// (Epic 2) as the precedent for adding a word rather than repurposing one of
-// the existing six.
-const tiersAnsweredStopReason = "answered"
+// queryAnsweredStopReason is the `stop=` word the done line carries when a
+// query command — `tiers` or `models` — completes: neither of the six words
+// SPECS already fixes fits a run that never tries to reach a model at all —
+// not even `no_reviewer`, which means *this run's own* reviewer was never
+// reached, whereas `tiers` reporting that no tier resolves, or `models`
+// reporting that nothing is left to show, is the query correctly answered.
+// SPECS calls the stop-reason set "a union that only grows" and gives
+// `bounds` (Epic 2) as the precedent for adding a word rather than
+// repurposing one of the existing six; `tiers` (issue 06) is the precedent
+// for two commands sharing one word rather than each minting its own.
+const queryAnsweredStopReason = "answered"
 
 // runTiersCommand implements `external-reviewer tiers`: one row per tier
 // naming its assignment, where that assignment came from, and — when it does
@@ -88,7 +90,7 @@ func runTiersCommand(ctx context.Context, args []string, stdout, stderr io.Write
 	}
 
 	writeTiersReport(stdout, cfg.Path, rows)
-	state.StopReason = tiersAnsweredStopReason
+	state.StopReason = queryAnsweredStopReason
 	return nil
 }
 
