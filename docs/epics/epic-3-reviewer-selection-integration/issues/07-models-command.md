@@ -3,14 +3,15 @@ type: Issue
 title: "Add the models command"
 description: "List the intersection of the catalog, this machine's credentials and the family rule, with price and context window per row."
 tags: [epic-3]
-timestamp: 2026-08-13T07:10:00Z
+timestamp: 2026-08-13T16:30:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/66
 epic: 3
 issue: 07
 slug: models-command
 size: M
-status: open
+status: pr-open
 gh_issue: 66
+gh_pr: 89
 depends_on: [2, 4, 6]
 ---
 

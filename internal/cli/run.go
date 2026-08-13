@@ -179,6 +179,9 @@ func run(ctx context.Context, argv []string, stdin io.Reader, stdout, stderr io.
 	case "tiers":
 		err := runTiersCommand(ctx, rest, stdout, stderr, state, registry)
 		return classify(err), err
+	case "models":
+		err := runModelsCommand(ctx, rest, stdout, stderr, state, registry)
+		return classify(err), err
 	default:
 		diag.WriteError(stderr, fmt.Sprintf("unknown command %q", cmd))
 		state.StopReason = usageStopReason
