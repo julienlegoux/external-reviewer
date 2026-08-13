@@ -2,6 +2,11 @@
 
 ## 2026-08-13
 
+* **Issue 06 done**: [06 — Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
+  ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
+  merged into `develop`; issue #65 already closed. Reconciled by issue 07's run — the
+  issue file, `issues/index.md` and the `status: pr-open` label still read `pr-open`.
+
 * **Epic 3, issue 06 PR opened**: [Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
   ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
   opened against `develop` from branch `issue-06-tier-resolve-cli`. `tiers
