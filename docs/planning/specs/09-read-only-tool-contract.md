@@ -46,7 +46,7 @@ explicit marker.**
 | `list` | `pattern` (glob, repo-relative; default `**/*`) | Matching paths, one per line, repo-relative with `/` separators. |
 | `read_file` | `path`, `offset` (1-based line, default 1), `limit` (lines, default 2000) | The lines, each prefixed `<n>\t`, after a header naming the path and the range. |
 | `search` | `pattern` (regex), `path` (subtree, default `.`), `glob` (file filter, optional), `max_results` (default 100) | `path:line:text` per match. |
-| `git_read` | `command` (`log`/`diff`/`show`/`status`), `args` (array of strings) | The command's stdout verbatim. |
+| `git_read` | `command` (`log`/`diff`/`show`/`status`), `args` (array of strings), `paths` (array of repo-relative paths, optional) | The command's stdout verbatim. |
 
 The details that are contract rather than implementation:
 
@@ -115,3 +115,18 @@ enumerate within them, `read_file` refuses paths outside them (per path, in a ba
 the other paths still return), and `git_read` is pathspec-restricted with `show`'s
 `<rev>:<path>` form validated before the command is built. A refusal names the rule that
 refused, so "outside the allow-list" and "denied filename" read differently to the model.
+
+**Amended 2026-08-13 — `git_read` gains `paths`.** The table above declared `command` and
+`args` only, which left a *path-scoped* read unreachable: decision 10 gives the tool sole
+ownership of the `--` separator, so a literal `--` in `args` is refused, and without one
+git reads `diff <range> <subtree>` as two revisions and fails on the second. The only diff
+a reviewer could obtain was therefore the whole granted surface — the read most likely to
+hit the line cap, and measured in [Epic 2](../../epics/epic-2-read-only-agentic-loop/MEASUREMENTS.md)
+costing five of one run's twelve turns. `paths` is an optional array of repo-relative,
+`/`-separated strings; each entry is resolved through the same gate, with the same three
+refusal wordings, as a `<rev>:<path>` object, and the resolved entries become the
+pathspecs in place of the granted subtrees. Since every entry has been proved inside a
+granted subtree first, the parameter can only narrow the grant. Omitted, it changes
+nothing. It cannot be combined with a `<rev>:<path>` object, for the reason that already
+refuses mixing an object with a plain revision: git takes pathspecs or an object, never
+both. This is not drift — nothing decided is departed from; it is the gap decision 10 left.

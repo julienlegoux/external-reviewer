@@ -3,7 +3,7 @@ type: Technical Specification
 title: "External Reviewer — Technical Specs"
 description: "A single Go binary that runs a bounded, read-only agent loop over an explicitly allowed slice of a repository, on a model outside the Anthropic family, and returns markdown on stdout."
 tags: [planning, specs]
-timestamp: 2026-08-13T06:10:00Z
+timestamp: 2026-08-13T09:30:00Z
 status: final
 ---
 
@@ -150,7 +150,7 @@ directions on every platform:
 | `list` | `pattern` | Glob orientation |
 | `read_file` | `paths[]`, `offset`, `limit` | **Batched** — eight issue files in one turn; a bad path in a batch is reported inline, the rest still return |
 | `search` | `pattern`, `path`, `glob`, `max_results`, `context` | Regex with surrounding lines, so a match rarely needs a follow-up read |
-| `git_read` | `command` ∈ {`log`,`diff`,`show`,`status`}, `args[]` | `args` is an array, never a string — there is no shell to parse one |
+| `git_read` | `command` ∈ {`log`,`diff`,`show`,`status`}, `args[]`, `paths[]` | `args` is an array, never a string — there is no shell to parse one; `paths` narrows the appended pathspecs to part of the grant, which is how a diff is scoped to a subtree |
 
 **Truncation is always announced** (`[truncated: showing 200 of 431 matches]`). The
 concept's objection to pre-assembled evidence is that it truncates silently and *"a report
@@ -173,7 +173,10 @@ allowlisted *before* the command is built, never a shell, with `GIT_CONFIG_GLOBA
 `GIT_CONFIG_SYSTEM` neutralised. It is confined too: `log` and `diff` take the allowed
 subtrees as pathspecs, and `show`'s `<rev>:<path>` form has its path validated — without
 which `git show HEAD:.env` reads anything in history and every file-level control is
-decorative.
+decorative. The `paths[]` parameter chooses *which* pathspecs are appended: each entry
+goes through the same resolution as a `<rev>:<path>` before the command is built, so it
+can only narrow the grant, and it is what makes a path-scoped diff reachable at all when
+the tool owns the `--` separator ([decision](/specs/09-read-only-tool-contract.md)).
 
 Within allowed subtrees a small non-configurable floor still refuses `.env*`, `*.pem`,
 `*.key`, `id_rsa*`, `*.p12`, `*.pfx`, `.npmrc`, `.netrc`, `credentials*` and `.git/`
