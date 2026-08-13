@@ -1,0 +1,31 @@
+model   openai-codex/gpt-5.6-luna  auth=OAuth
+turn 1  tools=3  in=2374 out=154  $0.0007  4.6s
+tool    git_read args=[--stat 24e1b24...729dee9] command="diff"
+tool    git_read args=[--name-only 24e1b24...729dee9] command="diff"
+tool    git_read args=[--oneline --decorate 24e1b24...729dee9] command="log"
+turn 2  tools=3  in=8273 out=412  $0.0021  7.0s
+tool    git_read args=[--unified=20 24e1b24...729dee9] command="diff" paths=[internal/family internal/config internal/reviewer internal/tools/git_read.go]
+tool    git_read args=[--unified=20 24e1b24...729dee9] command="diff" paths=[internal/cli/review.go internal/cli/run.go internal/cli/request.go internal/cli/tiers.go internal/cli/models.go internal/cli/usage.go internal/cli/version.go]
+tool    git_read args=[--unified=10 24e1b24...729dee9] command="diff" paths=[docs/planning/SPECS.md docs/planning/specs/09-read-only-tool-contract.md docs/planning/specs/10-repository-confinement.md go.mod]
+turn 3  tools=3  in=59210 out=657  $0.0126  6.2s
+tool    git_read args=[--unified=30 24e1b24...729dee9] command="diff" paths=[internal/tools/git_read.go internal/reviewer/chain.go internal/reviewer/resolve.go internal/reviewer/run.go]
+tool    git_read args=[--unified=15 24e1b24...729dee9] command="diff" paths=[internal/cli/export_test.go internal/cli/models_test.go internal/cli/tiers_test.go internal/cli/request_test.go internal/tools/git_read_test.go]
+tool    git_read args=[--unified=15 24e1b24...729dee9] command="diff" paths=[internal/cli/review_test.go internal/cli/run_test.go internal/cli/selection_test.go internal/reviewer/chain_test.go internal/reviewer/resolve_test.go]
+turn 4  tools=3  in=161587 out=845  $0.0333  6.3s
+tool    git_read args=[729dee9:internal/confine/scope.go] command="show"
+tool    git_read args=[729dee9:internal/cli/review.go] command="show"
+tool    git_read args=[729dee9:internal/cli/run.go] command="show"
+turn 5  tools=1  in=274167 out=1533  $0.0567  15.2s
+tool    list pattern="internal/confine/*"
+turn 6  tools=1  in=386837 out=1564  $0.0701  2.9s
+tool    git_read args=[729dee9:internal/confine/root.go] command="show"
+turn 7  tools=3  in=502068 out=1719  $0.0934  5.7s
+tool    git_read args=[729dee9:internal/confine/allow.go] command="show"
+tool    git_read args=[729dee9:internal/cli/models.go] command="show"
+tool    git_read args=[729dee9:internal/cli/tiers.go] command="show"
+turn 8  tools=1  in=622789 out=2444  $0.1184  15.6s
+tool    search path="internal/tools" pattern="func stringsArgument"
+turn 9  tools=1  in=743649 out=2475  $0.1426  3.5s
+tool    read_file limit=60 offset=340 paths=[internal/tools/git_read.go]
+turn 10  tools=0  in=865064 out=3927  $0.1686  28.4s
+done    turns=10  in=865064 out=3927  $0.1686  1m36s  stop=stop

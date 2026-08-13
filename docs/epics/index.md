@@ -17,3 +17,4 @@ the next cycle. No epic 0 is currently open.
 Reference documents produced by an epic, rather than epics themselves:
 
 * [Epic 2 — Hand-run measurements](/epic-2-read-only-agentic-loop/MEASUREMENTS.md) - what four hand runs on `openai-codex/gpt-5.5` (three completed) cost in turns, tokens, context and wall clock; Epic 3's input for the loop caps
+* [Epic 3 — Success criteria verification](/epic-3-reviewer-selection-integration/VERIFICATION.md) - four skill-shaped runs through the swapped contract, their leads verified against the files, and SCOPE's three v1 success criteria answered against measured numbers

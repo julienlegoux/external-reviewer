@@ -1,0 +1,11 @@
+{
+  "label": "b-sol",
+  "model": "openai-codex/gpt-5.6-sol",
+  "command": "external-reviewer review --allow . --model openai-codex/gpt-5.6-sol <repo> < request-diff.json",
+  "started_utc": "2026-08-13T11:49:58.5949383Z",
+  "ended_utc": "2026-08-13T11:52:53.2144002Z",
+  "wall_clock_seconds": 174.62,
+  "exit_code": 0,
+  "stdout_bytes": 7352,
+  "stderr_bytes": 4463
+}
