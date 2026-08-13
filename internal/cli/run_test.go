@@ -109,7 +109,7 @@ func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
-		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())

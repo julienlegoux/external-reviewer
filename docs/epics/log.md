@@ -2,6 +2,33 @@
 
 ## 2026-08-13
 
+* **Epic 3, issue 05 pr-open**: [Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
+  ([#64](https://github.com/julienlegoux/external-reviewer/issues/64)) — [PR #86](https://github.com/julienlegoux/external-reviewer/pull/86)
+  opened against `develop` from branch `issue-64-cli-reviewer-selection`. `reviewer.Chain`
+  now sits behind `--tier` / `--model` / `--exclude-family`, and `DefaultProviderID` /
+  `DefaultModelID` are gone: the grep criterion holds, so the only provider named in
+  non-test source is the family classifier's own data table. Four usage errors, one of
+  them beyond the issue's criteria — an unrecognised `--exclude-family` name is refused,
+  because `family.NewExclusion` keeps it verbatim and it would then exclude nothing at
+  all. Issue 04's **third** failure class, `*MalformedAssignmentError`, had no slot in the
+  contract and is split by its `Source` rather than folded into a neighbour: exit 2 either
+  way, `stop=usage` from `--model` and `stop=failed` from the environment or the config
+  file. `Chain.ResolveTier` now returns its assignment on the failure path too, which is
+  what the exit-1 diagnostic reads. One drift record: the exit-1 path writes a single
+  `warn` line where SPECS says "silent" — stdout stays empty and no `error:` line is
+  written, so both criteria hold, but exit 1 now covers three assignment layers and five
+  reasons and is otherwise undebuggable. Also gives `internal/cli` a `TestMain` that pins
+  `EXTERNAL_REVIEWER_CONFIG` and clears the tier variables, which the suite had been
+  reading from the developer's own profile. 1173 changed lines of Go against a ~1000-line
+  `L` ceiling; `-race` ran through the remote fallback, `gcc` being blocked again exactly
+  as drift record 02 describes.
+
+* **Issue 04 done**: [04 — Resolve a tier to a reachable, allowed model](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md)
+  ([#63](https://github.com/julienlegoux/external-reviewer/issues/63)) — [PR #85](https://github.com/julienlegoux/external-reviewer/pull/85)
+  merged into `develop`; issue #63 already closed, its stale `status: pr-open` label
+  removed here. Reconciled by issue 05's run — the issue file and `issues/index.md` still
+  read `pr-open`.
+
 * **Issue 09 done**: [09 — Set the loop caps from Epic 2's measurements](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
   ([#68](https://github.com/julienlegoux/external-reviewer/issues/68)) — [PR #83](https://github.com/julienlegoux/external-reviewer/pull/83)
   merged into `develop`; issue #68 already closed. Reconciled here while merging

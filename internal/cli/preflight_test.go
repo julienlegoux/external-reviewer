@@ -10,11 +10,22 @@ import (
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
-	"github.com/julienlegoux/external-reviewer/internal/reviewer"
+)
+
+// fixtureProvider and fixtureModel are the provider and model this package's
+// offline registry serves, and the pair selection_test.go's package-wide tier
+// assignment fixture points `standard` at. They live in the test package
+// because the binary itself no longer names a provider anywhere: tier
+// resolution replaced the walking skeleton's hard-coded reviewer, and the one
+// place a provider id may still be written down in non-test source is the
+// family classifier's data table (TestBinary_NamesNoProviderOutsideTheFamilyTables).
+const (
+	fixtureProvider = "openai-codex"
+	fixtureModel    = "gpt-5.5"
 )
 
 // registryWith builds the offline registry a run resolves against and
-// streams from: kern-link's in-process faux provider under the hard-coded
+// streams from: kern-link's in-process faux provider under the fixture
 // provider id, serving modelIDs, with auth scripted. No network, no bill, no
 // credential store on disk. The handle it returns is the scripting surface —
 // what the model answers, and how fast.
@@ -26,7 +37,7 @@ import (
 func registryWith(t *testing.T, auth ai.ProviderAuth, credentials ai.CredentialStore, tokensPerSecond float64, modelIDs ...string) (ai.Models, *faux.Handle) {
 	t.Helper()
 	return fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID:      reviewer.DefaultProviderID,
+		ProviderID:      fixtureProvider,
 		ModelIDs:        modelIDs,
 		Auth:            auth,
 		Credentials:     credentials,
@@ -64,7 +75,7 @@ func runReview(t *testing.T, models ai.Models) (int, string, string) {
 // reaches it, so the run continues into the round trip and terminates
 // normally with the reviewer's answer on stdout.
 func TestRun_ResolvableCredentialedModel_ProceedsPastPreflight(t *testing.T) {
-	code, stdout, stderr := runReview(t, registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+	code, stdout, stderr := runReview(t, registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 0 {
 		t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr)
@@ -79,7 +90,7 @@ func TestRun_ResolvableCredentialedModel_ProceedsPastPreflight(t *testing.T) {
 	if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop != "stop" {
 		t.Errorf("done stop = %q, want stop (the model's own reason)", fields.Stop)
 	}
-	if !strings.Contains(stderr, reviewer.DefaultProviderID+"/"+reviewer.DefaultModelID) {
+	if !strings.Contains(stderr, fixtureProvider+"/"+fixtureModel) {
 		t.Errorf("stderr = %q, want it to name the resolved model", stderr)
 	}
 	if !strings.Contains(stderr, "OAuth") {
@@ -110,7 +121,7 @@ func TestRun_NotReached_ExitsOne(t *testing.T) {
 			name: "provider unconfigured, GetAuth returns (nil, nil)",
 			models: func(t *testing.T) ai.Models {
 				t.Helper()
-				return registry(t, fauxtest.UnconfiguredAuth(), nil, reviewer.DefaultModelID)
+				return registry(t, fauxtest.UnconfiguredAuth(), nil, fixtureModel)
 			},
 		},
 	}
@@ -148,15 +159,15 @@ func TestRun_BrokenCredential_ExitsTwo(t *testing.T) {
 			name: "ModelsError code oauth",
 			models: func(t *testing.T) ai.Models {
 				t.Helper()
-				auth, credentials := fauxtest.ExpiredOAuthAuth(t, reviewer.DefaultProviderID)
-				return registry(t, auth, credentials, reviewer.DefaultModelID)
+				auth, credentials := fauxtest.ExpiredOAuthAuth(t, fixtureProvider)
+				return registry(t, auth, credentials, fixtureModel)
 			},
 		},
 		{
 			name: "ModelsError code auth",
 			models: func(t *testing.T) ai.Models {
 				t.Helper()
-				return registry(t, fauxtest.BrokenAPIKeyAuth(), nil, reviewer.DefaultModelID)
+				return registry(t, fauxtest.BrokenAPIKeyAuth(), nil, fixtureModel)
 			},
 		},
 	}
@@ -174,8 +185,12 @@ func TestRun_BrokenCredential_ExitsTwo(t *testing.T) {
 			if fields := fauxtest.ParseDoneLine(t, stderr); fields.Stop != "failed" {
 				t.Errorf("done stop = %q, want failed", fields.Stop)
 			}
-			if !strings.Contains(stderr, "error:") {
-				t.Errorf("stderr = %q, want the reason written to it", stderr)
+			// Exactly one, not merely at least one: the exit-code contract
+			// issue 05 lands states the count, because a caller that copies
+			// every error: line into its report must not get two for one
+			// broken credential — nor zero, which is the exit-1 shape.
+			if n := countErrorLines(stderr); n != 1 {
+				t.Errorf("stderr = %q, want exactly one error: line, found %d", stderr, n)
 			}
 		})
 	}
@@ -187,15 +202,15 @@ func TestRun_BrokenCredential_ExitsTwo(t *testing.T) {
 // AuthResult.Source may travel — on every path, including the ones that fail
 // while holding a credential.
 func TestRun_NoCredentialValueReachesTheStreams(t *testing.T) {
-	oauthAuth, oauthCredentials := fauxtest.ExpiredOAuthAuth(t, reviewer.DefaultProviderID)
+	oauthAuth, oauthCredentials := fauxtest.ExpiredOAuthAuth(t, fixtureProvider)
 
 	tests := []struct {
 		name   string
 		models ai.Models
 	}{
-		{"resolved successfully", registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID)},
-		{"broken oauth credential", registry(t, oauthAuth, oauthCredentials, reviewer.DefaultModelID)},
-		{"broken api key", registry(t, fauxtest.BrokenAPIKeyAuth(), nil, reviewer.DefaultModelID)},
+		{"resolved successfully", registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel)},
+		{"broken oauth credential", registry(t, oauthAuth, oauthCredentials, fixtureModel)},
+		{"broken api key", registry(t, fauxtest.BrokenAPIKeyAuth(), nil, fixtureModel)},
 	}
 
 	for _, tc := range tests {

@@ -378,8 +378,8 @@ func TestReadFile_EndToEndThroughTheLoop(t *testing.T) {
 	registry := tools.NewRegistry(tools.ReadFile(scope))
 
 	models, handle := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 	})
 	const finalAnswer = "# Review\n\nno leads\n"
@@ -391,9 +391,9 @@ func TestReadFile_EndToEndThroughTheLoop(t *testing.T) {
 		faux.Step(faux.TextMessage(finalAnswer, nil)),
 	)
 
-	model := models.GetModel(reviewer.DefaultProviderID, reviewer.DefaultModelID)
+	model := models.GetModel(fixtureProvider, fixtureModel)
 	if model == nil {
-		t.Fatalf("model %s/%s missing from the registry", reviewer.DefaultProviderID, reviewer.DefaultModelID)
+		t.Fatalf("model %s/%s missing from the registry", fixtureProvider, fixtureModel)
 	}
 
 	loop := &reviewer.Loop{

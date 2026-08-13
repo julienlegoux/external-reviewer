@@ -664,8 +664,8 @@ func TestGitRead_AFailingGitLeavesTheRunAlive(t *testing.T) {
 	tool := newGitReadTool(t, root, "docs")
 
 	models, handle := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 	})
 	handle.SetResponses(
@@ -678,9 +678,9 @@ func TestGitRead_AFailingGitLeavesTheRunAlive(t *testing.T) {
 		)),
 		faux.Step(faux.TextMessage(answer, nil)),
 	)
-	model := models.GetModel(reviewer.DefaultProviderID, reviewer.DefaultModelID)
+	model := models.GetModel(fixtureProvider, fixtureModel)
 	if model == nil {
-		t.Fatalf("model %s/%s missing from the registry", reviewer.DefaultProviderID, reviewer.DefaultModelID)
+		t.Fatalf("model %s/%s missing from the registry", fixtureProvider, fixtureModel)
 	}
 
 	stderr := &bytes.Buffer{}
