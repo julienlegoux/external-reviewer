@@ -3,11 +3,11 @@ type: Epic
 title: "Reviewer selection and pipeline integration"
 description: "Weight tiers, the machine-local assignment, binary-enforced family exclusion, caps sized from real measurements, and the review-interfaces.md swap that retires opencode."
 tags: [epic]
-timestamp: 2026-08-13T06:10:00Z
+timestamp: 2026-08-14T09:45:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/3
 epic: 3
 slug: reviewer-selection-integration
-status: open
+status: done
 gh_issue: 3
 milestone: 3
 source: docs/planning/SCOPE.md#milestone-3-reviewer-selection-and-pipeline-integration

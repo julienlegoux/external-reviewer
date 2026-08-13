@@ -3,13 +3,13 @@ type: Issue
 title: "Run a real review through the pipeline and record the success criteria"
 description: "Drive review-epics or review-issues through external-reviewer on this project's own artifacts, verify the leads, and record wall clock and quota headroom against SCOPE's three v1 success criteria."
 tags: [epic-3]
-timestamp: 2026-08-13T12:25:00Z
+timestamp: 2026-08-13T19:30:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/69
 epic: 3
 issue: 11
 slug: success-criteria-verification-run
 size: S
-status: pr-open
+status: done
 gh_issue: 69
 gh_pr: 92
 depends_on: [1, 9, 10]

@@ -1,6 +1,23 @@
 # Log
 
+## 2026-08-14
+
+* **Epic 3, issue 10 done**: [Swap review-interfaces.md from opencode to external-reviewer](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md)
+  ([julienlegoux/skills#37](https://github.com/julienlegoux/skills/issues/37)) —
+  [PR julienlegoux/skills#42](https://github.com/julienlegoux/skills/pull/42) merged into that
+  repository's `main` on 2026-08-13 and its tracking issue closed. The contract was split in
+  two on merge: `review-interfaces.md` keeps the probe and the invariants, `external-reviewer.md`
+  carries the invocation, tiers, grant, system prompt and exit codes, loaded only once
+  `command -v external-reviewer` answers yes. Reconciled by `close-epic`; the epic's own
+  bookkeeping PR #90 had merged earlier.
+
 ## 2026-08-13
+
+* **Epic 3, issue 11 done**: [Run a real review through the pipeline and record the success criteria](/epic-3-reviewer-selection-integration/issues/11-success-criteria-verification-run.md)
+  ([#69](https://github.com/julienlegoux/external-reviewer/issues/69)) —
+  [PR #92](https://github.com/julienlegoux/external-reviewer/pull/92) merged into `develop`,
+  issue closed and the stale `status: pr-open` label removed. Reconciled by `close-epic`:
+  the merge was the epic's last, so no later implementer ran to self-heal the status.
 
 * **Epic 3, issue 11 pr-open**: [Run a real review through the pipeline and record the success criteria](/epic-3-reviewer-selection-integration/issues/11-success-criteria-verification-run.md)
   ([#69](https://github.com/julienlegoux/external-reviewer/issues/69)) —

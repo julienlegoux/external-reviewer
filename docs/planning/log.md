@@ -1,5 +1,22 @@
 # Log
 
+## 2026-08-14
+
+* **Update**: promoted [Epic 3](../epics/epic-3-reviewer-selection-integration/EPIC_3.md)'s drift
+  at its close. Five drift records became five [DRIFT](/DRIFT.md) entries — nothing folded, because
+  the two that both point at [specs 04](/specs/04-model-family-classification.md) ask for different
+  actions: one moves a provider between two rule lists, the other decides substring-shaped
+  matching. Dispositions triaged by the user: three `accepted`
+  (specs 04's reseller list, SPECS' *"silent native fallback"* wording,
+  [CONVENTIONS § Testing](/CONVENTIONS.md)'s cgo sentence), two `deferred`.
+* **Reopened**: the Epic 0 entry resolved on 2026-08-11 — `-race` no longer builds natively,
+  because Application Control now refuses `ld.exe` rather than the test binaries. Superseded in
+  place by Epic 3's entry, which carries `ld --version` as the check that settles it.
+* **Recorded**: the product direction that decides the largest deferred entry — an installation
+  skill will connect providers and let the user assign models to tiers, so the fix for 160
+  unclassifiable models is expected to be inverting what `Unknown` means rather than growing the
+  classifier. Left for a `define-change`, with the safety cost stated.
+
 ## 2026-08-12
 
 * **Update**: promoted [Epic 2](../epics/epic-2-read-only-agentic-loop/EPIC_2.md)'s drift
