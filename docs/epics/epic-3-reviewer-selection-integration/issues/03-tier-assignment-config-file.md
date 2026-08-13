@@ -3,7 +3,7 @@ type: Issue
 title: "Read the machine-local tier assignment TOML"
 description: "Locate, decode and warn about the user-level config file that assigns a provider and model to each weight tier — never writing it."
 tags: [epic-3]
-timestamp: 2026-08-13T08:54:53Z
+timestamp: 2026-08-13T11:40:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/62
 epic: 3
 issue: 03

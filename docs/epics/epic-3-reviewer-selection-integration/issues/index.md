@@ -7,7 +7,7 @@ swap and the run that proves v1's success criteria. Issue 10 lands in the **lx s
 repository**, not this one.
 
 * [Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md) - M, done, [#60](https://github.com/julienlegoux/external-reviewer/issues/60), [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81)
-* [Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md) - L, open, [#61](https://github.com/julienlegoux/external-reviewer/issues/61)
+* [Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md) - L, done, [#61](https://github.com/julienlegoux/external-reviewer/issues/61), [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
 * [Read the machine-local tier assignment TOML](/epic-3-reviewer-selection-integration/issues/03-tier-assignment-config-file.md) - M, done, [#62](https://github.com/julienlegoux/external-reviewer/issues/62), [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80)
 * [Resolve a tier to a reachable, allowed model](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md) - L, open, [#63](https://github.com/julienlegoux/external-reviewer/issues/63)
 * [Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md) - L, open, [#64](https://github.com/julienlegoux/external-reviewer/issues/64)

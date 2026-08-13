@@ -19,17 +19,33 @@
   PR body since the issue explicitly permits answering "no". 126 changed lines against
   the ~500-line S target.
 
-* **Issue 03 done**: [03 — Read the machine-local tier assignment TOML](/epic-3-reviewer-selection-integration/issues/03-tier-assignment-config-file.md)
-  ([#62](https://github.com/julienlegoux/external-reviewer/issues/62)) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80)
-  merged into `develop`; issue #62 already closed. Reconciled here while merging
+* **Issue 02 done**: [02 — Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
+  ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
+  merged into `develop`; issue #61 already closed. Reconciled here while merging
   `origin/develop` into issue 09's branch to resolve a conflict — the issue file and
   `issues/index.md` still read `pr-open`.
 
+* **Epic 3, issue 02 pr-open**: [Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
+  ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
+  opened against `develop`. New `internal/family` package: `(Provider, ID)` classified
+  against two data tables, unknown as the `Family` zero value and refused by every
+  `Exclusion`, proved over all 1042 models of the 35 embedded providers. Two drift records
+  written — `azure-openai-responses` classified by rule 1 rather than the reseller rule, and
+  the native `-race` command not running because `gcc.exe` draws an Application Control
+  fail-fast. That second record carries the root cause behind the `gcc` refusal issue 03
+  reported the same day: `0xC0000602` on a one-line C file, so no Go build flag can
+  re-roll it.
+
+* **Issue 03 done**: [03 — Read the machine-local tier assignment TOML](/epic-3-reviewer-selection-integration/issues/03-tier-assignment-config-file.md)
+  ([#62](https://github.com/julienlegoux/external-reviewer/issues/62)) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80)
+  merged into `develop`; issue #62 already closed. Reconciled independently by issue 09's
+  and issue 02's runs — the issue file and `issues/index.md` still read `pr-open`.
+
 * **Issue 01 done**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
   ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) — [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81)
-  merged into `develop`; issue #60 already closed. Reconciled here — the issue file and
-  `issues/index.md` still read `pr-open`. Reconciled independently by issue 03's run too,
-  while merging `develop` into its own branch to resolve a conflict.
+  merged into `develop`; issue #60 already closed. Reconciled independently by issue 09's,
+  issue 02's and issue 03's runs — the issue file and `issues/index.md` still read
+  `pr-open`.
 
 * **PR opened**: Epic 3 issue 03 — [Read the machine-local tier assignment TOML](https://github.com/julienlegoux/external-reviewer/issues/62)
   (#62) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80) against
