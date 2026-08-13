@@ -2,6 +2,15 @@
 
 ## 2026-08-13
 
+* **Epic 3, issue 02 pr-open**: [Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
+  ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
+  opened against `develop`. New `internal/family` package: `(Provider, ID)` classified
+  against two data tables, unknown as the `Family` zero value and refused by every
+  `Exclusion`, proved over all 1042 models of the 35 embedded providers. Two drift records
+  written — `azure-openai-responses` classified by rule 1 rather than the reseller rule, and
+  the native `-race` command not running because `gcc.exe` draws an Application Control
+  fail-fast.
+
 * **Retirement**: Epic 0 (Epic 3 plan repair) retired - 4 issues, milestone 5 closed.
   Consumed reports docs/reviews/2026-08-13-issues-epic-3.md. Fixed: repaired Epic 3's plan
   against all eight review findings — the scope EPIC_3 never named for its own issues 01

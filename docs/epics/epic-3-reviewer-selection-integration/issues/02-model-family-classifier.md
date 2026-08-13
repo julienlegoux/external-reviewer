@@ -3,14 +3,15 @@ type: Issue
 title: "Add the fail-closed model family classifier"
 description: "A data table over (Provider, ID) that yields a model's vendor family, treats unknown as excluded, and is proved against the whole embedded catalog."
 tags: [epic-3]
-timestamp: 2026-08-13T09:05:00Z
+timestamp: 2026-08-13T11:15:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/61
 epic: 3
 issue: 02
 slug: model-family-classifier
 size: L
-status: in-progress
+status: pr-open
 gh_issue: 61
+gh_pr: 82
 depends_on: []
 ---
 
