@@ -2,6 +2,10 @@
 
 ## 2026-08-13
 
+* **Started**: Epic 3 issue 05 — [Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
+  ([#64](https://github.com/julienlegoux/external-reviewer/issues/64)) — branch
+  `issue-64-cli-reviewer-selection`.
+
 * **Issue 04 done**: [04 — Resolve a tier to a reachable, allowed model](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md)
   ([#63](https://github.com/julienlegoux/external-reviewer/issues/63)) — [PR #85](https://github.com/julienlegoux/external-reviewer/pull/85)
   merged into `develop`; issue #63 already closed, its stale `status: pr-open` label
