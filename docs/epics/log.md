@@ -2,6 +2,11 @@
 
 ## 2026-08-13
 
+* **Issue 01 done**: [01 Amend EPIC_3 with the scope its issues will
+  ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
+  [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) merged into
+  `develop`.
+
 * **PR opened**: [01 Amend EPIC_3 with the scope its issues will
   ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
   [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) against
@@ -44,6 +49,13 @@
   rewritten from one of them. Every `## PR size note` names that issue's own bulk and its
   own split line, which is the defect issue 03 exists to fix in Epic 3 and would have been
   hypocritical to reproduce here.
+
+* **Issue 02 PR opened**: [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+  ([#72](https://github.com/julienlegoux/external-reviewer/issues/72)) opened as
+  [PR #77](https://github.com/julienlegoux/external-reviewer/pull/77) from branch
+  `issue-72-epic-3-issue-corrections`, qualifying issue 10's cross-repository
+  `gh_issue`, adding the three missing dependency edges (11 → 1, 9; 07 → 6), and
+  giving issue 07 a criterion for the silent-empty catalog.
 
 * **Creation**: Established [Epic 0: Epic 3 plan repair](https://github.com/julienlegoux/external-reviewer/issues/70)
   by converting [the Epic 3 issue review](../reviews/2026-08-13-issues-epic-3.md) —

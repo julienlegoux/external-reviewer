@@ -3,13 +3,13 @@ type: Issue
 title: "Amend EPIC_3 with the scope its issues will ship"
 description: "Name the git_read paths parameter, the JSON request object, --system and version in EPIC_3's Scope and Acceptance criteria, and correct SPECS' count of the non-model stop reasons."
 tags: [epic-0]
-timestamp: 2026-08-13T06:25:00Z
+timestamp: 2026-08-13T07:00:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/71
 epic: 0
 issue: 01
 slug: epic-3-scope-amendment
 size: S
-status: pr-open
+status: done
 gh_issue: 71
 gh_pr: 75
 depends_on: []

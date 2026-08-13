@@ -3,14 +3,14 @@ type: Issue
 title: "Swap review-interfaces.md from opencode to external-reviewer"
 description: "In the lx skills repository: probe and call external-reviewer, remove the opencode branch, and leave the native fallback unchanged and unconditional."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T06:25:00Z
 resource: https://github.com/julienlegoux/skills/issues/37
 epic: 3
 issue: 10
 slug: review-interfaces-external-reviewer-swap
 size: M
 status: open
-gh_issue: 37
+gh_issue: julienlegoux/skills#37
 depends_on: [5, 6, 8]
 ---
 
@@ -23,8 +23,10 @@ depends_on: [5, 6, 8]
 > Per [conventions decision 04](../../../planning/conventions/04-cross-repo-conventions.md),
 > **that repository's own authoring contract, branch model and review gate apply**. This
 > project's CONVENTIONS.md does not travel — what travels is the acceptance criteria below.
-> The GitHub issue for this work is filed on `julienlegoux/skills`; its `.md` lives here
-> because it is part of Epic 3.
+> The GitHub issue for this work is **`julienlegoux/skills#37`**; a bare `37` in *this*
+> repository is a different, already-merged issue, which is why `gh_issue` above carries the
+> qualified `owner/repo#number` form instead. Its `.md` lives here because it is part of
+> Epic 3.
 
 This is the swap the whole project exists for. `skills/_shared/review-interfaces.md`
 § *Delegating the analysis pass to another model* currently probes `command -v opencode`
@@ -51,7 +53,9 @@ In `julienlegoux/skills`:
     noise.
   - **Invocation**, as the binary actually accepts it after issues 05 and 08:
     `external-reviewer review --allow <path> [--allow <path>…] --tier <light|standard|heavy> <repo>`
-    with `{"system": …, "task": …}` on stdin.
+    with `{"system": …, "task": …}` on stdin. The template above takes the defaults unless
+    [issue 09](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
+    adds a ceiling flag; if one is added, the template gains it.
   - **`--allow` is required and is the reach of the run** — the reviewing skill declares
     which subtrees the external model may read, and the exposure of any run is visible in
     the command line that produced it.

@@ -3,7 +3,7 @@ type: Issue
 title: "Set the loop caps from Epic 2's measurements"
 description: "Fill in the bounds seam with turn and wall-clock ceilings sized from real runs, decide which to expose as flags, and make a bounded run exit 0 with the report it had."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T06:25:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/68
 epic: 3
 issue: 09
@@ -129,8 +129,9 @@ Governing decisions:
 
 - Blocked by: [01 — git_read path-scoped diff](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md),
   the single largest distortion in the turn counts these caps are sized against.
-- Blocks: None strictly, though [issue 11](/epic-3-reviewer-selection-integration/issues/11-success-criteria-verification-run.md)
-  measures a binary that has these caps in it.
+- Blocks: [11 — success-criteria verification run](/epic-3-reviewer-selection-integration/issues/11-success-criteria-verification-run.md),
+  which reports its cap bits and headroom against the `Bounds` this issue sets and cannot
+  do so until they land.
 
 ## PR size note
 

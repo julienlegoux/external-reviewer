@@ -3,7 +3,7 @@ type: Issue
 title: "Add the tiers command"
 description: "Report which tiers resolve to a reachable model on this machine right now, the config path that was read, and why a tier does not resolve."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T06:25:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/65
 epic: 3
 issue: 06
@@ -111,7 +111,11 @@ first-time setup).
   [05 — CLI tier flags](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
   (which establishes `--exclude-family`'s parsing and the usage-error shape this command
   reuses).
-- Blocks: [10 — review-interfaces swap](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md),
+- Blocks: [07 — models command](/epic-3-reviewer-selection-integration/issues/07-models-command.md)
+  (not a functional dependency — a sequencing one: both rewrite `internal/cli/run.go`'s
+  subcommand switch and `internal/cli/usage.go`'s `usageText`, so landing them in parallel
+  would produce a conflict neither PR's tests would catch), and
+  [10 — review-interfaces swap](/epic-3-reviewer-selection-integration/issues/10-review-interfaces-external-reviewer-swap.md),
   whose capability probe and setup instructions point at this command.
 
 ## PR size note

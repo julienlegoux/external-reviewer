@@ -3,7 +3,7 @@ type: Issue
 title: "Make a path-scoped diff reachable through git_read"
 description: "Give git_read a paths parameter so a reviewer can scope a diff to a subtree, closing the gap that inflated Epic 2's turn counts before the caps are sized from them."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T06:25:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/60
 epic: 3
 issue: 01
@@ -131,7 +131,10 @@ why every object argument is validated per subcommand).
 
 - Blocked by: None.
 - Blocks: [09 — loop caps](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md),
-  which sizes turn and wall-clock ceilings against turn counts this gap inflates.
+  which sizes turn and wall-clock ceilings against turn counts this gap inflates, and
+  [11 — success-criteria verification run](/epic-3-reviewer-selection-integration/issues/11-success-criteria-verification-run.md),
+  which measures whether closing this gap moved the turn count the way MEASUREMENTS
+  predicted.
 
 ## PR size note
 
