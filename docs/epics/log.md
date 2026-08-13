@@ -2,6 +2,12 @@
 
 ## 2026-08-13
 
+* **Issue 04 done**: [04 — Resolve a tier to a reachable, allowed model](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md)
+  ([#63](https://github.com/julienlegoux/external-reviewer/issues/63)) — [PR #85](https://github.com/julienlegoux/external-reviewer/pull/85)
+  merged into `develop`; issue #63 already closed, its stale `status: pr-open` label
+  removed here. Reconciled by issue 05's run — the issue file and `issues/index.md` still
+  read `pr-open`.
+
 * **Issue 09 done**: [09 — Set the loop caps from Epic 2's measurements](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
   ([#68](https://github.com/julienlegoux/external-reviewer/issues/68)) — [PR #83](https://github.com/julienlegoux/external-reviewer/pull/83)
   merged into `develop`; issue #68 already closed. Reconciled here while merging
