@@ -2,6 +2,31 @@
 
 ## 2026-08-13
 
+* **PR opened**: Epic 3 issue 03 — [Read the machine-local tier assignment TOML](https://github.com/julienlegoux/external-reviewer/issues/62)
+  (#62) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80) against
+  `develop`, from branch `issue-03-epic3-reviewer-selection`. Adds `internal/config`:
+  `Locate()`/`LoadFile()`/`Load()` find and decode the hand-written, never-committed
+  tier assignment TOML — `EXTERNAL_REVIEWER_CONFIG` or `os.UserConfigDir()`, then
+  `[tiers.<name>]` tables into `provider`/`model` assignments verbatim, with
+  `MetaData.Undecoded()` driving the unrecognised-key warning in SPECS' exact wording.
+  Also adds the project's second and last non-stdlib dependency,
+  `github.com/BurntSushi/toml v1.6.0`. 441 changed lines against a ~500-line M target.
+
+  Two things found by the red-green loop rather than assumed: printing the OS path in
+  the malformed-TOML error with `%q` would have escaped a Windows path's backslashes,
+  contradicting CONVENTIONS' "printed as the OS renders it" — fixed to `%s`. And a
+  typo'd key (e.g. `models` for `model`) alongside the resulting missing `model` would
+  otherwise fire two warnings for one mistake; the missing-required-key warning is now
+  suppressed for a tier that already carries an unrecognised-key warning, matching the
+  issue's "exactly one warning" criterion.
+
+  **No native `-race` run this session**: `gcc.exe` itself is currently refused by
+  Smart App Control (exit 127, no output, even on `gcc --version`), a step beyond the
+  per-test-binary hash blocking DRIFT already documents. Verified instead through the
+  documented fallback, `scripts/test-remote.sh` — full suite green, `-race` included.
+  Not promoted to a new drift record: DRIFT already documents this class of problem and
+  its fallback; this run exercised the fallback rather than proving anything wrong.
+
 * **Retirement**: Epic 0 (Epic 3 plan repair) retired - 4 issues, milestone 5 closed.
   Consumed reports docs/reviews/2026-08-13-issues-epic-3.md. Fixed: repaired Epic 3's plan
   against all eight review findings — the scope EPIC_3 never named for its own issues 01
