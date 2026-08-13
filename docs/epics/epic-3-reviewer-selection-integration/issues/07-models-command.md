@@ -3,7 +3,7 @@ type: Issue
 title: "Add the models command"
 description: "List the intersection of the catalog, this machine's credentials and the family rule, with price and context window per row."
 tags: [epic-3]
-timestamp: 2026-08-13T06:25:00Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/66
 epic: 3
 issue: 07
@@ -115,4 +115,6 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+The three-filter intersection (catalog × credentials × family) plus deterministic sort is
+the core; `--all`, `--refresh` and `--provider` and their own usage-error and warning paths
+are additive on top of it and the natural split if this grows.

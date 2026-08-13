@@ -2,6 +2,24 @@
 
 ## 2026-08-13
 
+* **Issue 03 PR opened**: [03 — Re-grade Epic 3's issue sizes and sync the recorded surfaces](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md)
+  ([#73](https://github.com/julienlegoux/external-reviewer/issues/73)) opened as
+  [PR #78](https://github.com/julienlegoux/external-reviewer/pull/78) from branch
+  `issue-03-epic0-work`. **Re-graded against Epic 2's measured shapes** — a new package
+  plus its tool and its tests graded `L` five times out of seven there — so Epic 3's 02
+  (model family classifier), 04 (tier resolution chain) and 05 (CLI tier flags and exit
+  codes) move to `L`; 09 (loop caps) drops to `S`, matching its own Summary's "a data
+  change plus one correctness gap, not a restructuring"; 01, 03, 06, 07, 08 and 10 stay
+  `M`; 11 was already `S`. Every boilerplate PR-size note replaced with one naming that
+  issue's own bulk and split line. Also fixed `docs/epics/index.md`'s stale
+  "`create-issues` deliberately deferred" clause and rewrote GitHub #60's body to the same
+  rendering `#61`–`#69` carry, keeping the original discovery transcript as its Summary.
+
+* **Issue 02 done**: [02 — Repair Epic 3's cross-repository pointer, dependency edges and the models criterion](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+  (#72) — [PR #77](https://github.com/julienlegoux/external-reviewer/pull/77) merged into
+  `develop`; issue #72 already closed. Reconciled here — `02-epic-3-issue-corrections.md`
+  and `issues/index.md` still read `pr-open`.
+
 * **Issue 01 done**: [01 Amend EPIC_3 with the scope its issues will
   ship](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md) (#71) —
   [PR #75](https://github.com/julienlegoux/external-reviewer/pull/75) merged into
@@ -96,7 +114,10 @@
   the previous Epic 0 (retirement notice, 2026-08-11).
 
 * **Issues created**: [Epic 3: Reviewer selection and pipeline integration](/epic-3-reviewer-selection-integration/EPIC_3.md)
-  (#3) cut into eleven issues, all sized S or M — nothing needed the L ceiling. In build
+  (#3) cut into eleven issues, sized uniformly S or M at cut time — a grading later shown
+  to be wrong against Epic 2's measured shapes and corrected by
+  [Epic 0 issue 03](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md) to
+  three L, six M and two S. In build
   order: [01](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
   ([#60](https://github.com/julienlegoux/external-reviewer/issues/60), filed at Epic 2's
   close and adopted as this epic's first issue rather than created again),

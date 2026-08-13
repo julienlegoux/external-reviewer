@@ -3,12 +3,12 @@ type: Issue
 title: "Set the loop caps from Epic 2's measurements"
 description: "Fill in the bounds seam with turn and wall-clock ceilings sized from real runs, decide which to expose as flags, and make a bounded run exit 0 with the report it had."
 tags: [epic-3]
-timestamp: 2026-08-13T06:25:00Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/68
 epic: 3
 issue: 09
 slug: loop-caps-from-measurements
-size: M
+size: S
 status: open
 gh_issue: 68
 depends_on: [1]
@@ -135,4 +135,8 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+A data change — three `Bounds` fields set on `cli.Run`'s existing seam — plus one
+correctness-gap fix in `resolveAndReview`'s empty-report check, as the Summary already
+says: not a restructuring. The one place this could grow is the flag-exposure decision the
+issue owns, and the issue already permits answering it "no" and recording why, rather than
+shipping a flag to keep the PR from feeling small.

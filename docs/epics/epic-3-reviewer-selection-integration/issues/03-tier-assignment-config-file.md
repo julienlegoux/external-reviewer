@@ -3,7 +3,7 @@ type: Issue
 title: "Read the machine-local tier assignment TOML"
 description: "Locate, decode and warn about the user-level config file that assigns a provider and model to each weight tier — never writing it."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/62
 epic: 3
 issue: 03
@@ -126,4 +126,9 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+The locate-and-decode core (`os.UserConfigDir`, `[tiers.<name>]` decoding into
+`provider`/`model`) is the small half; the warning taxonomy is where the bulk is — an
+unrecognised key, a missing `provider` or `model`, malformed TOML, and an out-of-vocabulary
+tier name each get their own acceptance criterion and their own `t.TempDir()` fixture. If
+this grows, that taxonomy is the natural split, since the locate-and-decode core has no
+reason to change once it passes.

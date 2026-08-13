@@ -3,12 +3,12 @@ type: Issue
 title: "Select the reviewer from the command line with --tier, --model and --exclude-family"
 description: "Wire tier resolution into `review`, retire the hard-coded reviewer, and prove the exit-code contract end to end through Run."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/64
 epic: 3
 issue: 05
 slug: review-tier-flags-and-exit-codes
-size: M
+size: L
 status: open
 gh_issue: 64
 depends_on: [4]
@@ -128,4 +128,10 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Three flags, their mutual-exclusion and default rules, plus an exit-code contract (`1` /
+`2` / `0`) proved end to end through `Run` — the same shape as Epic 2's `--allow` plus
+`os.OpenRoot` issue, also graded L. The flag parsing and validation
+(`--tier`/`--model`/`--exclude-family`, the mutual-exclusion and empty-value usage errors)
+is the small half; the exit-code contract's black-box proof through `Run` — silent
+fallback, broken credential, malformed invocation, each asserted on full stderr — is the
+bulk and the natural split if it overruns.

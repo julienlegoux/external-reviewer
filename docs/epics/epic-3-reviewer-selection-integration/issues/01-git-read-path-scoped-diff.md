@@ -3,7 +3,7 @@ type: Issue
 title: "Make a path-scoped diff reachable through git_read"
 description: "Give git_read a paths parameter so a reviewer can scope a diff to a subtree, closing the gap that inflated Epic 2's turn counts before the caps are sized from them."
 tags: [epic-3]
-timestamp: 2026-08-13T06:25:00Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/60
 epic: 3
 issue: 01
@@ -138,4 +138,9 @@ why every object argument is validated per subcommand).
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+The `paths` wire parameter and its `Scope.Resolve` wiring in `gitReadArgv` /
+`allowedArgument` is small; the bulk is the refusal matrix — six of the nine acceptance
+criteria are refusal cases, three of them run on both matrix OSes. If it grows, the
+OS-matrix path-traversal tests (`../outside`, `/etc/passwd`, `C:\Windows\win.ini`) are the
+natural first cut, since they exercise `Scope.Resolve` rather than anything new in
+`git_read` itself.
