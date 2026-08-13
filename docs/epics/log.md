@@ -2,6 +2,16 @@
 
 ## 2026-08-13
 
+* **Issue 08 done**: [08 — Accept the JSON request object on stdin, add --system and version](/epic-3-reviewer-selection-integration/issues/08-request-object-and-version.md)
+  ([#67](https://github.com/julienlegoux/external-reviewer/issues/67)) — [PR #88](https://github.com/julienlegoux/external-reviewer/pull/88)
+  merged into `develop`; issue #67 already closed, its stale `status: pr-open` label
+  removed here. Reconciled by issue 07's run while merging `origin/develop` into
+  `issue-07-models-command` to resolve the conflict the two PRs' shared surfaces
+  produced — `run.go`'s subcommand switch, `usageText` and
+  `TestUsage_ListsExactlyTheFlagsThatWork` all resolved as a union, every command's
+  case and usage block surviving (`review`, `tiers`, `models`, `version`, `help`), the
+  dispatcher left unrestructured.
+
 * **Epic 3, issue 07 PR opened**: [Add the models command](/epic-3-reviewer-selection-integration/issues/07-models-command.md)
   ([#66](https://github.com/julienlegoux/external-reviewer/issues/66)) — [PR #89](https://github.com/julienlegoux/external-reviewer/pull/89)
   opened against `develop` from branch `issue-07-models-command`. `models [--provider
@@ -28,8 +38,34 @@
 
 * **Issue 06 done**: [06 — Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
   ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)
-  merged into `develop`; issue #65 already closed. Reconciled by issue 07's run — the
-  issue file, `issues/index.md` and the `status: pr-open` label still read `pr-open`.
+  merged into `develop`; issue #65 already closed, carrying no status label. Reconciled
+  independently by both issue 07's and issue 08's runs — the issue file, `issues/index.md`
+  and the `status: pr-open` label all still read `pr-open` when each started.
+
+* **Epic 3, issue 08 pr-open**: [Accept the JSON request object on stdin, add --system and version](/epic-3-reviewer-selection-integration/issues/08-request-object-and-version.md)
+  ([#67](https://github.com/julienlegoux/external-reviewer/issues/67)) — [PR #88](https://github.com/julienlegoux/external-reviewer/pull/88)
+  opened against `develop` from branch `issue-67-request-object-and-version`. stdin for
+  `review` is now `{"system": …, "task": …}` decoded with `DisallowUnknownFields` — the
+  cross-repo contract issue 10 calls this binary through — replacing the raw task text
+  Epic 1 read. The caller owns the system prompt and the binary substitutes none, so an
+  absent, empty or whitespace-only field is exit 2. Malformed input takes `stop=usage`
+  rather than a fourth shape: the request object is written by the same caller, in the
+  same breath, as argv, so a mistyped key is a mistyped invocation, and `stop=failed`
+  stays reserved for a machine that is wrong while the invocation is right. `--system`
+  and `--prompt` are all-or-nothing and refused from argv alone, before anything can
+  block on a terminal; giving either means stdin is never read. Two refusals beyond the
+  criteria, both on issue 05's fail-closed instinct: a **second** JSON object after the
+  first (otherwise silently discarded), and `version --json`. `reviewer.NewConversation`
+  now carries the prompt onto `ai.Context.SystemPrompt`, and `version` prints
+  `runtime/debug.ReadBuildInfo()` at exit 0. 1024 changed lines against a predicted `M`
+  (~500) — `version` is the 147-line peel-off the issue's own size note named, and making
+  the two flags a pair forced a mechanical `--system` edit across 13 existing test files.
+  No new drift record; drift record 02 was **sharpened** instead — `gcc --version` now
+  exits 0 while a one-line C file still fails at `collect2.exe`, so that record's own
+  revisit shortcut would report a working toolchain that cannot link. `-race` ran
+  remotely, ten packages green. Issue 06 (PR #87) merged mid-flight and was merged back
+  in: `run.go`'s switch, `usageText` and `TestUsage_ListsExactlyTheFlagsThatWork` resolved
+  as a union, both commands surviving, the dispatcher unrestructured.
 
 * **Epic 3, issue 06 PR opened**: [Add the tiers command](/epic-3-reviewer-selection-integration/issues/06-tiers-command.md)
   ([#65](https://github.com/julienlegoux/external-reviewer/issues/65)) — [PR #87](https://github.com/julienlegoux/external-reviewer/pull/87)

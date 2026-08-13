@@ -47,7 +47,7 @@ func scriptedTurn(t *testing.T, script fauxtest.StreamScript) *reviewer.Conversa
 		t.Fatalf("model %s/%s missing from the scripted registry", fixtureProvider, fixtureModel)
 	}
 
-	conversation := reviewer.NewConversation(models, model, "review this")
+	conversation := reviewer.NewConversation(models, model, callerSystemPrompt, "review this")
 	conversation.StreamTimeout = turnTimeout
 	return conversation
 }

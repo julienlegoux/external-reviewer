@@ -729,7 +729,7 @@ func searchLoop(t *testing.T, tool tools.Tool, responses ...faux.ResponseStep) (
 	state := diag.NewState()
 	dispatched := &recordingToolSet{inner: tools.NewRegistry(tool)}
 	loop := &reviewer.Loop{
-		Conversation: reviewer.NewConversation(models, model, "review this"),
+		Conversation: reviewer.NewConversation(models, model, "you review repositories you did not write", "review this"),
 		Tools:        dispatched,
 		State:        state,
 		Stderr:       io.Discard,

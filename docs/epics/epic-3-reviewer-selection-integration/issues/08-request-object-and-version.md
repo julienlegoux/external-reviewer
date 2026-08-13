@@ -3,14 +3,15 @@ type: Issue
 title: "Accept the JSON request object on stdin, add --system and version"
 description: "The caller-owned system prompt reaches the binary as {\"system\",\"task\"} on stdin with --system/--prompt as by-hand shorthand, and version reports the build."
 tags: [epic-3]
-timestamp: 2026-08-13T07:10:00Z
+timestamp: 2026-08-13T20:00:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/67
 epic: 3
 issue: 08
 slug: request-object-and-version
 size: M
-status: open
+status: done
 gh_issue: 67
+gh_pr: 88
 depends_on: [5]
 ---
 

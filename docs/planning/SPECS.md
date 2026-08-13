@@ -275,18 +275,20 @@ different questions and a usage error can never carry a model's own reason:
   `ai.AssistantMessage`, spelled exactly as `kern-link` spells it — no translation table
   between the two. `unspecified` is the named fallback for the rare successful message
   whose `StopReason` is itself empty, so `stop=` can never render with nothing after it.
-- **On every termination the model never reaches**, it is one of seven fixed CLI words:
+- **On every termination the model never reaches**, it is one of eight fixed CLI words:
   `usage` (a malformed invocation — bad flags, a missing or non-directory repository path,
   an empty prompt), `help` (`help`/`--help`/`-h`), `no_reviewer` (exit `1`: no reviewer was
   ever reachable), `interrupted` (`SIGINT` or a cancelled context), `failed` (reached and
   then unusable for any other reason — a failed turn, a broken credential, an empty final
   message, a report that could not be written to stdout), `bounds` (the run reached its
   own turn, cost or elapsed ceiling — exit `0` with the report the run had, since a bounded
-  run neither failed nor was interrupted; a `warn` line names which of the three bit), and
+  run neither failed nor was interrupted; a `warn` line names which of the three bit),
   `answered` (the `tiers` and `models` commands' own success path — exit `0`, whether or
   not any tier resolved or any model row was left to print, since a query that reports
   "nothing resolves" or "nothing to show" answered the question asked of it;
-  `no_reviewer` stays reserved for `review`'s *own* reviewer never being reached).
+  `no_reviewer` stays reserved for `review`'s *own* reviewer never being reached), and
+  `version` (the `version` command's own success path — exit `0`, printed after
+  `runtime/debug.ReadBuildInfo()` runs, whether or not a build info is available).
 
 This is a union that only grows: a later epic adds a value no code can produce yet rather
 than repurposing one of the above. `bounds` was added by Epic 2's loop
