@@ -3,13 +3,13 @@ type: Issue
 title: "Add the README stating v1's OpenAI-only validation boundary"
 description: "Create the README the plan twice promises, whose load-bearing sentence is that the mechanism is generic while v1 is validated against openai-codex alone."
 tags: [epic-0]
-timestamp: 2026-08-13T06:15:00Z
+timestamp: 2026-08-13T08:00:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/74
 epic: 0
 issue: 04
 slug: readme-validation-boundary
 size: S
-status: pr-open
+status: done
 gh_issue: 74
 gh_pr: 76
 depends_on: []
