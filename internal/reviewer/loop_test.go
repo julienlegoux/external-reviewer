@@ -30,16 +30,16 @@ func queuedLoop(t *testing.T, toolSet reviewer.ToolSet, responses ...faux.Respon
 	t.Helper()
 
 	models, handle := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 		Priced:     true,
 	})
 	handle.SetResponses(responses...)
 
-	model := models.GetModel(reviewer.DefaultProviderID, reviewer.DefaultModelID)
+	model := models.GetModel(fixtureProvider, fixtureModel)
 	if model == nil {
-		t.Fatalf("model %s/%s missing from the registry", reviewer.DefaultProviderID, reviewer.DefaultModelID)
+		t.Fatalf("model %s/%s missing from the registry", fixtureProvider, fixtureModel)
 	}
 
 	stderr := &bytes.Buffer{}

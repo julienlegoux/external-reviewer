@@ -56,7 +56,13 @@ func WriteTool(w io.Writer, summary string) {
 // WriteModel writes the "model" line pre-flight emits once a reviewer has
 // been resolved:
 //
-//	model   openai-codex/gpt-5.5  auth=OAuth
+//	model   <provider>/<id>  auth=<source>
+//
+// provider and id are kern-link's own identifiers verbatim, whatever tier
+// resolution picked. The example is deliberately written as placeholders:
+// after Epic 3 nothing in this binary names a provider except the family
+// classifier's data table, and a doc comment that named one would be the one
+// remaining place a reader could mistake for a default.
 //
 // authSource is AuthResult.Source — a label like "OAuth" or
 // "ANTHROPIC_API_KEY". It is the only credential-adjacent value that ever

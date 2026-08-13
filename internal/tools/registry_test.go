@@ -10,6 +10,16 @@ import (
 	"github.com/julienlegoux/external-reviewer/internal/tools"
 )
 
+// fixtureProvider and fixtureModel are the provider and model the scripted
+// registries in this package's end-to-end tool tests serve. They live here
+// rather than in internal/reviewer, which no longer exports a default
+// reviewer: the CLI resolves a tier, and the binary names no provider outside
+// the family classifier's data table (issue 05 of Epic 3).
+const (
+	fixtureProvider = "openai-codex"
+	fixtureModel    = "gpt-5.5"
+)
+
 // stub is a tool with no behaviour, for the registry's own contract: what it
 // declares, and what it dispatches to.
 func stub(name string) tools.Tool {

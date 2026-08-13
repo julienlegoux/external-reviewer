@@ -36,15 +36,15 @@ func scriptedTurn(t *testing.T, script fauxtest.StreamScript) *reviewer.Conversa
 	t.Helper()
 
 	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 		Priced:     true,
 		Stream:     script,
 	})
-	model := models.GetModel(reviewer.DefaultProviderID, reviewer.DefaultModelID)
+	model := models.GetModel(fixtureProvider, fixtureModel)
 	if model == nil {
-		t.Fatalf("model %s/%s missing from the scripted registry", reviewer.DefaultProviderID, reviewer.DefaultModelID)
+		t.Fatalf("model %s/%s missing from the scripted registry", fixtureProvider, fixtureModel)
 	}
 
 	conversation := reviewer.NewConversation(models, model, "review this")

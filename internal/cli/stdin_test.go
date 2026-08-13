@@ -13,7 +13,6 @@ import (
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
-	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // blockingReader models stdin with nothing typed into it yet — a terminal a
@@ -48,7 +47,7 @@ func TestRun_Review_StdinCancelledMidRead_ExitsInterrupted(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", t.TempDir()}, newBlockingReader(), &stdout, &stderr,
-		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {
 		t.Errorf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -87,7 +86,7 @@ func (b repeatingReader) Read(p []byte) (int, error) {
 func TestRun_Review_StdinOverTheBound_NamedError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.RunForTest([]string{"review", "--allow", ".", t.TempDir()}, repeatingReader('a'), &stdout, &stderr,
-		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {
 		t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())

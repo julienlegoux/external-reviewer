@@ -97,7 +97,7 @@ func TestRun_ThreeTurnConversation_DispatchesToolsAndEndsOnFinalText(t *testing.
 // the real `list` tool over the run's real confinement.
 func TestRun_ToolResult_CarriesTheRealListOutput(t *testing.T) {
 	var secondRequest ai.Context
-	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, reviewer.DefaultModelID)
+	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, fixtureModel)
 	handle.SetResponses(
 		listCall("**/*"),
 		faux.StepFunc(func(_ context.Context, chat ai.Context, _ *ai.StreamOptions, _ *faux.State, _ *ai.Model) (*ai.AssistantMessage, error) {
@@ -140,7 +140,7 @@ func TestRun_ToolResult_CarriesTheRealListOutput(t *testing.T) {
 // model's mistake to learn from, not a run-ending failure.
 func TestRun_UnknownToolName_IsAToolErrorAndTheRunContinues(t *testing.T) {
 	var secondRequest ai.Context
-	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, reviewer.DefaultModelID)
+	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, fixtureModel)
 	handle.SetResponses(
 		faux.Step(faux.AssistantMessage(
 			[]ai.AssistantContentPart{faux.ToolCall("write_file", map[string]any{"path": "main.go"}, nil)},
@@ -184,7 +184,7 @@ func TestRun_UnknownToolName_IsAToolErrorAndTheRunContinues(t *testing.T) {
 // and the next scripted turn still exits 0.
 func TestRun_RefusedToolArguments_AreAToolErrorAndTheRunContinues(t *testing.T) {
 	var secondRequest ai.Context
-	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, reviewer.DefaultModelID)
+	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, fixtureModel)
 	handle.SetResponses(
 		listCall("/etc/*"),
 		faux.StepFunc(func(_ context.Context, chat ai.Context, _ *ai.StreamOptions, _ *faux.State, _ *ai.Model) (*ai.AssistantMessage, error) {
@@ -224,7 +224,7 @@ func TestRun_RefusedToolArguments_AreAToolErrorAndTheRunContinues(t *testing.T) 
 // so the registry's declarations travel on every turn, not just the first.
 func TestRun_ToolDeclarationsReachTheModelOnEveryRequest(t *testing.T) {
 	var declared [][]ai.Tool
-	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, reviewer.DefaultModelID)
+	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, 0, fixtureModel)
 	handle.SetResponses(
 		faux.StepFunc(func(_ context.Context, chat ai.Context, _ *ai.StreamOptions, _ *faux.State, _ *ai.Model) (*ai.AssistantMessage, error) {
 			declared = append(declared, chat.Tools)
@@ -441,8 +441,8 @@ func TestRun_CancelledBetweenTurns_ExitsTwoWithADoneLine(t *testing.T) {
 	var calls atomic.Int64
 
 	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 		Priced:     true,
 		Stream: func(context.Context, *ai.Model, ai.Context, *ai.SimpleStreamOptions) *ai.Stream {

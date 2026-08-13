@@ -16,17 +16,6 @@ import (
 	"github.com/julienlegoux/external-reviewer/internal/family"
 )
 
-// DefaultProviderID and DefaultModelID are the walking skeleton's single
-// reviewer, hard-coded because Epic 1 ships no tier vocabulary, no --model
-// flag and no config file. Both are kern-link's own identifiers verbatim,
-// and the model is chosen by hand outside the Anthropic family so a review
-// of Claude's work is never sent back to Claude — the family classifier that
-// makes that a rule rather than a choice arrives in Epic 3.
-const (
-	DefaultProviderID = "openai-codex"
-	DefaultModelID    = "gpt-5.5"
-)
-
 // ErrNoReviewer classifies a run that never reached a model: exit code 1,
 // SPECS' silent-fallback case that needs no line explaining it to the caller
 // — a model absent from the catalog, a provider with no credential

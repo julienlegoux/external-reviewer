@@ -17,13 +17,13 @@ import (
 func reviewerModel(t *testing.T) (ai.Models, *faux.Handle, *ai.Model) {
 	t.Helper()
 	models, handle := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 	})
-	model := models.GetModel(reviewer.DefaultProviderID, reviewer.DefaultModelID)
+	model := models.GetModel(fixtureProvider, fixtureModel)
 	if model == nil {
-		t.Fatalf("GetModel(%s, %s) = nil, want the model the registry was built with", reviewer.DefaultProviderID, reviewer.DefaultModelID)
+		t.Fatalf("GetModel(%s, %s) = nil, want the model the registry was built with", fixtureProvider, fixtureModel)
 	}
 	return models, handle, model
 }

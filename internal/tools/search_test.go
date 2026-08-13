@@ -715,15 +715,15 @@ func searchLoop(t *testing.T, tool tools.Tool, responses ...faux.ResponseStep) (
 	t.Helper()
 
 	models, handle := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 	})
 	handle.SetResponses(responses...)
 
-	model := models.GetModel(reviewer.DefaultProviderID, reviewer.DefaultModelID)
+	model := models.GetModel(fixtureProvider, fixtureModel)
 	if model == nil {
-		t.Fatalf("model %s/%s missing from the registry", reviewer.DefaultProviderID, reviewer.DefaultModelID)
+		t.Fatalf("model %s/%s missing from the registry", fixtureProvider, fixtureModel)
 	}
 
 	state := diag.NewState()

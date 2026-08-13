@@ -11,7 +11,6 @@ import (
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
-	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // TestRun_Review drives the review/help subcommand grammar through Run,
@@ -190,7 +189,7 @@ func TestRun_Review(t *testing.T) {
 
 			var stdout, stderr bytes.Buffer
 			code := cli.RunForTest(argv, strings.NewReader(tc.stdin), &stdout, &stderr,
-				registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+				registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 			if code != tc.wantExit {
 				t.Errorf("exit code = %d, want %d (stderr: %q)", code, tc.wantExit, stderr.String())
@@ -221,7 +220,7 @@ func TestRun_Review(t *testing.T) {
 func TestRun_Review_WithoutAllow_IsUsageError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.RunForTest([]string{"review", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
-		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {
 		t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -254,7 +253,7 @@ func TestRun_Review_RepeatedAllow_ParsesEveryValue(t *testing.T) {
 	code := cli.RunForTest(
 		[]string{"review", "--allow", "docs", "--allow", "internal", "--prompt", "review this", repo},
 		strings.NewReader(""), &stdout, &stderr,
-		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 0 {
 		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
@@ -288,7 +287,7 @@ func TestRun_Review_AllowValueThatIsNotASubtree_IsUsageError(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			code := cli.RunForTest([]string{"review", "--allow", tc.allow, "--prompt", "x", repo},
 				strings.NewReader(""), &stdout, &stderr,
-				registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+				registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 			if code != 2 {
 				t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())
@@ -349,7 +348,7 @@ func TestRun_Review_StdinReadFailure_ExitsTwo(t *testing.T) {
 func TestRun_NoReviewerReached_WritesNoErrorLine(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
-		registry(t, fauxtest.UnconfiguredAuth(), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.UnconfiguredAuth(), nil, fixtureModel))
 
 	if code != 1 {
 		t.Fatalf("exit code = %d, want 1 (stderr: %q)", code, stderr.String())
@@ -446,7 +445,7 @@ func TestRun_Review_NoTestCausesProcessExit(t *testing.T) {
 func TestRun_Review_PromptFlagEmptyString_IsUsageError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "", t.TempDir()}, strings.NewReader("review this"), &stdout, &stderr,
-		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {
 		t.Fatalf("exit code = %d, want 2 (stderr: %q)", code, stderr.String())

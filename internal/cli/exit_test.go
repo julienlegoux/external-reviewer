@@ -8,7 +8,6 @@ import (
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
-	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // knownDiagPrefixes are the leading words internal/diag's Write* functions
@@ -64,7 +63,7 @@ func TestClassify_WrappedErrNoReviewer_IsExitOne(t *testing.T) {
 func TestRun_Success_ExitsZero(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := cli.RunForTest([]string{"review", "--allow", ".", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
-		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, reviewer.DefaultModelID))
+		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 0 {
 		t.Errorf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())

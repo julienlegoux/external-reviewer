@@ -15,6 +15,16 @@ import (
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
+// fixtureProvider and fixtureModel are the provider and model this package's
+// scripted registries serve. They live here rather than in internal/reviewer
+// because the package exports no default reviewer any more: selection is a
+// tier resolved through the chain, and the binary names no provider outside
+// the family classifier's data table (issue 05 of Epic 3).
+const (
+	fixtureProvider = "openai-codex"
+	fixtureModel    = "gpt-5.5"
+)
+
 // recordingModels notes the order of the three catalog calls resolution
 // makes. It is a decorator rather than a fake so the calls still run against
 // the real registry underneath.
@@ -456,19 +466,23 @@ func TestResolve_NoReviewerReasons_NameTheRule(t *testing.T) {
 	}
 }
 
-// TestDefaults_NameOneHardCodedModel guards the walking skeleton's single
-// reviewer: Epic 1 ships no tier vocabulary, so these constants are the whole
-// of model selection, and they must name a provider and id kern-link's
-// embedded catalog actually carries.
-func TestDefaults_NameOneHardCodedModel(t *testing.T) {
-	if reviewer.DefaultProviderID == "" || reviewer.DefaultModelID == "" {
-		t.Fatalf("default model = %q/%q, want both set", reviewer.DefaultProviderID, reviewer.DefaultModelID)
-	}
-	if strings.Contains(reviewer.DefaultProviderID, "anthropic") {
-		t.Errorf("default provider = %q, want one outside the Anthropic family", reviewer.DefaultProviderID)
-	}
-	if catalog.BuiltinModel(reviewer.DefaultProviderID, reviewer.DefaultModelID) == nil {
+// TestFixtureModel_IsInTheEmbeddedCatalog is what survives of Epic 1's
+// TestDefaults_NameOneHardCodedModel. The constants it guarded —
+// fixtureProvider and DefaultModelID — are gone: the CLI resolves
+// a tier now, and the binary names no provider outside the family
+// classifier's data table (issue 05).
+//
+// The claim worth keeping is about the *fixture*: every test in this package
+// resolves against a faux provider serving these two ids, and a pair absent
+// from kern-link's embedded catalog would make the suite prove resolution
+// works for something no real machine could ever resolve.
+func TestFixtureModel_IsInTheEmbeddedCatalog(t *testing.T) {
+	if catalog.BuiltinModel(fixtureProvider, fixtureModel) == nil {
 		t.Errorf("%s/%s is absent from kern-link's embedded catalog, so it can never resolve",
-			reviewer.DefaultProviderID, reviewer.DefaultModelID)
+			fixtureProvider, fixtureModel)
+	}
+	if strings.Contains(fixtureProvider, "anthropic") {
+		t.Errorf("fixture provider = %q, want one outside the Anthropic family — the default exclusion would refuse it",
+			fixtureProvider)
 	}
 }

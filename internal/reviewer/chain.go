@@ -38,9 +38,17 @@ type Chain struct {
 // tiers entirely, so a Chain whose Assigner carries one resolves the same way
 // for any tier, including the empty string.
 //
-// A successful Resolution carries the assignment that produced it, because
-// "why did this resolve to that?" is not answerable after the fact — the
-// three precedence layers all yield a bare provider and id.
+// The Resolution carries the assignment that produced it, because "why did
+// this resolve to that?" is not answerable after the fact — the three
+// precedence layers all yield a bare provider and id.
+//
+// It carries it on the *failure* path too, with Model left nil. A tier that
+// resolves to nothing is the hardest state a user has to debug, and the
+// question is always which layer named the model that was refused — a
+// [NoReviewerError] states the rule, never the origin. Only the assignment
+// layer's own failures return a zero Assignment, because there is then
+// nothing to report: no layer named anything, or what one named could not be
+// parsed (and the *MalformedAssignmentError says where itself).
 func (c Chain) ResolveTier(ctx context.Context, tier string) (Resolution, error) {
 	assignment, err := c.Assigner.Assign(tier)
 	if err != nil {
@@ -54,10 +62,6 @@ func (c Chain) ResolveTier(ctx context.Context, tier string) (Resolution, error)
 		Exclusion:  c.Exclusion,
 		Warn:       c.Warn,
 	}.Resolve(ctx)
-	if err != nil {
-		return Resolution{}, err
-	}
-
 	resolution.Assignment = assignment
-	return resolution, nil
+	return resolution, err
 }

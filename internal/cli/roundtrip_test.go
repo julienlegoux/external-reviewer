@@ -17,7 +17,6 @@ import (
 
 	"github.com/julienlegoux/external-reviewer/internal/cli"
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
-	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
 // markdownAnswer is what a scripted reviewer returns on the success path. It
@@ -46,7 +45,7 @@ func runReviewOver(t *testing.T, models ai.Models, repoPath string) (int, string
 // machine allows.
 func scripted(t *testing.T, tokensPerSecond float64, responses ...faux.ResponseStep) ai.Models {
 	t.Helper()
-	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, tokensPerSecond, reviewer.DefaultModelID)
+	models, handle := registryWith(t, fauxtest.CredentialedAuth("OAuth"), nil, tokensPerSecond, fixtureModel)
 	handle.SetResponses(responses...)
 	return models
 }
@@ -232,8 +231,8 @@ func TestRun_DoneLineCarriesTheAdaptersOwnCost(t *testing.T) {
 		},
 	}
 	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
-		ProviderID: reviewer.DefaultProviderID,
-		ModelIDs:   []string{reviewer.DefaultModelID},
+		ProviderID: fixtureProvider,
+		ModelIDs:   []string{fixtureModel},
 		Auth:       fauxtest.CredentialedAuth("OAuth"),
 		Priced:     true,
 		Stream: func(context.Context, *ai.Model, ai.Context, *ai.SimpleStreamOptions) *ai.Stream {
@@ -458,12 +457,12 @@ func TestRun_ThinkingAndToolCall_NeverReachStdoutOrReport(t *testing.T) {
 func cacheAwareModels(t *testing.T, usage ai.Usage) ai.Models {
 	t.Helper()
 	provider := ai.CreateProvider(ai.CreateProviderOptions{
-		ID:   reviewer.DefaultProviderID,
+		ID:   fixtureProvider,
 		Auth: fauxtest.CredentialedAuth("OAuth"),
 		Models: []*ai.Model{{
-			ID:       reviewer.DefaultModelID,
-			Name:     reviewer.DefaultModelID,
-			Provider: reviewer.DefaultProviderID,
+			ID:       fixtureModel,
+			Name:     fixtureModel,
+			Provider: fixtureProvider,
 			Cost:     ai.ModelCost{Input: 100, Output: 200},
 		}},
 		Api: ai.StreamFuncs{

@@ -8,12 +8,15 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/julienlegoux/kern-link/ai"
 
+	"github.com/julienlegoux/external-reviewer/internal/config"
 	"github.com/julienlegoux/external-reviewer/internal/confine"
 	"github.com/julienlegoux/external-reviewer/internal/diag"
+	"github.com/julienlegoux/external-reviewer/internal/family"
 	"github.com/julienlegoux/external-reviewer/internal/repo"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 	"github.com/julienlegoux/external-reviewer/internal/tools"
@@ -35,6 +38,20 @@ type reviewRequest struct {
 	// (see run.go) — and travels on the request rather than as a package
 	// value so Epic 3 fills it in at the one place the request is built.
 	Bounds reviewer.Bounds
+	// Tier is the weight the reviewer is selected by: one of config.Tiers,
+	// defaulting to defaultTier when neither --tier nor --model is given. It
+	// is empty exactly when Model is set, which bypasses tiers entirely.
+	Tier string
+	// Model is --model's explicit provider/id, empty when the flag is absent.
+	// It is parsed by internal/reviewer rather than here, so the grammar of a
+	// provider/id pair is stated in exactly one place — the same one the
+	// environment and config layers are parsed by.
+	Model string
+	// Exclusion is the family rule built from --exclude-family, never nil:
+	// the flag's own default names the product default, and every value that
+	// would excuse a family from the rule by accident is a usage error before
+	// a request is built (see parseExclusion).
+	Exclusion *family.Exclusion
 }
 
 // allowList is the repeatable --allow flag's value: repo-relative wire paths,
@@ -100,12 +117,7 @@ func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest
 	}
 
 	warn := func(message string) { diag.WriteWarn(stderr, message) }
-	resolution, err := reviewer.Resolver{
-		Models:     registry,
-		ProviderID: reviewer.DefaultProviderID,
-		ModelID:    reviewer.DefaultModelID,
-		Warn:       warn,
-	}.Resolve(ctx)
+	resolution, err := selectReviewer(ctx, registry, req, warn)
 	if err != nil {
 		return err
 	}
@@ -141,6 +153,80 @@ func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest
 		return errors.New("the reviewer finished but its final message carried no text")
 	}
 	return writeReport(stdout, report)
+}
+
+// selectReviewer runs the whole of reviewer selection for one invocation:
+// the precedence chain specs 06 fixes, then the pre-flight SPECS orders,
+// both inside reviewer.Chain. Nothing in this function names a provider — the
+// binary's only knowledge of vendors is the family classifier's data table.
+//
+// The config file is read only when no --model was given. That is the flag's
+// documented meaning taken literally: an explicit pair bypasses tiers
+// entirely, and a run that names its own model must not fail because the
+// machine's tier file, which it is not consulting, happens to be malformed.
+//
+// A resolution that failed still carries its assignment, and that is what
+// makes the exit-1 path diagnosable: SPECS calls it the silent-fallback case
+// and forbids an error: line, so the one thing a human gets is the warn line
+// written here — which rule refused, and which layer named the model it
+// refused.
+func selectReviewer(ctx context.Context, registry ai.Models, req reviewRequest, warn func(string)) (reviewer.Resolution, error) {
+	assigner := reviewer.Assigner{Explicit: req.Model, Getenv: os.Getenv}
+	configPath := ""
+	if req.Model == "" {
+		cfg, err := config.Load()
+		if err != nil {
+			return reviewer.Resolution{}, err
+		}
+		for _, warning := range cfg.Warnings {
+			warn(warning)
+		}
+		assigner.Config = cfg
+		configPath = cfg.Path
+	}
+
+	resolution, err := reviewer.Chain{
+		Models:    registry,
+		Assigner:  assigner,
+		Exclusion: req.Exclusion,
+		Warn:      warn,
+	}.ResolveTier(ctx, req.Tier)
+	if err != nil {
+		var noReviewer *reviewer.NoReviewerError
+		if errors.As(err, &noReviewer) {
+			warn(noReviewerDiagnostic(noReviewer, resolution.Assignment, req.Tier, configPath))
+		}
+		return reviewer.Resolution{}, err
+	}
+	return resolution, nil
+}
+
+// noReviewerDiagnostic renders the one warn line the exit-1 path writes. It
+// switches on the typed Reason rather than reading the error's message text,
+// because the two cases need different information: an unassigned tier has no
+// origin to name — the point is that nothing named anything — while every
+// other rule refused a model some layer did name, and the fix depends on
+// which one.
+func noReviewerDiagnostic(e *reviewer.NoReviewerError, assignment reviewer.Assignment, tier, configPath string) string {
+	if e.Reason == reviewer.ReasonUnassigned {
+		return fmt.Sprintf("no reviewer: nothing assigns tier %q — set [tiers.%s] in %s, or %s%s",
+			tier, tier, configPath, reviewer.TierEnvPrefix, strings.ToUpper(tier))
+	}
+	return fmt.Sprintf("no reviewer: %s (assigned by %s)", e.Error(), assignedBy(assignment))
+}
+
+// assignedBy names the knob that chose this assignment, in the spelling the
+// human who has to change it would use: the flag, the environment variable,
+// or the config file's own path. The path is printed as the OS renders it
+// (CONVENTIONS § Paths and platforms) — it is not a wire path.
+func assignedBy(assignment reviewer.Assignment) string {
+	if assignment.Source == reviewer.SourceFlag {
+		return "--model"
+	}
+	if assignment.Origin != "" {
+		return assignment.Origin
+	}
+	return string(assignment.Source)
 }
 
 // writeReport performs the run's one and only write to stdout and classifies
@@ -184,6 +270,69 @@ func writeReport(stdout io.Writer, report string) error {
 // "unspecified" fallback are set by the loop, one call frame below, because
 // that is where the totals the bound check reads have to live (issue 03).
 const usageStopReason = "usage"
+
+// defaultTier is what a caller that names neither --tier nor --model is
+// asking for. The alternative — making the flag mandatory — would lengthen
+// every hand invocation for no safety gained: the family rule protects the
+// outcome whichever tier is resolved, and a caller with no opinion about
+// weight has one about wanting an ordinary review.
+const defaultTier = "standard"
+
+// defaultExcludeFamily is --exclude-family's default value, rendered from the
+// family package's own list rather than spelled again here, so "which
+// families does this product exclude by default?" has one answer in one
+// place.
+var defaultExcludeFamily = func() string {
+	excluded := family.DefaultExcluded()
+	names := make([]string, len(excluded))
+	for i, f := range excluded {
+		names[i] = f.String()
+	}
+	return strings.Join(names, ",")
+}()
+
+// parseExclusion turns --exclude-family's comma-separated value into the rule
+// the resolver applies, refusing every spelling that would quietly excuse a
+// family from it.
+//
+// Both refusals are the same defence. An empty value — the whole flag, or one
+// element of the list — reads as "exclude nothing", and a flag that switches
+// off this product's central safety property by looking like a typo is
+// exactly the shape specs 04 will not ship. A name that is no family is
+// worse, because it looks like it worked: family.NewExclusion keeps an
+// unrecognised name verbatim, so it never matches anything, and
+// `--exclude-family anthropi` would run a Claude review believing it had
+// excluded Claude. family.Lookup is the check that package documents for
+// callers taking names from a human.
+func parseExclusion(value string) (family.Exclusion, error) {
+	parts := strings.Split(value, ",")
+	names := make([]string, 0, len(parts))
+	for _, part := range parts {
+		name := strings.TrimSpace(part)
+		if name == "" {
+			return family.Exclusion{}, errors.New("--exclude-family needs at least one family name: an empty value excludes nothing")
+		}
+		if _, known := family.Lookup(name); !known {
+			return family.Exclusion{}, fmt.Errorf("--exclude-family names %q, which is not a model family: an unrecognised name excludes nothing", name)
+		}
+		names = append(names, name)
+	}
+	return family.NewExclusion(names...), nil
+}
+
+// flagsSet reports which of names were actually given on the command line, as
+// opposed to holding their default value. --tier and --model are alternatives
+// in the grammar, so "was this flag given?" is a different question from
+// "does it hold a non-empty value", and only fs.Visit answers the first.
+func flagsSet(fs *flag.FlagSet, names ...string) map[string]bool {
+	given := make(map[string]bool, len(names))
+	fs.Visit(func(f *flag.Flag) {
+		if slices.Contains(names, f.Name) {
+			given[f.Name] = true
+		}
+	})
+	return given
+}
 
 // ensureModels returns registry unchanged when a caller supplied one — every
 // test does, as an explicit argument — and builds the real one, over
@@ -279,6 +428,9 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 	fs := flag.NewFlagSet("review", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	prompt := fs.String("prompt", "", "the task prompt for the reviewer")
+	tier := fs.String("tier", defaultTier, "the weight of reviewer to select: light, standard or heavy")
+	model := fs.String("model", "", "an explicit provider/id, bypassing tiers entirely")
+	excludeFamily := fs.String("exclude-family", defaultExcludeFamily, "comma-separated model families that may not review")
 	var allow allowList
 	fs.Var(&allow, "allow", "a repo-relative subtree the reviewer may read; repeatable, required")
 
@@ -293,6 +445,27 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		diag.WriteError(stderr, err.Error())
 		state.StopReason = usageStopReason
 		return fmt.Errorf("parsing review flags: %w", err)
+	}
+
+	// The reviewer-selection flags are validated first, before the repository
+	// is even stat'd: they are decided wholly from argv, they cost no I/O,
+	// and the grammar they form is the contract the calling skill's template
+	// is built from (specs 02).
+	given := flagsSet(fs, "tier", "model")
+	if given["tier"] && given["model"] {
+		return usageError(stderr, state, "--tier and --model are alternatives: give one or the other, not both")
+	}
+	selectedTier := ""
+	if !given["model"] {
+		selectedTier = *tier
+		if !slices.Contains(config.Tiers, selectedTier) {
+			return usageError(stderr, state, fmt.Sprintf("unknown tier %q: the tiers are %s",
+				selectedTier, strings.Join(config.Tiers, ", ")))
+		}
+	}
+	exclusion, err := parseExclusion(*excludeFamily)
+	if err != nil {
+		return usageError(stderr, state, err.Error())
 	}
 
 	positional := fs.Args()
@@ -400,7 +573,25 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 		return errors.New("empty task prompt")
 	}
 
-	return runReview(ctx, registry, reviewRequest{RepoPath: repoPath, Task: task, Scope: scope, Bounds: bounds}, stdout, stderr, state)
+	return runReview(ctx, registry, reviewRequest{
+		RepoPath:  repoPath,
+		Task:      task,
+		Scope:     scope,
+		Bounds:    bounds,
+		Tier:      selectedTier,
+		Model:     *model,
+		Exclusion: &exclusion,
+	}, stdout, stderr, state)
+}
+
+// usageError writes the one error: line a malformed invocation gets, records
+// the CLI word its done line carries, and returns the error classify turns
+// into exit 2 — the three steps every usage path in this file used to repeat
+// with the message spelled twice.
+func usageError(stderr io.Writer, state *diag.State, message string) error {
+	diag.WriteError(stderr, message)
+	state.StopReason = usageStopReason
+	return errors.New(message)
 }
 
 // runReview calls the review seam and folds its outcome into state's stop
@@ -408,6 +599,18 @@ func runReviewCommand(ctx context.Context, args []string, stdin io.Reader, stdou
 // failure case: a run a human interrupted is not a run that failed, and the
 // transcript has to say which of the two happened. Both are exit 2 all the
 // same.
+//
+// Reviewer selection produces three failure classes, and this switch is where
+// they become exit codes:
+//
+//   - *reviewer.NoReviewerError unwraps to ErrNoReviewer — exit 1,
+//     stop=no_reviewer, and deliberately no error: line (SPECS' silent
+//     native-fallback case; selectReviewer writes the warn line that keeps it
+//     diagnosable);
+//   - a *reviewer.MalformedAssignmentError is exit 2 either way, but splits on
+//     which layer wrote the unparseable value — see typedAssignmentUsageError;
+//   - everything else, including the *ai.ModelsError a broken credential
+//     produces, is exit 2 with stop=failed and one error: line.
 func runReview(ctx context.Context, registry ai.Models, req reviewRequest, stdout, stderr io.Writer, state *diag.State) error {
 	err := resolveAndReview(ctx, registry, req, stdout, stderr, state)
 	switch {
@@ -417,6 +620,9 @@ func runReview(ctx context.Context, registry ai.Models, req reviewRequest, stdou
 		// not a CLI word (SPECS § Interfaces).
 	case errors.Is(err, ErrNoReviewer):
 		state.StopReason = "no_reviewer"
+	case malformedFlagAssignment(err):
+		state.StopReason = usageStopReason
+		diag.WriteError(stderr, err.Error())
 	case interruptedError(err):
 		state.StopReason = "interrupted"
 		diag.WriteError(stderr, "run interrupted")
@@ -425,6 +631,34 @@ func runReview(ctx context.Context, registry ai.Models, req reviewRequest, stdou
 		diag.WriteError(stderr, err.Error())
 	}
 	return err
+}
+
+// malformedFlagAssignment reports whether err is an unparseable provider/id
+// that the *caller wrote on the command line*, as opposed to one the machine
+// carries in an environment variable or its config file.
+//
+// The exit-code contract has no slot for reviewer.MalformedAssignmentError:
+// SPECS classifies on whether a reviewer was ever reachable, and an
+// unparseable value never reaches anything while equally never being an
+// absent capability — issue 04 made it a third class precisely so it could
+// not be folded into the silent exit 1. It is exit 2 whichever layer produced
+// it; what this predicate decides is the CLI word, and the split is by
+// Source rather than by message text.
+//
+//   - SourceFlag — the invocation is malformed, exactly like a missing
+//     repository path or an unknown tier: stop=usage, and the caller rereads
+//     its own argv.
+//   - SourceEnvironment, SourceConfig — argv is well formed and the machine is
+//     not. Calling that a usage error would send a script's author hunting
+//     through a command line that is correct, so it takes the same
+//     stop=failed as any other "reached the point of trying and could not"
+//     failure, with one error: line naming the variable or file to fix.
+//
+// Both are exit 2 either way, so no caller reading only the code can be
+// misled by the distinction; it exists for the human reading the transcript.
+func malformedFlagAssignment(err error) bool {
+	var malformed *reviewer.MalformedAssignmentError
+	return errors.As(err, &malformed) && malformed.Source == reviewer.SourceFlag
 }
 
 // interruptedError reports whether err represents a run a human (or a
