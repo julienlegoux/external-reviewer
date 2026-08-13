@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/julienlegoux/kern-link/ai"
 
@@ -14,6 +15,25 @@ import (
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
+
+// TestRun_ShippedBounds_AreSizedFromMeasurements pins the run ceiling every
+// real invocation carries as data, not only through its effect on a scripted
+// run — a later edit that quietly unsets one of the three fields fails this
+// test directly. The ranges are the ones issue 09 of Epic 3 derives from
+// Epic 2's MEASUREMENTS, re-read after issue 01 closed the git_read gap that
+// inflated the twelve-turn run.
+func TestRun_ShippedBounds_AreSizedFromMeasurements(t *testing.T) {
+	b := cli.ShippedBoundsForTest()
+	if b.MaxTurns < 25 || b.MaxTurns > 40 {
+		t.Errorf("MaxTurns = %d, want in [25, 40]", b.MaxTurns)
+	}
+	if b.MaxElapsed < 15*time.Minute || b.MaxElapsed > 25*time.Minute {
+		t.Errorf("MaxElapsed = %s, want in [15m, 25m]", b.MaxElapsed)
+	}
+	if b.MaxCost != 0 {
+		t.Errorf("MaxCost = %v, want 0 — the credential is a subscription, nothing is billed per token", b.MaxCost)
+	}
+}
 
 // TestRun_EmptyArgv_UsageError asserts the empty-argv path's error: line
 // text directly — not stderr.Len() != 0, which the leftover usage text this

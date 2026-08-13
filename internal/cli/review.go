@@ -132,7 +132,12 @@ func resolveAndReview(ctx context.Context, registry ai.Models, req reviewRequest
 	if err != nil {
 		return err
 	}
-	if report == "" {
+	// An empty report is only ever a failure when nothing else explains it.
+	// A bounds stop can legitimately have nothing to show — the report is
+	// written in one final turn, so a run stopped ahead of it has no prose
+	// at all — and SPECS says a bounded run is exit 0 with the report it
+	// had, including none; it must not be reclassified as failed here.
+	if report == "" && state.StopReason != reviewer.BoundsStopReason {
 		return errors.New("the reviewer finished but its final message carried no text")
 	}
 	return writeReport(stdout, report)

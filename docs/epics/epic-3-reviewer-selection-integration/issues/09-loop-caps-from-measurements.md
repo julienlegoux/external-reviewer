@@ -3,14 +3,15 @@ type: Issue
 title: "Set the loop caps from Epic 2's measurements"
 description: "Fill in the bounds seam with turn and wall-clock ceilings sized from real runs, decide which to expose as flags, and make a bounded run exit 0 with the report it had."
 tags: [epic-3]
-timestamp: 2026-08-13T07:10:00Z
+timestamp: 2026-08-13T14:55:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/68
 epic: 3
 issue: 09
 slug: loop-caps-from-measurements
 size: S
-status: open
+status: done
 gh_issue: 68
+gh_pr: 83
 depends_on: [1]
 ---
 

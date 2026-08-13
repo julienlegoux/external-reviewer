@@ -3,7 +3,7 @@ type: Issue
 title: "Make a path-scoped diff reachable through git_read"
 description: "Give git_read a paths parameter so a reviewer can scope a diff to a subtree, closing the gap that inflated Epic 2's turn counts before the caps are sized from them."
 tags: [epic-3]
-timestamp: 2026-08-13T09:45:00Z
+timestamp: 2026-08-13T07:58:11Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/60
 epic: 3
 issue: 01

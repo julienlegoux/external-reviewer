@@ -232,7 +232,7 @@ func TestLoop_Run_UnsetBoundsNeverStopARun(t *testing.T) {
 // return the same instant on Windows, which would make a sub-millisecond
 // bound a coin flip rather than an assertion.
 func TestLoop_Run_ElapsedBoundStopsTheRun(t *testing.T) {
-	loop, _, state := queuedLoop(t, tools.NewRegistry(echoTool()),
+	loop, stderr, state := queuedLoop(t, tools.NewRegistry(echoTool()),
 		toolUse("echo", map[string]any{"text": "one"}, "partial\n"),
 		faux.Step(faux.TextMessage(loopAnswer, nil)),
 	)
@@ -252,6 +252,9 @@ func TestLoop_Run_ElapsedBoundStopsTheRun(t *testing.T) {
 	}
 	if state.StopReason != "bounds" {
 		t.Errorf("state.StopReason = %q, want bounds", state.StopReason)
+	}
+	if !strings.Contains(stderr.String(), "elapsed bound") {
+		t.Errorf("stderr = %q, want it to name the elapsed bound, not just say bounds", stderr.String())
 	}
 }
 

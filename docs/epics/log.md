@@ -2,6 +2,12 @@
 
 ## 2026-08-13
 
+* **Issue 09 done**: [09 — Set the loop caps from Epic 2's measurements](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
+  ([#68](https://github.com/julienlegoux/external-reviewer/issues/68)) — [PR #83](https://github.com/julienlegoux/external-reviewer/pull/83)
+  merged into `develop`; issue #68 already closed. Reconciled here while merging
+  `origin/develop` into issue 04's branch to resolve a conflict — the issue file and
+  `issues/index.md` still read `pr-open`.
+
 * **Epic 3, issue 04 pr-open**: [Resolve a tier to a reachable, allowed model](/epic-3-reviewer-selection-integration/issues/04-tier-resolution-chain.md)
   ([#63](https://github.com/julienlegoux/external-reviewer/issues/63)) — [PR #85](https://github.com/julienlegoux/external-reviewer/pull/85)
   opened against `develop`. The four-layer precedence chain as `reviewer.Assigner`, the
@@ -12,11 +18,31 @@
   tier resolves to no reviewer because all 25 of that provider's ids are bare, ten of them
   Anthropic's, so the fix is a specs 04 rule rather than a widening of this PR.
 
+* **Issue 09 PR opened**: [09 — Set the loop caps from Epic 2's measurements](/epic-3-reviewer-selection-integration/issues/09-loop-caps-from-measurements.md)
+  ([#68](https://github.com/julienlegoux/external-reviewer/issues/68)) opened as
+  [PR #83](https://github.com/julienlegoux/external-reviewer/pull/83) from branch
+  `issue-09-epic3-caps`. `cli.Run` wires a non-zero `reviewer.Bounds` on every real
+  invocation: `MaxTurns: 30` (SCOPE-fixed [25, 40]), `MaxElapsed: 20 * time.Minute`
+  (SCOPE-fixed [15m, 25m]), `MaxCost` stays 0 — sized from Epic 2's MEASUREMENTS, read
+  knowing issue 01 (PR #81, merged) had already closed the `git_read` gap that inflated
+  the twelve-turn run. Also fixes the correctness gap the issue named:
+  `resolveAndReview`'s empty-report check no longer reclassifies a bounds stop with no
+  prose yet as `failed` — it now checks `state.StopReason` first, verified red against
+  the pre-fix code (exit 2, `stop=failed`) before the fix went in. **No flag** exposes
+  any of the three ceilings — they are a safety net sized well above every measured run,
+  not a knob the invocation template has asked to turn, and the seam already makes
+  adding one later an ordinary PR rather than a restructuring; reasoning recorded in the
+  PR body since the issue explicitly permits answering "no". 126 changed lines against
+  the ~500-line S target.
+
 * **Issue 02 done**: [02 — Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
   ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
-  merged into `develop`. Reconciled from issue 04's branch, which depends on it;
-  `02-model-family-classifier.md` and `issues/index.md` still read `pr-open`, and the GitHub
-  issue was already closed by the merge but still carried the `status: pr-open` label.
+  merged into `develop`; issue #61 already closed. Reconciled here while merging
+  `origin/develop` into issue 09's branch to resolve a conflict — the issue file and
+  `issues/index.md` still read `pr-open`. Issue 04's run reconciled the same fact
+  independently, and additionally removed the stale `status: pr-open` label that the merge
+  had left on the closed issues [#61](https://github.com/julienlegoux/external-reviewer/issues/61)
+  and [#62](https://github.com/julienlegoux/external-reviewer/issues/62).
 
 * **Epic 3, issue 02 pr-open**: [Add the fail-closed model family classifier](/epic-3-reviewer-selection-integration/issues/02-model-family-classifier.md)
   ([#61](https://github.com/julienlegoux/external-reviewer/issues/61)) — [PR #82](https://github.com/julienlegoux/external-reviewer/pull/82)
@@ -29,16 +55,16 @@
   reported the same day: `0xC0000602` on a one-line C file, so no Go build flag can
   re-roll it.
 
-* **Issue 03 done**: [03 — Read the machine-local tier assignment TOML](https://github.com/julienlegoux/external-reviewer/issues/62)
+* **Issue 03 done**: [03 — Read the machine-local tier assignment TOML](/epic-3-reviewer-selection-integration/issues/03-tier-assignment-config-file.md)
   ([#62](https://github.com/julienlegoux/external-reviewer/issues/62)) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80)
-  merged into `develop`. Reconciled here while merging `develop` into issue 02's branch to
-  resolve a conflict — `03-tier-assignment-config-file.md` and `issues/index.md` still read
-  `pr-open`.
+  merged into `develop`; issue #62 already closed. Reconciled independently by issue 09's
+  and issue 02's runs — the issue file and `issues/index.md` still read `pr-open`.
 
-* **Issue 01 done**: [01 — Make a path-scoped diff reachable through git_read](https://github.com/julienlegoux/external-reviewer/issues/60)
-  (#60) — [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81) merged into
-  `develop`. Reconciled here while merging `develop` into issue 03's branch to resolve a
-  conflict — `01-git-read-path-scoped-diff.md` and `issues/index.md` still read `pr-open`.
+* **Issue 01 done**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
+  ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) — [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81)
+  merged into `develop`; issue #60 already closed. Reconciled independently by issue 09's,
+  issue 02's and issue 03's runs — the issue file and `issues/index.md` still read
+  `pr-open`.
 
 * **PR opened**: Epic 3 issue 03 — [Read the machine-local tier assignment TOML](https://github.com/julienlegoux/external-reviewer/issues/62)
   (#62) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80) against
