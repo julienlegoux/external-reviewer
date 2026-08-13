@@ -2,6 +2,11 @@
 
 ## 2026-08-13
 
+* **Issue 01 done**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
+  ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) — [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81)
+  merged into `develop`; issue #60 already closed. Reconciled here — the issue file and
+  `issues/index.md` still read `pr-open`.
+
 * **Epic 3, issue 01 PR opened**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
   ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) opened as
   [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81) from branch
