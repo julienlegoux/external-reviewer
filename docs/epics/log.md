@@ -2,6 +2,16 @@
 
 ## 2026-08-13
 
+* **Issue 04 done**: [04 — Add the README stating v1's OpenAI-only validation boundary](/epic-0-epic-3-plan-repair/issues/04-readme-validation-boundary.md)
+  ([#74](https://github.com/julienlegoux/external-reviewer/issues/74)) — [PR #76](https://github.com/julienlegoux/external-reviewer/pull/76) merged into
+  `develop`; issue #74 already closed. Reconciled here — `04-readme-validation-boundary.md`
+  and `issues/index.md` still read `pr-open`.
+
+* **Issue 03 done**: [03 — Re-grade Epic 3's issue sizes and sync the recorded surfaces](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md)
+  ([#73](https://github.com/julienlegoux/external-reviewer/issues/73)) — [PR #78](https://github.com/julienlegoux/external-reviewer/pull/78) merged into
+  `develop`; issue #73 already closed. Reconciled here — `03-epic-3-sizes-and-surfaces.md`
+  and `issues/index.md` still read `pr-open`.
+
 * **Issue 03 PR opened**: [03 — Re-grade Epic 3's issue sizes and sync the recorded surfaces](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md)
   ([#73](https://github.com/julienlegoux/external-reviewer/issues/73)) opened as
   [PR #78](https://github.com/julienlegoux/external-reviewer/pull/78) from branch
