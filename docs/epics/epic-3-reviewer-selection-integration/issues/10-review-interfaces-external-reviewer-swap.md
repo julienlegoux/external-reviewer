@@ -104,9 +104,10 @@ In `julienlegoux/skills`:
 
 - [ ] `grep -rn opencode` across `julienlegoux/skills` matches nothing outside historical
       `docs/log.md` entries.
-- [ ] `skills/_shared/review-interfaces.md` names the exact command line, including
-      `--allow`, `--tier`, the positional repository path, and the JSON request object on
-      stdin — copy-pasteable, with no placeholder that isn't obviously one.
+- [ ] The shared review contract names the exact command line — `--allow`, `--tier`, the
+      positional repository path, and the JSON request object on stdin — copy-pasteable,
+      with no placeholder that isn't obviously one: `review-interfaces.md` probes and
+      branches, `external-reviewer.md` carries the invocation behind that probe.
 - [ ] The system prompt written into the contract carries the leads-not-findings
       instruction and the "a review that confirms is a legitimate outcome" clause; the
       verify-each-lead rule survives verbatim in substance.
