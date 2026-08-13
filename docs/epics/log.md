@@ -2,6 +2,12 @@
 
 ## 2026-08-13
 
+* **Issue 05 done**: [05 — Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
+  ([#64](https://github.com/julienlegoux/external-reviewer/issues/64)) — [PR #86](https://github.com/julienlegoux/external-reviewer/pull/86)
+  merged into `develop`; GitHub issue #64 already closed and carrying no status label.
+  Reconciled by issue 08's run — the issue file and `issues/index.md` still read
+  `pr-open`.
+
 * **Epic 3, issue 05 pr-open**: [Select the reviewer from the command line with --tier, --model and --exclude-family](/epic-3-reviewer-selection-integration/issues/05-review-tier-flags-and-exit-codes.md)
   ([#64](https://github.com/julienlegoux/external-reviewer/issues/64)) — [PR #86](https://github.com/julienlegoux/external-reviewer/pull/86)
   opened against `develop` from branch `issue-64-cli-reviewer-selection`. `reviewer.Chain`
