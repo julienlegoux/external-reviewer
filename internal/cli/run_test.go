@@ -108,7 +108,7 @@ func TestRunContext_CancelledContext_ExitsTwo(t *testing.T) {
 	cancel()
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
+	code := cli.RunWithModelsForTest(ctx, []string{"review", "--allow", ".", "--system", fixtureSystem, "--prompt", "x", t.TempDir()}, strings.NewReader(""), &stdout, &stderr,
 		registry(t, fauxtest.CredentialedAuth("OAuth"), nil, fixtureModel))
 
 	if code != 2 {

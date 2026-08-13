@@ -88,8 +88,14 @@ type Turn struct {
 // multi-turn loop calls Next repeatedly against the same value, which is why
 // the message history lives here rather than on the caller's stack.
 type Conversation struct {
-	models   ai.Models
-	model    *ai.Model
+	models ai.Models
+	model  *ai.Model
+	// system is the caller-supplied system prompt, carried on every request
+	// as ai.Context.SystemPrompt. This package neither writes one nor
+	// substitutes one for an empty value: specs 08 puts the prompt entirely
+	// in the caller's hands, and internal/cli refuses an invocation that
+	// supplies none long before a Conversation is built.
+	system   string
 	messages []ai.Message
 	// tools are the declarations sent with every request. Epic 1 sent none;
 	// the Loop sets them once from its ToolSet, and they travel on every turn
@@ -105,14 +111,16 @@ type Conversation struct {
 	StreamTimeout time.Duration
 }
 
-// NewConversation seeds a conversation with the caller's task and nothing
-// else. No system prompt (the caller owns it, and Epic 1 sends none), no file
-// listing, no repository summary: the reviewer chooses what to read, and
-// choosing is the reason the loop exists.
-func NewConversation(models ai.Models, model *ai.Model, task string) *Conversation {
+// NewConversation seeds a conversation with the caller's system prompt and
+// task, and nothing else. Both come from the caller — specs 08 — and nothing
+// is injected alongside them: no file listing, no repository summary, no git
+// log. The reviewer chooses what to read, and choosing is the reason the loop
+// exists.
+func NewConversation(models ai.Models, model *ai.Model, system, task string) *Conversation {
 	return &Conversation{
 		models: models,
 		model:  model,
+		system: system,
 		messages: []ai.Message{&ai.UserMessage{
 			Content:   ai.UserText(task),
 			Timestamp: time.Now().UnixMilli(),
@@ -161,7 +169,7 @@ func (c *Conversation) Next(ctx context.Context) (Turn, error) {
 	turnCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	chat := ai.Context{Messages: c.messages, Tools: c.tools}
+	chat := ai.Context{SystemPrompt: c.system, Messages: c.messages, Tools: c.tools}
 	// The timeout is handed to the adapter as well as held here: kern-link's
 	// transports arm their own read deadlines from StreamOptions.Timeout and
 	// arm none while it is zero, so this is what lets a dead connection be

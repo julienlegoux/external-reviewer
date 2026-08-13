@@ -105,32 +105,38 @@ func TestRun_Review_StdinOverTheBound_NamedError(t *testing.T) {
 }
 
 // TestRun_Review_PromptWhitespaceReachesModelVerbatim is the trim's own
-// boundary: strings.TrimSpace decides emptiness, and nothing else — the
-// prompt the model actually receives is the caller's own text, leading and
-// trailing whitespace included. The assertion runs from inside a scripted
-// faux step, capturing the exact ai.UserMessage the round trip sent, on
-// issue 06's pattern of asserting the request rather than only the
-// response.
+// boundary, carried over to the request object issue 08 landed:
+// strings.TrimSpace decides emptiness, and nothing else — both values the
+// model actually receives are the caller's own text, leading and trailing
+// whitespace included. The assertion runs from inside a scripted faux step,
+// capturing the exact request the round trip sent, on issue 06's pattern of
+// asserting the request rather than only the response.
 func TestRun_Review_PromptWhitespaceReachesModelVerbatim(t *testing.T) {
-	const raw = "  please review this carefully  \n"
-	var captured string
+	const rawTask = "  please review this carefully  \n"
+	const rawSystem = "\n  you review repositories you did not write  "
+	var capturedTask, capturedSystem string
 	capture := faux.StepFunc(func(_ context.Context, chat ai.Context, _ *ai.StreamOptions, _ *faux.State, _ *ai.Model) (*ai.AssistantMessage, error) {
+		capturedSystem = chat.SystemPrompt
 		user, ok := chat.Messages[0].(*ai.UserMessage)
 		if !ok || user.Content.Plain == nil {
 			t.Fatalf("chat.Messages[0] = %#v, want a *ai.UserMessage carrying plain text", chat.Messages[0])
 		}
-		captured = *user.Content.Plain
+		capturedTask = *user.Content.Plain
 		return faux.TextMessage(scriptedAnswer, nil), nil
 	})
 	models := scripted(t, 0, capture)
 
 	var stdout, stderr bytes.Buffer
-	code := cli.RunForTest([]string{"review", "--allow", ".", t.TempDir()}, strings.NewReader(raw), &stdout, &stderr, models)
+	code := cli.RunForTest([]string{"review", "--allow", ".", t.TempDir()},
+		strings.NewReader(requestObject(rawSystem, rawTask)), &stdout, &stderr, models)
 
 	if code != 0 {
 		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr.String())
 	}
-	if captured != raw {
-		t.Errorf("prompt reaching the model = %q, want the caller's own text untouched: %q", captured, raw)
+	if capturedTask != rawTask {
+		t.Errorf("task reaching the model = %q, want the caller's own text untouched: %q", capturedTask, rawTask)
+	}
+	if capturedSystem != rawSystem {
+		t.Errorf("system prompt reaching the model = %q, want the caller's own text untouched: %q", capturedSystem, rawSystem)
 	}
 }

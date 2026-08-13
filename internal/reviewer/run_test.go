@@ -11,6 +11,38 @@ import (
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
 
+// callerSystemPrompt stands in for whatever the calling skill sends. It lives
+// in the test package because the binary carries no system prompt of its own:
+// specs 08 puts the text entirely in the caller's hands, and
+// internal/cli's TestBinary_CarriesNoSystemPrompt keeps it out of non-test
+// source.
+const callerSystemPrompt = "You review repositories you did not write. Report leads, not findings."
+
+// TestConversation_Next_SendsSystemPromptVerbatim is the caller-owned prompt
+// arriving where a model actually reads one: kern-link carries it on
+// ai.Context.SystemPrompt rather than as a message, so a Conversation that
+// stored the text and never put it on the request would look identical from
+// the outside. Dropping SystemPrompt from the ai.Context literal in Next must
+// turn this red.
+func TestConversation_Next_SendsSystemPromptVerbatim(t *testing.T) {
+	var got string
+	capture := faux.StepFunc(func(_ context.Context, chat ai.Context, _ *ai.StreamOptions, _ *faux.State, _ *ai.Model) (*ai.AssistantMessage, error) {
+		got = chat.SystemPrompt
+		return faux.TextMessage("acknowledged", nil), nil
+	})
+
+	models, handle, model := reviewerModel(t)
+	handle.SetResponses(capture)
+
+	conv := reviewer.NewConversation(models, model, callerSystemPrompt, "review this repository")
+	if _, err := conv.Next(context.Background()); err != nil {
+		t.Fatalf("Next() error = %v, want nil", err)
+	}
+	if got != callerSystemPrompt {
+		t.Errorf("the system prompt reaching the model = %q, want the caller's own text: %q", got, callerSystemPrompt)
+	}
+}
+
 // reviewerModel builds the offline registry a Conversation test resolves
 // against and streams from, returning the one model it serves so a test can
 // call NewConversation directly without going through Resolver.
@@ -48,7 +80,7 @@ func TestConversation_Next_SendsTaskAsUserMessageVerbatim(t *testing.T) {
 	models, handle, model := reviewerModel(t)
 	handle.SetResponses(capture)
 
-	conv := reviewer.NewConversation(models, model, task)
+	conv := reviewer.NewConversation(models, model, callerSystemPrompt, task)
 	if _, err := conv.Next(context.Background()); err != nil {
 		t.Fatalf("Next() error = %v, want nil", err)
 	}
@@ -85,7 +117,7 @@ func TestConversation_Next_AccumulatesMessagesInOrder(t *testing.T) {
 		}),
 	)
 
-	conv := reviewer.NewConversation(models, model, task)
+	conv := reviewer.NewConversation(models, model, callerSystemPrompt, task)
 	if _, err := conv.Next(context.Background()); err != nil {
 		t.Fatalf("first Next() error = %v, want nil", err)
 	}

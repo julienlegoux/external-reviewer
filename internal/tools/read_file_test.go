@@ -397,7 +397,7 @@ func TestReadFile_EndToEndThroughTheLoop(t *testing.T) {
 	}
 
 	loop := &reviewer.Loop{
-		Conversation: reviewer.NewConversation(models, model, "review this"),
+		Conversation: reviewer.NewConversation(models, model, "you review repositories you did not write", "review this"),
 		Tools:        registry,
 		State:        diag.NewState(),
 		Stderr:       &strings.Builder{},

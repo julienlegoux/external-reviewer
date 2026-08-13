@@ -45,7 +45,7 @@ func queuedLoop(t *testing.T, toolSet reviewer.ToolSet, responses ...faux.Respon
 	stderr := &bytes.Buffer{}
 	state := diag.NewState()
 	loop := &reviewer.Loop{
-		Conversation: reviewer.NewConversation(models, model, "review this"),
+		Conversation: reviewer.NewConversation(models, model, callerSystemPrompt, "review this"),
 		Tools:        toolSet,
 		State:        state,
 		Stderr:       stderr,

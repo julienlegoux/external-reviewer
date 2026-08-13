@@ -686,7 +686,7 @@ func TestGitRead_AFailingGitLeavesTheRunAlive(t *testing.T) {
 	stderr := &bytes.Buffer{}
 	state := diag.NewState()
 	loop := &reviewer.Loop{
-		Conversation: reviewer.NewConversation(models, model, "review this"),
+		Conversation: reviewer.NewConversation(models, model, "you review repositories you did not write", "review this"),
 		Tools:        tools.NewRegistry(tool),
 		State:        state,
 		Stderr:       stderr,
