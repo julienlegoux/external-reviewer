@@ -3,13 +3,13 @@ type: Issue
 title: "Resolve a tier to a reachable, allowed model"
 description: "The four-layer precedence chain, refresh-before-lookup for dynamic providers, the family gate, and the two failure classes — as a library, before any flag exists."
 tags: [epic-3]
-timestamp: 2026-08-13T07:10:00Z
+timestamp: 2026-08-13T13:20:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/63
 epic: 3
 issue: 04
 slug: tier-resolution-chain
 size: L
-status: open
+status: in-progress
 gh_issue: 63
 depends_on: [2, 3]
 ---
