@@ -7,3 +7,4 @@ Standards this epic's implementation could not follow as decided, with the evide
 * [The native -race command did not run: gcc itself is now blocked, not the test binary](/epic-3-reviewer-selection-integration/drift/02-gcc-is-blocked-so-race-ran-remotely.md) - issues 02 and 08, open
 * [A github-copilot tier resolves to no reviewer, so one of the four dynamic providers cannot serve a tier at all](/epic-3-reviewer-selection-integration/drift/04-github-copilot-tiers-resolve-to-no-reviewer.md) - issue 04, open
 * [The exit-1 path is not silent: it writes one warn line naming the rule and the layer that assigned the model](/epic-3-reviewer-selection-integration/drift/05-exit-1-is-silent-except-for-one-warn-line.md) - issue 05, open
+* [The three gpt-5.6 models are defined in this repository, alongside kern-link's embedded catalog rather than in it](/epic-3-reviewer-selection-integration/drift/06-gpt-5-6-models-registered-locally.md) - epic-adjacent, open

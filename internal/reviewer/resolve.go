@@ -202,15 +202,21 @@ func (r Resolver) warn(message string) {
 
 // DefaultModels builds the registry resolution runs against in production:
 // every provider kern-link ships, over its own cross-process-locked
-// credential store at ~/.pi/agent/auth.json. This binary reads no credential
-// itself, stores none and refreshes none — it hands kern-link the store's
-// location and asks nothing else.
+// credential store at ~/.pi/agent/auth.json, plus the models defined locally
+// because the pinned release's embedded catalog predates them (see
+// catalog.go). This binary reads no credential itself, stores none and
+// refreshes none — it hands kern-link the store's location and asks nothing
+// else.
 func DefaultModels() (ai.MutableModels, error) {
 	path, err := auth.DefaultPath()
 	if err != nil {
 		return nil, fmt.Errorf("locating the credential store: %w", err)
 	}
-	return providers.Models(&ai.CreateModelsOptions{
+	models := providers.Models(&ai.CreateModelsOptions{
 		Credentials: auth.NewFileCredentialStore(path),
-	}), nil
+	})
+	if err := RegisterLocalModels(models); err != nil {
+		return nil, err
+	}
+	return models, nil
 }
