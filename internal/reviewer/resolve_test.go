@@ -10,6 +10,7 @@ import (
 	"github.com/julienlegoux/kern-link/ai"
 	"github.com/julienlegoux/kern-link/ai/catalog"
 
+	"github.com/julienlegoux/external-reviewer/internal/family"
 	"github.com/julienlegoux/external-reviewer/internal/fauxtest"
 	"github.com/julienlegoux/external-reviewer/internal/reviewer"
 )
@@ -202,19 +203,19 @@ func TestResolve_BrokenCredential_IsNotNoReviewer(t *testing.T) {
 // "model not found" and falls back silently — the exact bug the order exists
 // to prevent.
 func TestResolve_DynamicProvider_RefreshesBeforeLookup(t *testing.T) {
-	models := dynamicRegistry("openrouter", nil, []string{"gpt-5.5"}, nil, fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
+	models := dynamicRegistry("openrouter", nil, []string{"openai/gpt-5.5"}, nil, fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
 
 	var calls []string
 	resolution, err := reviewer.Resolver{
 		Models:     recordingModels{Models: models, calls: &calls},
 		ProviderID: "openrouter",
-		ModelID:    "gpt-5.5",
+		ModelID:    "openai/gpt-5.5",
 	}.Resolve(context.Background())
 	if err != nil {
 		t.Fatalf("Resolve() error = %v, want nil — a dynamic provider holds no models until refreshed", err)
 	}
-	if resolution.Model == nil || resolution.Model.ID != "gpt-5.5" {
-		t.Fatalf("resolved model = %+v, want gpt-5.5", resolution.Model)
+	if resolution.Model == nil || resolution.Model.ID != "openai/gpt-5.5" {
+		t.Fatalf("resolved model = %+v, want openai/gpt-5.5", resolution.Model)
 	}
 
 	want := []string{"Refresh", "GetModel", "GetAuth"}
@@ -252,13 +253,13 @@ func TestResolve_StaticProvider_IsNotRefreshed(t *testing.T) {
 // catalog outage must not end a run that can still be served. The failure is
 // worth a warn line, never a swallowed error.
 func TestResolve_RefreshFailure_WarnsAndUsesLastKnownModels(t *testing.T) {
-	models := dynamicRegistry("openrouter", []string{"gpt-5.5"}, nil, errors.New("catalog unreachable"), fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
+	models := dynamicRegistry("openrouter", []string{"openai/gpt-5.5"}, nil, errors.New("catalog unreachable"), fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
 
 	var warnings []string
 	resolution, err := reviewer.Resolver{
 		Models:     models,
 		ProviderID: "openrouter",
-		ModelID:    "gpt-5.5",
+		ModelID:    "openai/gpt-5.5",
 		Warn:       func(message string) { warnings = append(warnings, message) },
 	}.Resolve(context.Background())
 	if err != nil {
@@ -278,9 +279,180 @@ func TestResolve_RefreshFailure_WarnsAndUsesLastKnownModels(t *testing.T) {
 func TestResolve_RefreshFailureWithNoLastKnownModels_IsNoReviewer(t *testing.T) {
 	models := dynamicRegistry("openrouter", nil, nil, errors.New("catalog unreachable"), fauxtest.CredentialedAuth("OPENROUTER_API_KEY"))
 
-	_, err := reviewer.Resolver{Models: models, ProviderID: "openrouter", ModelID: "gpt-5.5"}.Resolve(context.Background())
+	_, err := reviewer.Resolver{Models: models, ProviderID: "openrouter", ModelID: "openai/gpt-5.5"}.Resolve(context.Background())
 	if !errors.Is(err, reviewer.ErrNoReviewer) {
 		t.Fatalf("Resolve() error = %v, want one matching ErrNoReviewer", err)
+	}
+}
+
+// TestResolve_ExcludedFamily_IsNoReviewer is the safety property this binary
+// exists for, at the one place it can be enforced: a tier assigned an
+// Anthropic-family model resolves to no reviewer *for that tier*. It never
+// falls back to another tier, another model, or the same family reached
+// through another provider — the reseller case below is the one a
+// provider-based filter would wave through.
+func TestResolve_ExcludedFamily_IsNoReviewer(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider string
+		model    string
+	}{
+		{"the vendor's own provider", "anthropic", "claude-sonnet-4.5"},
+		{"resold through openrouter", "openrouter", "anthropic/claude-sonnet-4.5"},
+		{"resold through amazon-bedrock, with a regional qualifier", "amazon-bedrock", "us.anthropic.claude-sonnet-4-5-20250929-v1:0"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+				ProviderID: tc.provider, ModelIDs: []string{tc.model}, Auth: fauxtest.CredentialedAuth("OAuth"),
+			})
+
+			resolution, err := reviewer.Resolver{Models: models, ProviderID: tc.provider, ModelID: tc.model}.Resolve(context.Background())
+			if !errors.Is(err, reviewer.ErrNoReviewer) {
+				t.Fatalf("Resolve() error = %v, want one matching ErrNoReviewer", err)
+			}
+			if resolution.Model != nil {
+				t.Errorf("Resolve() returned model %+v, want none — an excluded tier resolves to nothing at all", resolution.Model)
+			}
+			var noReviewer *reviewer.NoReviewerError
+			if !errors.As(err, &noReviewer) {
+				t.Fatalf("Resolve() error = %v, want a *NoReviewerError naming the rule", err)
+			}
+			if noReviewer.Reason != reviewer.ReasonFamilyExcluded {
+				t.Errorf("Reason = %q, want %q", noReviewer.Reason, reviewer.ReasonFamilyExcluded)
+			}
+			if noReviewer.Family != family.Anthropic {
+				t.Errorf("Family = %q, want %q", noReviewer.Family, family.Anthropic)
+			}
+		})
+	}
+}
+
+// TestResolve_UnknownFamily_IsNoReviewer is the fail-closed half: a model the
+// classifier cannot place is excluded, not admitted. The github-copilot case
+// is not hypothetical — every one of that provider's catalog entries carries a
+// bare model name with no vendor segment, so a tier assigned to it resolves to
+// nothing on this rule (see the epic's drift record 04).
+func TestResolve_UnknownFamily_IsNoReviewer(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider string
+		model    string
+	}{
+		{"a reseller id with no vendor segment", "github-copilot", "gpt-5"},
+		{"a provider in neither table", "some-inhouse-gateway", "openai/gpt-5.5"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+				ProviderID: tc.provider, ModelIDs: []string{tc.model}, Auth: fauxtest.CredentialedAuth("OAuth"),
+			})
+
+			resolution, err := reviewer.Resolver{Models: models, ProviderID: tc.provider, ModelID: tc.model}.Resolve(context.Background())
+			if !errors.Is(err, reviewer.ErrNoReviewer) {
+				t.Fatalf("Resolve() error = %v, want one matching ErrNoReviewer", err)
+			}
+			if resolution.Model != nil {
+				t.Errorf("Resolve() returned model %+v, want none", resolution.Model)
+			}
+			var noReviewer *reviewer.NoReviewerError
+			if !errors.As(err, &noReviewer) {
+				t.Fatalf("Resolve() error = %v, want a *NoReviewerError naming the rule", err)
+			}
+			if noReviewer.Reason != reviewer.ReasonFamilyUnknown {
+				t.Errorf("Reason = %q, want %q", noReviewer.Reason, reviewer.ReasonFamilyUnknown)
+			}
+			// A tier that silently resolves to nothing is the failure this
+			// reason exists to prevent, so the message has to name both the
+			// model and the rule that refused it.
+			if !strings.Contains(err.Error(), tc.provider) || !strings.Contains(err.Error(), "unknown family") {
+				t.Errorf("error = %q, want it to name %s and the unknown-family rule", err, tc.provider)
+			}
+		})
+	}
+}
+
+// TestResolve_FamilyGate_RunsBeforeGetAuth pins the sequencing SPECS fixes.
+// An excluded model must never cause a credential to be resolved for it —
+// GetAuth on a real provider reaches a credential store and can rewrite it.
+func TestResolve_FamilyGate_RunsBeforeGetAuth(t *testing.T) {
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "anthropic", ModelIDs: []string{"claude-sonnet-4.5"}, Auth: fauxtest.CredentialedAuth("OAuth"),
+	})
+
+	var calls []string
+	_, err := reviewer.Resolver{
+		Models:     recordingModels{Models: models, calls: &calls},
+		ProviderID: "anthropic",
+		ModelID:    "claude-sonnet-4.5",
+	}.Resolve(context.Background())
+	if !errors.Is(err, reviewer.ErrNoReviewer) {
+		t.Fatalf("Resolve() error = %v, want one matching ErrNoReviewer", err)
+	}
+
+	for _, call := range calls {
+		if call == "GetAuth" {
+			t.Fatalf("call order = %v, want no GetAuth for an excluded model", calls)
+		}
+	}
+	if strings.Join(calls, ",") != "GetModel" {
+		t.Errorf("call order = %v, want the lookup and nothing after it", calls)
+	}
+}
+
+// TestResolve_ExclusionList_IsTheCallersWhenSupplied: the nil Exclusion is the
+// product default (Anthropic), which is the fail-closed direction for every
+// existing call site; a caller that supplies its own list gets exactly that
+// list, and the unknown-family half holds under both.
+func TestResolve_ExclusionList_IsTheCallersWhenSupplied(t *testing.T) {
+	models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+		ProviderID: "openai-codex", ModelIDs: []string{"gpt-5.5"}, Auth: fauxtest.CredentialedAuth("OAuth"),
+	})
+
+	if _, err := (reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}).Resolve(context.Background()); err != nil {
+		t.Fatalf("Resolve() with the default exclusion error = %v, want nil — openai is not Anthropic", err)
+	}
+
+	excluded := family.NewExclusion("openai")
+	_, err := reviewer.Resolver{
+		Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5", Exclusion: &excluded,
+	}.Resolve(context.Background())
+	if !errors.Is(err, reviewer.ErrNoReviewer) {
+		t.Fatalf("Resolve() with openai excluded error = %v, want one matching ErrNoReviewer", err)
+	}
+}
+
+// TestResolve_NoReviewerReasons_NameTheRule keeps the two non-family exit-1
+// paths as legible as the family ones: the caller switches on Reason rather
+// than parsing a message.
+func TestResolve_NoReviewerReasons_NameTheRule(t *testing.T) {
+	tests := []struct {
+		name    string
+		auth    ai.ProviderAuth
+		modelID string
+		want    reviewer.Reason
+	}{
+		{"absent from the catalog", fauxtest.CredentialedAuth("OAuth"), "some-other-model", reviewer.ReasonNotInCatalog},
+		{"provider unconfigured", fauxtest.UnconfiguredAuth(), "gpt-5.5", reviewer.ReasonUnconfigured},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			models, _ := fauxtest.NewRegistry(t, fauxtest.RegistryOptions{
+				ProviderID: "openai-codex", ModelIDs: []string{tc.modelID}, Auth: tc.auth,
+			})
+
+			_, err := reviewer.Resolver{Models: models, ProviderID: "openai-codex", ModelID: "gpt-5.5"}.Resolve(context.Background())
+			var noReviewer *reviewer.NoReviewerError
+			if !errors.As(err, &noReviewer) {
+				t.Fatalf("Resolve() error = %v, want a *NoReviewerError", err)
+			}
+			if noReviewer.Reason != tc.want {
+				t.Errorf("Reason = %q, want %q", noReviewer.Reason, tc.want)
+			}
+		})
 	}
 }
 
