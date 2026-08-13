@@ -2,6 +2,11 @@
 
 ## 2026-08-13
 
+* **Issue 01 done**: [01 — Make a path-scoped diff reachable through git_read](https://github.com/julienlegoux/external-reviewer/issues/60)
+  (#60) — [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81) merged into
+  `develop`. Reconciled here while merging `develop` into issue 03's branch to resolve a
+  conflict — `01-git-read-path-scoped-diff.md` and `issues/index.md` still read `pr-open`.
+
 * **PR opened**: Epic 3 issue 03 — [Read the machine-local tier assignment TOML](https://github.com/julienlegoux/external-reviewer/issues/62)
   (#62) — [PR #80](https://github.com/julienlegoux/external-reviewer/pull/80) against
   `develop`, from branch `issue-03-epic3-reviewer-selection`. Adds `internal/config`:
@@ -26,6 +31,19 @@
   documented fallback, `scripts/test-remote.sh` — full suite green, `-race` included.
   Not promoted to a new drift record: DRIFT already documents this class of problem and
   its fallback; this run exercised the fallback rather than proving anything wrong.
+
+* **Epic 3, issue 01 PR opened**: [01 — Make a path-scoped diff reachable through git_read](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
+  ([#60](https://github.com/julienlegoux/external-reviewer/issues/60)) opened as
+  [PR #81](https://github.com/julienlegoux/external-reviewer/pull/81) from branch
+  `issue-60-git-read-path-scoped-diff`. `git_read` gains a **`paths`** parameter: every
+  entry resolved through `Scope.Resolve` before the command is built, under the same three
+  rules and the same wording as a `<rev>:<path>` object, then used as the pathspecs in
+  place of the granted subtrees — a narrowing of the grant, never a widening, and refused
+  alongside an object because git takes pathspecs or an object and not both. Verified by
+  mutation: dropping the resolution makes the out-of-allow-list test fail carrying the
+  ungranted subtree's own diff. SPECS' tool table, specs 09 and specs 10's pathspec bullet
+  amended to match. No drift record — this is the gap specs 10 left, not a departure from
+  it.
 
 * **Retirement**: Epic 0 (Epic 3 plan repair) retired - 4 issues, milestone 5 closed.
   Consumed reports docs/reviews/2026-08-13-issues-epic-3.md. Fixed: repaired Epic 3's plan
