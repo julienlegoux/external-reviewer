@@ -2,6 +2,36 @@
 
 ## 2026-08-13
 
+* **Issues created**: [Epic 0: Epic 3 plan repair](/epic-0-epic-3-plan-repair/EPIC_0.md)
+  (#70) cut into four issues on milestone 5, all four native sub-issues of #70:
+  [01](/epic-0-epic-3-plan-repair/issues/01-epic-3-scope-amendment.md)
+  ([#71](https://github.com/julienlegoux/external-reviewer/issues/71)),
+  [02](/epic-0-epic-3-plan-repair/issues/02-epic-3-issue-corrections.md)
+  ([#72](https://github.com/julienlegoux/external-reviewer/issues/72)),
+  [03](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md)
+  ([#73](https://github.com/julienlegoux/external-reviewer/issues/73)) and
+  [04](/epic-0-epic-3-plan-repair/issues/04-readme-validation-boundary.md)
+  ([#74](https://github.com/julienlegoux/external-reviewer/issues/74)).
+
+  **Seven repairs, four issues — cut by which files each opens rather than by repair.**
+  Repairs B, C and E all edit files under
+  `epic-3-reviewer-selection-integration/issues/`, and repair D sweeps all ten of them for
+  `size` and the PR-size note; splitting them one repair per PR would have put four branches
+  on the same ten files. So the correctness edits are issue 02 and the sizing sweep is issue
+  03, ordered behind it — the only dependency in this epic. Repairs D and F ride together
+  because both are recorded surfaces (`issues/index.md`, `docs/epics/index.md`, `log.md`,
+  GitHub #60), and #60's body must be rendered from an issue file that issue 02 has already
+  corrected. Repair A (issue 01, `EPIC_3.md` + `SPECS.md`) and repair G (issue 04,
+  `README.md`) open files nothing else in the epic touches, so all three of 01, 02 and 04
+  can run in parallel.
+
+  **Sizes: S, S, M, S — nothing needed the L ceiling, and this one is measured.** The whole
+  epic is planning artifacts plus one new `README.md`; no `.go` file is touched. Issue 03 is
+  M for spread rather than depth — thirteen files touched shallowly plus a GitHub body
+  rewritten from one of them. Every `## PR size note` names that issue's own bulk and its
+  own split line, which is the defect issue 03 exists to fix in Epic 3 and would have been
+  hypocritical to reproduce here.
+
 * **Creation**: Established [Epic 0: Epic 3 plan repair](https://github.com/julienlegoux/external-reviewer/issues/70)
   by converting [the Epic 3 issue review](../reviews/2026-08-13-issues-epic-3.md) —
   milestone 5, issue [#70](https://github.com/julienlegoux/external-reviewer/issues/70).
