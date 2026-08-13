@@ -3,12 +3,12 @@ type: Issue
 title: "Resolve a tier to a reachable, allowed model"
 description: "The four-layer precedence chain, refresh-before-lookup for dynamic providers, the family gate, and the two failure classes — as a library, before any flag exists."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/63
 epic: 3
 issue: 04
 slug: tier-resolution-chain
-size: M
+size: L
 status: open
 gh_issue: 63
 depends_on: [2, 3]
@@ -141,4 +141,10 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Three layers of precedence (flag, per-tier environment variable, config) plus
+refresh-before-lookup ordering plus a family gate sequenced ahead of the credential check —
+new behaviour layered onto an existing `Resolver`, the same shape Epic 2 graded L for its
+multi-turn loop and dispatch. The precedence chain and its typed errors (`ErrNoReviewer`
+versus the wrapped `*ai.ModelsError`) is one half; the refresh/family-gate/credential
+sequencing and its mutation-tested ordering guarantees is the other, and where this splits
+if it overruns.

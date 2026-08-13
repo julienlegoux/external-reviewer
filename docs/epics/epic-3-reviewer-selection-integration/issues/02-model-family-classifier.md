@@ -3,12 +3,12 @@ type: Issue
 title: "Add the fail-closed model family classifier"
 description: "A data table over (Provider, ID) that yields a model's vendor family, treats unknown as excluded, and is proved against the whole embedded catalog."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/61
 epic: 3
 issue: 02
 slug: model-family-classifier
-size: M
+size: L
 status: open
 gh_issue: 61
 depends_on: []
@@ -123,4 +123,10 @@ Governing decisions:
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Matches the shape Epic 2 graded L five times out of seven: a new package plus a
+catalog-wide table-driven test. The two data tables (vendor-provider, reseller/aggregator)
+and the classification function are the implementation half; the test proving every
+embedded `kern-link` model plus the dynamic-provider, regional-qualifier and
+substring-safety fixtures is the test half, and the natural split if this overruns — the
+same split every L in Epic 2 took, since the overrun there was consistently test volume,
+not implementation.

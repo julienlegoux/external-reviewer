@@ -11,7 +11,7 @@ remediation lane, retired once its issues are done.
 * [Epic 0: Epic 3 plan repair](/epic-0-epic-3-plan-repair/EPIC_0.md) - open, [#70](https://github.com/julienlegoux/external-reviewer/issues/70), remediation lane, runs before Epic 3's implementation
 * [Epic 1: Walking skeleton](/epic-1-walking-skeleton/EPIC_1.md) - done, [#1](https://github.com/julienlegoux/external-reviewer/issues/1), milestone closed
 * [Epic 2: Read-only agentic loop](/epic-2-read-only-agentic-loop/EPIC_2.md) - done, [#2](https://github.com/julienlegoux/external-reviewer/issues/2), milestone closed
-* [Epic 3: Reviewer selection and pipeline integration](/epic-3-reviewer-selection-integration/EPIC_3.md) - open, [#3](https://github.com/julienlegoux/external-reviewer/issues/3) — spans two repositories; `create-issues` deliberately deferred
+* [Epic 3: Reviewer selection and pipeline integration](/epic-3-reviewer-selection-integration/EPIC_3.md) - open, [#3](https://github.com/julienlegoux/external-reviewer/issues/3) — spans two repositories
 
 Reference documents produced by an epic, rather than epics themselves:
 

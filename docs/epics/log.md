@@ -101,7 +101,10 @@
   the previous Epic 0 (retirement notice, 2026-08-11).
 
 * **Issues created**: [Epic 3: Reviewer selection and pipeline integration](/epic-3-reviewer-selection-integration/EPIC_3.md)
-  (#3) cut into eleven issues, all sized S or M — nothing needed the L ceiling. In build
+  (#3) cut into eleven issues, sized uniformly S or M at cut time — a grading later shown
+  to be wrong against Epic 2's measured shapes and corrected by
+  [Epic 0 issue 03](/epic-0-epic-3-plan-repair/issues/03-epic-3-sizes-and-surfaces.md) to
+  three L, six M and two S. In build
   order: [01](/epic-3-reviewer-selection-integration/issues/01-git-read-path-scoped-diff.md)
   ([#60](https://github.com/julienlegoux/external-reviewer/issues/60), filed at Epic 2's
   close and adopted as this epic's first issue rather than created again),

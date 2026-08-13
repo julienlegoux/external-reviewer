@@ -3,7 +3,7 @@ type: Issue
 title: "Accept the JSON request object on stdin, add --system and version"
 description: "The caller-owned system prompt reaches the binary as {\"system\",\"task\"} on stdin with --system/--prompt as by-hand shorthand, and version reports the build."
 tags: [epic-3]
-timestamp: 2026-08-13T00:13:53Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/67
 epic: 3
 issue: 08
@@ -132,4 +132,8 @@ what the binary cannot enforce about its caller).
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+Two nearly unrelated pieces riding together, as the Summary already says: the stdin JSON
+request-object contract (`DisallowUnknownFields`, the empty/whitespace checks, the
+`--system`/`--prompt` shorthand) is the bulk; `version` is three lines of
+`runtime/debug.ReadBuildInfo()` and the first thing to peel off if the PR runs long, since
+it shares no code with the request-object change.

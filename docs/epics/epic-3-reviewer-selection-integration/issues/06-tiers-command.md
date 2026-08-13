@@ -3,7 +3,7 @@ type: Issue
 title: "Add the tiers command"
 description: "Report which tiers resolve to a reachable model on this machine right now, the config path that was read, and why a tier does not resolve."
 tags: [epic-3]
-timestamp: 2026-08-13T06:25:00Z
+timestamp: 2026-08-13T07:10:00Z
 resource: https://github.com/julienlegoux/external-reviewer/issues/65
 epic: 3
 issue: 06
@@ -120,4 +120,7 @@ first-time setup).
 
 ## PR size note
 
-Target ~500 changed lines; if this grows past ~1000, split it before opening the PR.
+The per-tier resolution report (source, reachability, which rule refused) is the core; the
+CLI wiring — the new `FlagSet`, `usageText`, the sequencing-only edit to `run.go`'s
+subcommand switch shared with issues 07 and 08 — is the small remainder and the natural
+split if it grows.
