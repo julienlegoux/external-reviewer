@@ -2,6 +2,33 @@
 
 ## 2026-08-13
 
+* **Epic 3, issue 11 pr-open**: [Run a real review through the pipeline and record the success criteria](/epic-3-reviewer-selection-integration/issues/11-success-criteria-verification-run.md)
+  ([#69](https://github.com/julienlegoux/external-reviewer/issues/69)) —
+  [PR #92](https://github.com/julienlegoux/external-reviewer/pull/92) opened against `develop`
+  from branch `issue-69-success-criteria-verification-run`, adding
+  [VERIFICATION](/epic-3-reviewer-selection-integration/VERIFICATION.md) and no `.go` change.
+  **Four real runs through the swapped contract**, launched with the request object on stdin
+  and the contract's system prompt verbatim: one document review on `gpt-5.5`, then the same
+  Epic 3 merged-diff review (`24e1b24...729dee9`, 78 files) on `gpt-5.6-sol`, `-terra` and
+  `-luna` so the three models the user intends to use are compared on one task. All four
+  exited `0` on the model's own stop reason in 1m36s–2m54s; none hit a cap (12 of 30 turns,
+  2m54s of 20m). **18 leads came back and 16 survived verification against the files** —
+  every lead that could be settled by running something was, including a **reproduced panic**
+  in `config.LoadFile` on a top-level unrecognised key that crashes both `tiers` and `review`.
+  The two that failed both claimed a widening that the control read disproves; chasing one of
+  them found the property underneath, which is that the sensitive-file floor filters names the
+  model spells and not the contents `git_read` returns — pre-existing since Epic 2, not
+  introduced by issue 01's `paths`. **The run had to bypass tiers**: this machine has no
+  assignment file, so every tier reads `unassigned` and a contract-following skill would exit
+  `1` into the silent native fallback; `--model` was used and no config file was created.
+  Criterion 3's quota half is answered by absence — the provider exposes no rate-limit signal
+  through this path. MEASUREMENTS' 12 → 6–8 turn prediction is tested and only half right: the
+  `git_read` gap is genuinely closed (`paths` carried 53 of 62 tool calls across B–D, no run
+  repeated Epic 2's five wasted turns) but the turn count proved to be a property of the model
+  — 5, 10 and 12 — rather than of the surface. Peak single-turn prompt more than doubled
+  against Epic 2, 99,163 → 205,590, which makes context the closest of the four ceilings and
+  the only one with no bound attached. Eight findings recorded for follow-up rather than fixed.
+
 * **Epic 3, epic-adjacent**: the three current `openai-codex` models — `gpt-5.6-sol`,
   `gpt-5.6-terra` and `gpt-5.6-luna`, the user's own definitions verbatim — are registered
   locally onto kern-link v0.1.1's `openai-codex` provider, because the models exist and the
