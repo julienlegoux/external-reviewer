@@ -143,6 +143,36 @@ models   = "gpt-5.5"
 	}
 }
 
+// TestLoadFile_RootLevelUnrecognisedKey_WarnsNamingTheKeyAndAssignsTheRest is
+// the same criterion as the nested case above — a typo is warned, not silently
+// ignored — for the key path that has no enclosing table to name. It is also
+// the likelier typo: the tier file is the first thing a user edits, and a key
+// written before any [tiers.<name>] header lands at the root.
+func TestLoadFile_RootLevelUnrecognisedKey_WarnsNamingTheKeyAndAssignsTheRest(t *testing.T) {
+	path := writeFixture(t, `
+verbose = true
+
+[tiers.heavy]
+provider = "openai-codex"
+model    = "gpt-5.6-sol"
+`)
+
+	cfg, err := config.LoadFile(path)
+	if err != nil {
+		t.Fatalf("LoadFile: unexpected error: %v", err)
+	}
+
+	wantWarning := `config: unrecognised key "verbose" at the top level`
+	if len(cfg.Warnings) != 1 || cfg.Warnings[0] != wantWarning {
+		t.Errorf("Warnings = %v, want exactly [%q]", cfg.Warnings, wantWarning)
+	}
+	// The unrecognised key explains itself and nothing else: a well-formed
+	// tier alongside it is still assigned.
+	if got := cfg.Assignments["heavy"]; got != (config.Assignment{Provider: "openai-codex", Model: "gpt-5.6-sol"}) {
+		t.Errorf("Assignments[heavy] = %#v, want the tier assigned despite the root-level key", got)
+	}
+}
+
 func TestLoadFile_FamilyKey_WarnedAsUnrecognisedAndNeverHonoured(t *testing.T) {
 	path := writeFixture(t, `
 [tiers.standard]
