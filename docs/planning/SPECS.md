@@ -178,6 +178,24 @@ goes through the same resolution as a `<rev>:<path>` before the command is built
 can only narrow the grant, and it is what makes a path-scoped diff reachable at all when
 the tool owns the `--` separator ([decision](/specs/09-read-only-tool-contract.md)).
 
+**The reviewed repository's own configuration is untrusted input**, and it is a third
+configuration scope that neutralising `GIT_CONFIG_GLOBAL` and `GIT_CONFIG_SYSTEM` does not
+reach. Several read-only subcommands run a program named in `.git/config` as ordinary
+work — `diff.external` and `diff.<driver>.command` on `diff`, `diff.<driver>.textconv` on
+`diff`, `log -p` and `show`, `filter.<driver>.clean` on a working-tree diff,
+`core.fsmonitor` on `status` and on the `ls-files` calls enumeration makes — and
+`.git/hooks/post-index-change` runs when `status` rewrites the index. None of it is
+reachable by argument validation, because the payload arrives through configuration
+rather than through argv.
+
+Every git this binary runs therefore carries `--no-optional-locks` and a `-c` blanking
+each such key, with `--no-ext-diff --no-textconv` added on the diff-shaped subcommands
+that accept them; the keys whose driver name the repository chooses are read back from
+the repository itself and blanked by name. This lives in `internal/repo`'s single exec,
+not in `git_read`, because enumeration runs against the same hostile repository. Anyone
+adding a git invocation inherits it; anyone adding a git *subcommand* owes this list a
+pass for whatever else that subcommand executes.
+
 Within allowed subtrees a small non-configurable floor still refuses `.env*`, `*.pem`,
 `*.key`, `id_rsa*`, `*.p12`, `*.pfx`, `.npmrc`, `.netrc`, `credentials*` and `.git/`
 ([decision](/specs/14-security-and-data-exposure.md)). It is a floor, not the boundary —

@@ -2,6 +2,18 @@
 
 ## 2026-08-14
 
+* **Amended**: [SPECS § Reading the repository](/SPECS.md) and
+  [specs 11](/specs/11-tool-implementation-strategy.md) now state that the reviewed
+  repository's own `.git/config` is untrusted input ([issue #58](https://github.com/julienlegoux/external-reviewer/issues/58)).
+  The decided neutralisation covered git's global and system scopes; the repository's own
+  scope is a third one, and it is the only one the author of the reviewed code controls.
+  Six vectors were reproduced on git 2.54 and two of them were not in the issue:
+  `filter.<driver>.clean`, which runs on a working-tree diff and which no diff flag
+  disables, and `.git/hooks/post-index-change`, which is not configuration at all and which
+  only `--no-optional-locks` stops. The issue's proposed `-c diff.external=` also proved
+  too narrow — it misses `diff.<driver>.command`, and `--no-ext-diff` is the instrument
+  that covers the class.
+
 * **Amended**: [specs 12](/specs/12-output-and-diagnostics-format.md) now carries the
   second spelling of the unrecognised-key warning ([issue #94](https://github.com/julienlegoux/external-reviewer/issues/94)).
   The document fixed one wording, `unrecognised key "models" in [tiers.standard]`, and a

@@ -124,6 +124,27 @@ splitting is a `CommandLineToArgvW` problem rather than a POSIX one.
 `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM` are neutralised so a machine-level pager, alias or
 `include` cannot change what a subcommand does.
 
+**Amended 2026-08-14 (issue #58): the reviewed repository's own configuration is the third
+scope, and it is the hostile one.** Neutralising the two environment variables covers the
+machine, not the repository — `.git/config` belongs to whoever wrote the code under review,
+and several read-only subcommands run a program named there as ordinary work. Verified on
+git 2.54: `diff.external` and `diff.<driver>.command` on `diff`; `diff.<driver>.textconv`
+on `diff`, `log -p` and `show`; `filter.<driver>.clean` on a working-tree `diff`;
+`core.fsmonitor` on `status` and on both `ls-files` calls enumeration makes; and
+`.git/hooks/post-index-change` on the `status` that rewrites the index. Argument validation
+sees none of it, since the payload arrives through configuration rather than argv.
+
+Every invocation therefore carries `--no-optional-locks` and a `-c` blanking each key,
+with `--no-ext-diff --no-textconv` on the diff-shaped subcommands that accept them — the
+class instrument rather than `-c diff.external=` alone, which misses the per-driver form.
+Where the driver name is the repository's to choose (`filter.*`, `diff.*`), no override can
+be written in advance, so the configured names are read back from the repository and
+blanked by name, on every invocation rather than once per run: `.git/config` can be
+rewritten mid-review. This belongs to the single exec in `internal/repo`, not to
+`git_read`, because enumeration reads the same hostile repository. Not decided here:
+whether a subcommand that talks to a remote is ever allowed, which would put
+`core.sshCommand`, `credential.helper` and `url.<base>.insteadOf` on the same list.
+
 **`git` is now a hard dependency, and that is a deliberate change.** The original
 recommendation treated a missing `git` as a degraded run — three tools still working. With
 enumeration built on `git ls-files`, its absence also costs correct ignore handling. It

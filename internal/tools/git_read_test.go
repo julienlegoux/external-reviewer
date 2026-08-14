@@ -151,6 +151,28 @@ func TestGitRead_RefusesArgumentsThatWouldWidenTheConfinement(t *testing.T) {
 	}
 }
 
+// TestGitRead_RefusesArgumentsThatSwitchAHelperProgramBackOn covers the third
+// shape that reaches past the confinement rather than through it, and it is
+// the one that is not about paths at all: internal/repo turns off the diff
+// helpers because the reviewed repository's own configuration names the
+// programs they run, and git applies the last occurrence of a flag — so an
+// --ext-diff or --textconv arriving after ours would hand the repository back
+// the execution it just lost.
+func TestGitRead_RefusesArgumentsThatSwitchAHelperProgramBackOn(t *testing.T) {
+	withoutGitOnPath(t)
+	tool := newGitReadTool(t, gitReadTree(t, gitReadFiles()), ".")
+
+	for _, arguments := range [][]any{
+		{"--ext-diff"},
+		{"--textconv"},
+		{"--oneline", "--ext-diff"},
+	} {
+		result := tool.Handler(t.Context(), map[string]any{"command": "log", "args": arguments})
+
+		mentions(t, result, "untrusted")
+	}
+}
+
 // TestGitRead_RefusesAnObjectOnTheSensitiveFileFloor is the hole this whole
 // issue exists to close: `git show HEAD:.env` reads a credential out of history
 // through the one tool that never touches *os.Root. The path is validated

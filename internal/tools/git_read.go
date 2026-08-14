@@ -39,6 +39,14 @@ const pathspecSeparator = "--"
 // subprocess doing it on our behalf is the same thing at one remove.
 const outputOption = "--output"
 
+// helperOptions switch back on the two mechanisms internal/repo turns off
+// because the reviewed repository's own .git/config names the programs they
+// run (issue #58). They are refused rather than merely overridden: the
+// hardening is placed immediately after the subcommand, these arguments follow
+// it, and git applies the last occurrence of a flag — so allowing one would be
+// allowing the model to undo the confinement on the repository's behalf.
+var helperOptions = []string{"--ext-diff", "--textconv"}
+
 // gitReadDescription is the model's only instruction on how to read history
 // here: the caller owns the system prompt, so this stands alone (specs 09).
 const gitReadDescription = `Read this repository's git history.
@@ -49,7 +57,7 @@ History is confined exactly as the working tree is. log, diff, show and status a
 
 The paths parameter narrows a read to part of what was granted, and is how a diff is scoped to a subtree: an array of repo-relative, /-separated paths, checked against the granted subtrees and the sensitive-file floor exactly as a <rev>:<path> is, then used as the pathspecs in place of the whole grant. {"command": "diff", "args": ["--unified=0", "HEAD~3..HEAD"], "paths": ["internal/confine"]} diffs that subtree alone rather than everything. Leave paths out and the whole granted surface is read, which is what hits the line cap on a large change. It cannot be combined with a <rev>:<path> object, since git takes pathspecs or an object and not both.
 
-Two arguments are refused: a literal -- (this tool appends the pathspecs itself, and paths is how to choose them) and --output (this run writes no files). When one argument names a <rev>:<path> object, all of them must, since git cannot take pathspecs alongside a blob.
+Four arguments are refused: a literal -- (this tool appends the pathspecs itself, and paths is how to choose them), --output (this run writes no files), and --ext-diff or --textconv (they let this repository's own configuration name a program for git to run while reading it, so diffs come back without external diff drivers or textconv filters applied). When one argument names a <rev>:<path> object, all of them must, since git cannot take pathspecs alongside a blob.
 
 At most 2000 lines are returned. When there are more, the last line reads "[truncated: showing 2000 of N lines]" with the real total — narrow the request with -n, --stat, or a pathspec-free argument like --oneline.`
 
@@ -238,6 +246,11 @@ func allowedArgument(arg string) error {
 	if name, _, _ := strings.Cut(arg, "="); name == outputOption {
 		return fmt.Errorf("the argument %q is refused: it writes git's output to a file, and this run writes none — "+
 			"the result comes back here, inside the granted pathspecs", arg)
+	}
+	if contains(helperOptions, arg) {
+		return fmt.Errorf("the argument %q is refused: it lets this repository's own configuration name a program "+
+			"for git to run while reading it, and a reviewed repository's configuration is untrusted input; "+
+			"the diff comes back without the helper applied", arg)
 	}
 	return nil
 }
