@@ -136,6 +136,47 @@ models   = "gpt-5.5"
 	}
 }
 
+// TestRun_Tiers_RootLevelTypoKeyFixture_ExitsThroughTheNormalPath is the same
+// criterion one key path over, and it is written against the command rather
+// than against config.LoadFile because what it guards is the shape of the
+// failure: a root-level key used to end the process from inside the warning
+// builder, so the run produced no error: line, a done line with an empty
+// stop=, and an exit code that came from the runtime rather than from the
+// classification.
+func TestRun_Tiers_RootLevelTypoKeyFixture_ExitsThroughTheNormalPath(t *testing.T) {
+	tierFixture(t, `
+verbose = true
+
+[tiers.standard]
+provider = "openai-codex"
+model    = "gpt-5.5"
+`)
+	models := catalogRegistry(t, fauxtest.CredentialedAuth("OAuth"), map[string][]string{
+		"openai-codex": {"gpt-5.5"},
+	})
+
+	code, stdout, stderr := runTiers(t, models)
+
+	if code != 0 {
+		t.Fatalf("exit code = %d, want 0 (stderr: %q)", code, stderr)
+	}
+	wantWarning := `config: unrecognised key "verbose" at the top level`
+	if n := strings.Count(stderr, wantWarning); n != 1 {
+		t.Errorf("stderr = %q, want exactly one warn line %q, found %d", stderr, wantWarning, n)
+	}
+	if !strings.Contains(stderr, "stop=answered") {
+		t.Errorf("stderr = %q, want a done line carrying a real stop= word", stderr)
+	}
+	if strings.Contains(stderr, "error:") {
+		t.Errorf("stderr = %q, want no error: line — an unrecognised key is a warning", stderr)
+	}
+	// The rest of the file is still honoured: the warning explains the key it
+	// names and nothing else.
+	if line := tierLine(stdout, "standard"); !strings.Contains(line, "gpt-5.5") {
+		t.Errorf("row for standard = %q, want the tier assigned despite the root-level key", line)
+	}
+}
+
 // TestRun_Tiers_AnthropicFamilyTier_ReportsExcludedByFamily: a tier whose
 // model is Anthropic-family reports excluded by family, naming anthropic —
 // not "model not found", which would send the reader looking for a catalog
