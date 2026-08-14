@@ -62,6 +62,19 @@ for free — so a report can be traced to a build without any release machinery.
 
 No Dockerfile, no goreleaser, no Homebrew tap, no signing.
 
+**Amended 2026-08-14 (first beta):** v1 is tagged after all. `v0.1.0-beta.1` on `main`
+carries a GitHub release, and the tag is the *only* thing added — no release workflow, no
+cross-compiled binaries, no `CHANGELOG.md`, no signing, none of the packaging this
+decision ruled out. The reason the original wording gave for staying untagged was that
+`@latest` should follow the default branch; what changed is that `main` now exists as a
+release branch behind `develop`, so "the newest commit on the default branch" and "the
+state someone should install" are no longer the same thing, and the tag is what names the
+second one. Note the mechanical consequence, since it is the sentence this amendment
+invalidates: `go install …@latest` now resolves to the newest **tag**, not to the newest
+commit — for a module whose only tags are pre-releases, Go's `@latest` picks the highest
+pre-release. `version` still reports `runtime/debug.ReadBuildInfo()` and is still what
+ties a report to a build; the tag only adds a name a human can ask for.
+
 **Cross-repository note:** Milestone 3's `review-interfaces.md` change lands in the **lx
 skills repository**, which has its own CI and none of this
 ([SCOPE](/SCOPE.md), [decision](/scope/13-skills-integration-scope.md)).
