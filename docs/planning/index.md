@@ -1,0 +1,19 @@
+---
+okf_version: "0.1"
+---
+
+# External Reviewer planning
+
+Planning bundle for External Reviewer — a CLI that reviews a repository on a model
+from outside the Anthropic family and returns its report to the Claude Code session
+that called it.
+
+* [Concept](/CONCEPT.md) - What the product is, why it is a called binary rather than a gateway in front of the session, and where the judgment about models lives.
+* [Scope](/SCOPE.md) - What v1 ships: users, goals, non-goals, constraints, and the three milestones.
+* [Scope decisions](/scope/index.md) - The decision ledger behind SCOPE.md.
+* [Specs](/SPECS.md) - The one-way technical doors: stack, the agent loop, confinement and the tools, interfaces, testing, distribution.
+* [Specs decisions](/specs/index.md) - The decision ledger behind SPECS.md.
+* [Conventions](/CONVENTIONS.md) - How code here is written, named, tested and committed: the personal baseline filtered to Go, with this project's deviations merged in.
+* [Conventions decisions](/conventions/index.md) - The deviations ledger behind CONVENTIONS.md.
+* [Drift](/DRIFT.md) - Standards above that the implementation could not follow, with the verified reason and the disposition. Read it alongside SPECS and CONVENTIONS.
+* [Log](/log.md) - History of this bundle.

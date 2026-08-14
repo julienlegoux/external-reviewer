@@ -1,0 +1,11 @@
+{
+  "label": "c-terra",
+  "model": "openai-codex/gpt-5.6-terra",
+  "command": "external-reviewer review --allow . --model openai-codex/gpt-5.6-terra <repo> < request-diff.json",
+  "started_utc": "2026-08-13T11:53:10.0920048Z",
+  "ended_utc": "2026-08-13T11:54:48.6739507Z",
+  "wall_clock_seconds": 98.58,
+  "exit_code": 0,
+  "stdout_bytes": 3806,
+  "stderr_bytes": 2955
+}
