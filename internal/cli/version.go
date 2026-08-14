@@ -16,10 +16,11 @@ const unknownBuildValue = "unknown"
 // stamped into the binary.
 //
 // specs 17 is the whole reason this exists and the whole reason it is this
-// small: there are no tags, no release workflow and no CHANGELOG in v1 —
-// `go install …@latest` resolves to the default branch's newest commit — so
-// the VCS revision the toolchain stamps for free is the only thing that ties
-// a report back to a build.
+// small: there is no release workflow and no CHANGELOG, so the VCS revision
+// the toolchain stamps for free is what ties a report back to a build. The
+// amendment that added tags did not change that — a tag names a build for a
+// human, it does not describe the one in hand, and `main` is only ever a
+// subset of what `develop` has already merged.
 //
 // ok is ReadBuildInfo's own second return, threaded in rather than called
 // here so the rendering is testable without a build context. A binary built

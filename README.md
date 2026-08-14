@@ -5,6 +5,54 @@ read-only tools — `list`, `read_file`, `search`, `git_read` — against an exp
 allowed slice of the repository, and returns markdown on stdout: leads for a reviewing
 skill to verify against the files, not a verdict.
 
+## Install
+
+Go 1.26 or newer, and `git` on `PATH` for the `git_read` tool:
+
+```
+go install github.com/julienlegoux/external-reviewer@v0.1.0-beta.1
+```
+
+`@latest` resolves to the newest tag, which for now is the beta above — there is no
+stable release yet.
+
+## Quickstart
+
+**1. Give `kern-link` a credential.** This binary reads none, stores none and has no
+`login` command: provider credentials are resolved wholly by `kern-link`, from env vars
+or its store at `~/.pi/agent/auth.json`, populated by its own `pi-ai login`. Use
+`openai-codex` unless you have read the validation boundary below.
+
+**2. Assign the tiers.** One hand-written, never-committed TOML at
+`%AppData%\external-reviewer\config.toml` on Windows,
+`$XDG_CONFIG_HOME/external-reviewer/config.toml` (or `~/.config/…`) elsewhere;
+`EXTERNAL_REVIEWER_CONFIG` overrides the location with an absolute path.
+
+```toml
+[tiers.standard]
+provider = "openai-codex"
+model = "gpt-5.5"
+```
+
+**3. Check what this machine can actually reach**, before spending anything on a run:
+
+```
+external-reviewer tiers
+external-reviewer models
+```
+
+**4. Review.** The system prompt and the task come from the caller, as a JSON request
+object on stdin; `--allow` grants the subtrees the reviewer may read, and nothing outside
+them is readable:
+
+```
+echo '{"system":"You are reviewing Go.","task":"Find correctness bugs in the tool layer."}' \
+  | external-reviewer review --allow internal/tools --allow docs/planning .
+```
+
+`external-reviewer help` prints the whole grammar. The report is on stdout; turn-by-turn
+cost and diagnostics are on stderr.
+
 ## Validation boundary
 
 The mechanism is fully generic: no provider is named anywhere in the binary except the

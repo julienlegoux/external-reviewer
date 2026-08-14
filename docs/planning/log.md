@@ -2,6 +2,16 @@
 
 ## 2026-08-14
 
+* **Amended**: [SPECS § Distribution & operations](/SPECS.md) and
+  [specs 17](/specs/17-distribution-and-ci.md) now allow tags and a GitHub release per
+  tag, `v0.1.0-beta.1` being the first. The decision's reasoning was that `@latest` should
+  follow the default branch; `main` now exists as a release branch behind `develop`, so
+  the newest commit on a branch and the state someone should install stopped being the
+  same thing. Only the tag was added — no release workflow, no binaries, no changelog, no
+  signing. The mechanical consequence is recorded because it is what the old wording got
+  wrong from here on: `@latest` resolves to the newest tag, and with only pre-releases
+  published that is the highest pre-release.
+
 * **Amended**: [SPECS § Reading the repository](/SPECS.md) and
   [specs 11](/specs/11-tool-implementation-strategy.md) now state that the reviewed
   repository's own `.git/config` is untrusted input ([issue #58](https://github.com/julienlegoux/external-reviewer/issues/58)).

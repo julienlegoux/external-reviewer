@@ -411,10 +411,16 @@ reasons.
 ## Distribution & operations
 
 `go install github.com/julienlegoux/external-reviewer@latest` is the entire distribution
-story ([decision](/specs/17-distribution-and-ci.md)). No releases, no tags, no changelog,
-no Dockerfile, no signing — `@latest` on an untagged module resolves to the default
-branch's newest commit, which is what a single-user tool wants. `version` reports
-`runtime/debug.ReadBuildInfo()`, so a report traces to a build without release machinery.
+story ([decision](/specs/17-distribution-and-ci.md)). No release workflow, no changelog,
+no Dockerfile, no signing. `version` reports `runtime/debug.ReadBuildInfo()`, so a report
+traces to a build without release machinery.
+
+**Amended 2026-08-14 (first beta):** there are tags, and there is a GitHub release per
+tag — `v0.1.0-beta.1` is the first ([amendment](/specs/17-distribution-and-ci.md)).
+Nothing else the decision ruled out came with them. `main` is the release branch and
+`develop` is where work lands, so `@latest` now resolves to the newest tag rather than to
+the default branch's newest commit; with only pre-release tags published, that is the
+highest pre-release.
 
 One workflow on push and pull request, `go-version-file: go.mod`: a **`test`** job
 (`go build ./...`, `go test ./... -race`) on **ubuntu-latest and windows-latest**, and a
