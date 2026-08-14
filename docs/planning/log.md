@@ -2,6 +2,13 @@
 
 ## 2026-08-14
 
+* **Amended**: [specs 12](/specs/12-output-and-diagnostics-format.md) now carries the
+  second spelling of the unrecognised-key warning ([issue #94](https://github.com/julienlegoux/external-reviewer/issues/94)).
+  The document fixed one wording, `unrecognised key "models" in [tiers.standard]`, and a
+  key at the root of the file has no table to put in those brackets — which the code
+  discovered by panicking rather than by warning. The rule specs 05 states is unchanged and
+  is what both spellings serve: every unrecognised key is named.
+
 * **Update**: promoted [Epic 3](../epics/epic-3-reviewer-selection-integration/EPIC_3.md)'s drift
   at its close. Five drift records became five [DRIFT](/DRIFT.md) entries — nothing folded, because
   the two that both point at [specs 04](/specs/04-model-family-classification.md) ask for different

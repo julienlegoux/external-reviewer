@@ -54,6 +54,12 @@ error   turn 4 failed: rate limit (provider google)
 done    turns=7  $0.0918  2m14s  stop=end_turn
 ```
 
+**Amended 2026-08-14 (issue #94):** a key with no enclosing table has nothing to put in
+the brackets, so it reads `config: unrecognised key "verbose" at the top level`. The
+bracketed form above stays exactly as it is for a key inside `[tiers.<name>]`. Two
+spellings, one rule — every unrecognised key is named, because the failure mode being
+warned about is a typo doing nothing silently ([specs 05](/specs/05-tier-assignment-schema.md)).
+
 The `done` line is the one that matters beyond debugging: turns, total cost, wall clock.
 Milestone 2 exists to produce those numbers, Milestone 3's caps are sized from them, and
 success criterion 3 is the author reading them and judging the tool cheap enough to reach

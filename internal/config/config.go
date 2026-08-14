@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -179,16 +180,16 @@ func resolveTier(name string, table tierTable, hasUndecodedKey bool) (warnings [
 // `config: unrecognised key "models" in [tiers.standard]`. key's last
 // element is the leaf name that was not recognised; everything before it
 // names the enclosing table.
+//
+// A key written before any [tiers.<name>] header has no enclosing table, so
+// there is nothing to put in the brackets and it says where the key is
+// instead. What both spellings owe specs 05 is the same: every unrecognised
+// key is named, since the failure mode being warned about is a typo doing
+// nothing silently.
 func undecodedWarning(key toml.Key) string {
 	leaf := key[len(key)-1]
-	section := key[:len(key)-1]
-	return fmt.Sprintf("config: unrecognised key %q in [%s]", leaf, joinDotted(section))
-}
-
-func joinDotted(parts []string) string {
-	out := parts[0]
-	for _, p := range parts[1:] {
-		out += "." + p
+	if section := key[:len(key)-1]; len(section) > 0 {
+		return fmt.Sprintf("config: unrecognised key %q in [%s]", leaf, strings.Join(section, "."))
 	}
-	return out
+	return fmt.Sprintf("config: unrecognised key %q at the top level", leaf)
 }
